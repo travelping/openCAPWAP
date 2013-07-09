@@ -108,14 +108,14 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveDtlsPacket(void *arg)
 	char *pData;
 
 	CW_REPEAT_FOREVER {
+		CWDebugLog("CWWTPReceiveDtlsPacket: recvfrom on DtlsSocket %d", sockDTLS);
 		if (!CWErr(CWNetworkReceiveUnsafe(sockDTLS, buf, CW_BUFFER_SIZE - 1, 0, &addr, &readBytes))) {
-
+			CWDebugLog("CWWTPReceiveDtlsPacket Error: %d", CWErrorGetLastErrorCode());
 			if (CWErrorGetLastErrorCode() == CW_ERROR_INTERRUPTED)
 				continue;
 
 			break;
 		}
-
 		/* Clone data packet */
 		CW_CREATE_OBJECT_SIZE_ERR(pData, readBytes, {
 					  CWLog("Out Of Memory");

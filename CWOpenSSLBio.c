@@ -128,17 +128,23 @@ static int memory_read(BIO * b, char *out, int outl)
 		/* Is a timer active? */
 		if (pData->timeout.tv_sec > 0 ||
 		    pData->timeout.tv_nsec > 0) {
+			CWDebugLog("Before Safe List Read Timeout");
 			if (!CWErr(CWWaitElementFromSafeListTimeout(pData->pRecvAddress, &pData->timeout))) {
 				CWUnlockSafeList(pData->pRecvAddress);
 				if (CWErrorGetLastErrorCode() == CW_ERROR_TIME_EXPIRED) {
+					CWDebugLog("After Safe List Read - Timeout Occured");
 					BIO_set_retry_read(b);
 				} else {
+					CWDebugLog("After Safe List Read - Other Error Occured");
 					BIO_clear_retry_flags(b);
 				}
 				return -1;
 			}
+			CWDebugLog("After Safe List Read NO Timeout");
 		} else {
+			CWDebugLog("Before Safe List Read");
 			CWWaitElementFromSafeList(pData->pRecvAddress);
+			CWDebugLog("After Safe List Read");
 		}
 	}
 
@@ -290,6 +296,7 @@ static long memory_ctrl(BIO * b, int cmd, long num, void *ptr)
 	case BIO_CTRL_DGRAM_MTU_DISCOVER:
 
 	default:
+		CWDebugLog("Got BIO command: %d", cmd);
 		ret = 0;
 		break;
 	}

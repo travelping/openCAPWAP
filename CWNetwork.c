@@ -64,9 +64,9 @@ CWBool CWNetworkSendUnsafeConnected(CWSocket sock, const char *buf, int len)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
 	while (send(sock, buf, len, 0) < 0) {
-
 		if (errno == EINTR)
 			continue;
+
 		CWNetworkRaiseSystemError(CW_ERROR_SENDING);
 	}
 	return CW_TRUE;
@@ -82,10 +82,12 @@ CWBool CWNetworkReceiveUnsafeConnected(CWSocket sock, char *buf, int len, int *r
 	if (buf == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
+	CWDebugLog("CWNetworkReceiveUnsafeConnected: recvfrom on Socket %d", sock);
 	while ((*readBytesPtr = recv(sock, buf, len, 0)) < 0) {
-
 		if (errno == EINTR)
 			continue;
+
+		CWDebugLog("CWNetworkReceiveUnsafeConnected: recvfrom error Socket %d", sock, errno);
 		CWNetworkRaiseSystemError(CW_ERROR_RECEIVING);
 	}
 	return CW_TRUE;
@@ -104,12 +106,15 @@ CWBool CWNetworkReceiveUnsafe(CWSocket sock,
 	if (buf == NULL || addrPtr == NULL || readBytesPtr == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
+	CWDebugLog("CWNetworkReceiveUnsafe: recvfrom on Socket %d", sock);
 	while ((*readBytesPtr = recvfrom(sock, buf, len, flags, (struct sockaddr *)addrPtr, &addrLen)) < 0) {
-
 		if (errno == EINTR)
 			continue;
+
+		CWDebugLog("CWNetworkReceiveUnsafe: recvfrom error Socket %d, %d", sock, errno);
 		CWNetworkRaiseSystemError(CW_ERROR_RECEIVING);
 	}
+	CWDebugLog("CWNetworkReceiveUnsafe: recvfrom ok Socket %d, %d", sock, *readBytesPtr);
 	return CW_TRUE;
 }
 
