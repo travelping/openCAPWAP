@@ -26,6 +26,7 @@
  *******************************************************************************************/
 
 #include "CWAC.h"
+#include "CWNetwork.h"
 
 #include "common.h"
 #include "ieee802_11_defs.h"

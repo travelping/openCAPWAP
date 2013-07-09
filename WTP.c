@@ -61,8 +61,8 @@ char *gWTPForceACAddress = NULL;
 CWAuthSecurity gWTPForceSecurity;
 
 /* UDP network socket */
-CWSocket gWTPSocket;
-CWSocket gWTPDataSocket;
+CWSocket gWTPSocket = -1;
+CWSocket gWTPDataSocket = -1;
 /* DTLS session vars */
 CWSecurityContext gWTPSecurityContext;
 CWSecuritySession gWTPSession;

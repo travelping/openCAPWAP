@@ -28,6 +28,7 @@
 #ifndef __CAPWAP_CWNetwork_HEADER__
 #define __CAPWAP_CWNetwork_HEADER__
 
+#include <assert.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -57,19 +58,52 @@ extern CWNetworkLev3Service gNetworkPreferredFamily;
                             {block}                 \
                         }
 
-#define CWNetworkRaiseSystemError(error)    {                       \
-                            char buf[256];              \
-                            if(strerror_r(errno, buf, 256) < 0) {   \
-                                CWErrorRaise(error, NULL);  \
-                                return CW_FALSE;        \
-                            }                   \
-                            CWErrorRaise(error, NULL);      \
-                            return CW_FALSE;            \
-                        }
+#define CWNetworkRaiseSystemError(error) do {			    \
+		char buf[256];					    \
+								    \
+		if (strerror_r(errno, buf, 256) < 0) {		    \
+			CWErrorRaise(error, NULL);		    \
+			return CW_FALSE;			    \
+		}						    \
+								    \
+		CWErrorRaise(error, buf);			    \
+		return CW_FALSE;				    \
+	} while(0)
 
-#define     CWNetworkCloseSocket(x)     { shutdown(SHUT_RDWR, x); close(x); }
+#define CWNetworkCloseSocket(x) do {				\
+	if (x != -1) {						\
+		assert(x > 2);					\
+		shutdown(x, SHUT_RDWR);				\
+		close(x);					\
+		x = -1;						\
+	} } while(0)
 
-int CWNetworkGetAddressSize(CWNetworkLev4Address * addrPtr);
+/*
+ * Assume address is valid
+ */
+static inline int CWNetworkGetFamily(CWNetworkLev4Address * addrPtr)
+{
+	return ((struct sockaddr *)(addrPtr))->sa_family;
+}
+
+/*
+ * Assume address is valid
+ */
+static inline int CWNetworkGetAddressSize(CWNetworkLev4Address * addrPtr)
+{
+	switch (CWNetworkGetFamily(addrPtr)) {
+#ifdef  IPV6
+		/* IPv6 is defined in Stevens' library */
+	case AF_INET6:
+		return sizeof(struct sockaddr_in6);
+		break;
+#endif
+	case AF_INET:
+	default:
+		return sizeof(struct sockaddr_in);
+	}
+}
+
 CWBool CWNetworkSendUnsafeConnected(CWSocket sock, const char *buf, int len);
 CWBool CWNetworkSendUnsafeUnconnected(CWSocket sock, CWNetworkLev4Address * addrPtr, const char *buf, int len);
 CWBool CWNetworkReceiveUnsafe(CWSocket sock, char *buf, int len, int flags, CWNetworkLev4Address * addrPtr,

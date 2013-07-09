@@ -34,26 +34,6 @@
 CWNetworkLev3Service gNetworkPreferredFamily = CW_IPv4;
 
 /*
- * Assume address is valid
- */
-__inline__ int CWNetworkGetAddressSize(CWNetworkLev4Address * addrPtr)
-{
-
-	switch (((struct sockaddr *)(addrPtr))->sa_family) {
-
-#ifdef  IPV6
-		/* IPv6 is defined in Stevens' library */
-	case AF_INET6:
-		return sizeof(struct sockaddr_in6);
-		break;
-#endif
-	case AF_INET:
-	default:
-		return sizeof(struct sockaddr_in);
-	}
-}
-
-/*
  * Send buf on an unconnected UDP socket. Unsafe means that we don't use DTLS.
  */
 CWBool CWNetworkSendUnsafeUnconnected(CWSocket sock, CWNetworkLev4Address * addrPtr, const char *buf, int len)
