@@ -105,6 +105,11 @@ CWStateTransition CWWTPEnterJoin()
 			goto cw_join_err;
 	}
 #endif
+	/* make sure we start with a fresh, empty list */
+	CWLockSafeList(gPacketReceiveList);
+	CWCleanSafeList(gPacketReceiveList, free);
+	CWUnlockSafeList(gPacketReceiveList);
+
 	CWThread thread_receiveFrame;
 	if (!CWErr(CWCreateThread(&thread_receiveFrame, CWWTPReceiveDtlsPacket, (void *)gWTPSocket))) {
 		CWLog("Error starting Thread that receive DTLS packet");
