@@ -50,8 +50,10 @@ CWBool CWSecurityInitContext(CWSecurityContext * ctxPtr,
 			     const char *caList,
 			     const char *keyfile, const char *passw, CWBool isClient, int (*hackPtr) (void *));
 
-void CWSecurityDestroyContext(CWSecurityContext ctx);
-void CWSecurityDestroySession(CWSecuritySession s);
+void CWSecurityDestroyContext(CWSecurityContext *ctx)
+	__attribute__((nonnull (1)));
+void CWSecurityDestroySession(CWSecuritySession *s)
+	__attribute__((nonnull (1)));
 
 BIO *BIO_new_memory(CWSocket sock, CWNetworkLev4Address * pSendAddress, CWSafeList * pRecvAddress);
 

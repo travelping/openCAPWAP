@@ -64,8 +64,8 @@ CWAuthSecurity gWTPForceSecurity;
 CWSocket gWTPSocket = -1;
 CWSocket gWTPDataSocket = -1;
 /* DTLS session vars */
-CWSecurityContext gWTPSecurityContext;
-CWSecuritySession gWTPSession;
+CWSecurityContext gWTPSecurityContext = NULL;
+CWSecuritySession gWTPSession = NULL;
 
 /* list used to pass frames from wireless interface to main thread */
 CWSafeList gFrameList;
@@ -518,10 +518,8 @@ int main(int argc, char * const argv[])
 			 * CWStopHeartbeatTimer();
 			 * CWStopNeighborDeadTimer();
 			 * CWNetworkCloseSocket(gWTPSocket);
-			 * CWSecurityDestroySession(gWTPSession);
-			 * CWSecurityDestroyContext(gWTPSecurityContext);
-			 * gWTPSecurityContext = NULL;
-			 * gWTPSession = NULL;
+			 * CWSecurityDestroySession(&gWTPSession);
+			 * CWSecurityDestroyContext(&gWTPSecurityContext);
 			 */
 			nextState = CW_ENTER_DISCOVERY;
 			break;

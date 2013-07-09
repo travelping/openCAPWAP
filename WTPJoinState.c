@@ -63,11 +63,9 @@ CWStateTransition CWWTPEnterJoin()
 	/* reset Join state */
 	CWNetworkCloseSocket(gWTPSocket);
 #ifndef CW_NO_DTLS
-	CWSecurityDestroySession(gWTPSession);
-	CWSecurityDestroyContext(gWTPSecurityContext);
+	CWSecurityDestroySession(&gWTPSession);
+	CWSecurityDestroyContext(&gWTPSecurityContext);
 #endif
-	gWTPSecurityContext = NULL;
-	gWTPSession = NULL;
 
 	/* Initialize gACInfoPtr */
 	gACInfoPtr->ACIPv4ListInfo.ACIPv4ListCount = 0;

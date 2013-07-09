@@ -65,10 +65,8 @@ CWStateTransition CWWTPEnterConfigure()
 
 		CWNetworkCloseSocket(gWTPSocket);
 #ifndef CW_NO_DTLS
-		CWSecurityDestroySession(gWTPSession);
-		CWSecurityDestroyContext(gWTPSecurityContext);
-		gWTPSecurityContext = NULL;
-		gWTPSession = NULL;
+		CWSecurityDestroySession(&gWTPSession);
+		CWSecurityDestroyContext(&gWTPSecurityContext);
 #endif
 		return CW_QUIT;
 	}

@@ -179,14 +179,12 @@ CWBool CWSecurityInitSessionClient(CWSocket sock,
 #endif
 
 	if ((sbio = BIO_new_memory(sock, addrPtr, packetReceiveList)) == NULL) {
-
-		SSL_free(*sessionPtr);
+		CWSecurityDestroySession(sessionPtr);
 		CWSecurityRaiseError(CW_ERROR_CREATING);
 	}
 
 	if (getsockname(sock, (struct sockaddr *)&peer, (void *)&peerlen) < 0) {
-
-		SSL_free(*sessionPtr);
+		CWSecurityDestroySession(sessionPtr);
 		CWSecurityRaiseSystemError(CW_ERROR_GENERAL);
 	}
 
@@ -217,7 +215,7 @@ CWBool CWSecurityInitSessionClient(CWSocket sock,
 	SSL_set_connect_state((*sessionPtr));
 
 	CWDebugLog("Before HS");
-	CWSecurityManageSSLError(SSL_do_handshake(*sessionPtr), *sessionPtr, SSL_free(*sessionPtr);
+	CWSecurityManageSSLError(SSL_do_handshake(*sessionPtr), *sessionPtr, CWSecurityDestroySession(sessionPtr);
 	    );
 	CWDebugLog("After HS");
 
@@ -252,8 +250,7 @@ CWBool CWSecurityInitSessionClient(CWSocket sock,
 
 void CWSecurityCloseSession(CWSecuritySession * sPtr)
 {
-
-	SSL_free(*sPtr);
+	CWSecurityDestroySession(sPtr);
 }
 
 CWBool CWSecurityReceive(CWSecuritySession session, char *buf, int len, int *readBytesPtr)
@@ -302,8 +299,7 @@ CWBool CWSecurityInitSessionServer(CWWTPManager * pWtp,
 	}
 
 	if ((sbio = BIO_new_memory(sock, &pWtp->address, pWtp->packetReceiveList)) == NULL) {
-
-		SSL_free(*sessionPtr);
+		CWSecurityDestroySession(sessionPtr);
 		CWSecurityRaiseError(CW_ERROR_CREATING);
 	}
 
@@ -336,7 +332,7 @@ CWBool CWSecurityInitSessionServer(CWWTPManager * pWtp,
 	SSL_set_accept_state((*sessionPtr));
 
 	CWDebugLog("Before HS");
-	CWSecurityManageSSLError(SSL_do_handshake(*sessionPtr), *sessionPtr, SSL_free(*sessionPtr);
+	CWSecurityManageSSLError(SSL_do_handshake(*sessionPtr), *sessionPtr, CWSecurityDestroySession(sessionPtr);
 	    );
 	CWDebugLog("After HS");
 
@@ -391,7 +387,7 @@ CWBool CWSecurityInitContext(CWSecurityContext * ctxPtr,
 		useCertificate = CW_TRUE;
 		/* load keys and certificates */
 		if (!(SSL_CTX_use_certificate_file((*ctxPtr), keyfile, SSL_FILETYPE_PEM))) {
-			SSL_CTX_free((*ctxPtr));
+			CWSecurityDestroyContext(ctxPtr);
 			CWSecurityRaiseError(CW_ERROR_GENERAL);
 		}
 
@@ -400,20 +396,18 @@ CWBool CWSecurityInitContext(CWSecurityContext * ctxPtr,
 		SSL_CTX_set_default_passwd_cb((*ctxPtr), CWDTLSPasswordCB);
 
 		if (!(SSL_CTX_use_PrivateKey_file((*ctxPtr), keyfile, SSL_FILETYPE_PEM))) {
-
-			SSL_CTX_free((*ctxPtr));
+			CWSecurityDestroyContext(ctxPtr);
 			CWSecurityRaiseError(CW_ERROR_GENERAL);
 		}
 
 		if (!SSL_CTX_check_private_key((*ctxPtr))) {
-
-			SSL_CTX_free((*ctxPtr));
+			CWSecurityDestroyContext(ctxPtr);
 			CWSecurityRaiseError(CW_ERROR_GENERAL);
 		}
 
 		/* load the CAs we trust */
 		if (!(SSL_CTX_load_verify_locations((*ctxPtr), caList, 0))) {
-			SSL_CTX_free((*ctxPtr));
+			CWSecurityDestroyContext(ctxPtr);
 			CWSecurityRaiseError(CW_ERROR_GENERAL);
 		}
 
@@ -476,20 +470,21 @@ CWBool CWSecurityInitContext(CWSecurityContext * ctxPtr,
 	return CW_TRUE;
 }
 
-void CWSecurityDestroyContext(CWSecurityContext ctx)
+void CWSecurityDestroyContext(CWSecurityContext *ctxPtr)
 {
 
-	if (ctx != NULL)
-		SSL_CTX_free(ctx);
+	if (*ctxPtr != NULL)
+		SSL_CTX_free(*ctxPtr);
+	*ctxPtr = NULL;
 }
 
-void CWSecurityDestroySession(CWSecuritySession s)
+void CWSecurityDestroySession(CWSecuritySession *sessionPtr)
 {
-
-	if (s != NULL) {
+	if (*sessionPtr != NULL) {
 		//if(s->rbio != NULL) BIO_free(s->rbio);
-		SSL_free(s);
+		SSL_free(*sessionPtr);
 	}
+	*sessionPtr = NULL;
 }
 
 CWBool CWSecurityVerifyCertEKU(X509 * x509, const char *const expected_oid)
