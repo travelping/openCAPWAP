@@ -25,7 +25,13 @@
  *           Mauro Bisson (mauro.bis@gmail.com)                                            *
  *******************************************************************************************/
 
+#ifndef	_GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 #include "CWCommon.h"
+#include <sys/time.h>
+#include <netinet/in.h>
 
 #ifdef DMALLOC
 #include "../dmalloc-5.5.0/dmalloc.h"
@@ -47,6 +53,7 @@ typedef struct {
 	CWNetworkLev4Address sendAddress;
 	CWSafeList *pRecvAddress;
 	unsigned int nMtu;
+	struct timespec timeout;
 } BIO_memory_data;
 
 static BIO_METHOD methods_memory = {
@@ -111,15 +118,28 @@ static int memory_read(BIO * b, char *out, int outl)
 	int size;
 	BIO_memory_data *pData = (BIO_memory_data *) b->ptr;
 
-	//
-	//BIO_clear_retry_flags(b);
+	BIO_clear_retry_flags(b);
 
-	//
 	CWLockSafeList(pData->pRecvAddress);
 
 	// Used only in DTLS handshake
 	while (CWGetCountElementFromSafeList(pData->pRecvAddress) == 0) {
-		CWWaitElementFromSafeList(pData->pRecvAddress);
+
+		/* Is a timer active? */
+		if (pData->timeout.tv_sec > 0 ||
+		    pData->timeout.tv_nsec > 0) {
+			if (!CWErr(CWWaitElementFromSafeListTimeout(pData->pRecvAddress, &pData->timeout))) {
+				CWUnlockSafeList(pData->pRecvAddress);
+				if (CWErrorGetLastErrorCode() == CW_ERROR_TIME_EXPIRED) {
+					BIO_set_retry_read(b);
+				} else {
+					BIO_clear_retry_flags(b);
+				}
+				return -1;
+			}
+		} else {
+			CWWaitElementFromSafeList(pData->pRecvAddress);
+		}
 	}
 
 	buf = (char *)CWRemoveHeadElementFromSafeList(pData->pRecvAddress, &size);
@@ -238,6 +258,36 @@ static long memory_ctrl(BIO * b, int cmd, long num, void *ptr)
 		pData->nMtu = num;
 		ret = num;
 		break;
+
+	case BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT: {
+		TIMEVAL_TO_TIMESPEC((struct timeval *)ptr, &pData->timeout);
+		ret = 0;
+                break;
+	}
+
+	case BIO_CTRL_DGRAM_GET_FALLBACK_MTU:
+		switch (CWNetworkGetFamily(&pData->sendAddress)) {
+		case AF_INET:
+			ret = 576 - 20 - 8;
+			break;
+#ifdef  IPV6
+		case AF_INET6:
+#ifdef IN6_IS_ADDR_V4MAPPED
+			if (IN6_IS_ADDR_V4MAPPED(&(((struct sockaddr_in6 *)&pData->sendAddress)->sin6_addr)))
+				ret = 576 - 20 - 8;
+			else
+#endif
+				ret = 1280 - 40 - 8;
+			break;
+#endif
+		default:
+			ret = 576 - 20 - 8;
+			break;
+		}
+		break;
+
+	case BIO_CTRL_DGRAM_SET_CONNECTED:
+	case BIO_CTRL_DGRAM_MTU_DISCOVER:
 
 	default:
 		ret = 0;
