@@ -337,8 +337,8 @@ int wtpInRunState = 0;
 
 CWStateTransition CWWTPEnterRun()
 {
-
 	int k, msg_len;
+	struct timespec timenow;
 
 	CWLog("\n");
 	CWLog("######### WTP enters in RUN State #########");
@@ -353,16 +353,15 @@ CWStateTransition CWWTPEnterRun()
 		return CW_ENTER_RESET;
 	}
 
+	/* Wait packet */
+	timenow.tv_sec = time(0) + CW_NEIGHBORDEAD_RESTART_DISCOVERY_DELTA_DEFAULT;	/* greater than NeighborDeadInterval */
+	timenow.tv_nsec = 0;
+
 	wtpInRunState = 1;
 
 	CW_REPEAT_FOREVER {
-		struct timespec timenow;
 		CWBool bReceivePacket = CW_FALSE;
 		CWBool bReveiveBinding = CW_FALSE;
-
-		/* Wait packet */
-		timenow.tv_sec = time(0) + CW_NEIGHBORDEAD_RESTART_DISCOVERY_DELTA_DEFAULT;	/* greater than NeighborDeadInterval */
-		timenow.tv_nsec = 0;
 
 		CWThreadMutexLock(&gInterfaceMutex);
 
@@ -423,9 +422,15 @@ CWStateTransition CWWTPEnterRun()
 					return CW_ENTER_RESET;
 				}
 			}
+
+			/* Wait packet */
+			timenow.tv_sec = time(0) + CW_NEIGHBORDEAD_RESTART_DISCOVERY_DELTA_DEFAULT;	/* greater than NeighborDeadInterval */
+			timenow.tv_nsec = 0;
 		}
+
 		if (bReveiveBinding)
 			CWWTPCheckForBindingFrame();
+
 	}
 
 	wtpInRunState = 0;
