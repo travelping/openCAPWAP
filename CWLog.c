@@ -38,6 +38,8 @@ static FILE *gLogFile = NULL;
 CWThreadMutex gFileMutex;
 #endif
 
+static void CWVLog(const char *format, va_list args);
+
 void CWLogInitFile(char *fileName)
 {
 	if (fileName == NULL) {
@@ -134,6 +136,7 @@ void CWVLog(const char *format, va_list args)
 
 void CWLog(const char *format, ...)
 {
+	int _errno = errno;
 	va_list args;
 
 	va_start(args, format);
@@ -141,6 +144,7 @@ void CWLog(const char *format, ...)
 		CWVLog(format, args);
 	}
 	va_end(args);
+	errno = _errno;
 }
 
 void CWDebugLog(const char *format, ...)

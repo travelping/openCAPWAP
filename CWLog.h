@@ -30,9 +30,10 @@
 
 extern char gLogFileName[];
 
-void CWVLog(const char *format, va_list args);
-void CWLog(const char *format, ...);
-void CWDebugLog(const char *format, ...);
+void CWLog(const char *format, ...)
+	__attribute__ ((__format__ (__printf__, 1, 2)));
+void CWDebugLog(const char *format, ...)
+	__attribute__ ((__format__ (__printf__, 1, 2)));
 void CWLogInitFile(char *fileName);
 
 #endif
