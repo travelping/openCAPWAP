@@ -30,10 +30,15 @@
 
 extern char gLogFileName[];
 
+void CWLogInitFile(char *fileName);
 void CWLog(const char *format, ...)
 	__attribute__ ((__format__ (__printf__, 1, 2)));
+
+#ifdef CW_DEBUGGING
 void CWDebugLog(const char *format, ...)
 	__attribute__ ((__format__ (__printf__, 1, 2)));
-void CWLogInitFile(char *fileName);
+#else
+#define CWDebugLog(format, ...) do { } while(0)
+#endif
 
 #endif

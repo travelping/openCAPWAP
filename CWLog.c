@@ -147,67 +147,27 @@ void CWLog(const char *format, ...)
 	errno = _errno;
 }
 
+#ifdef CW_DEBUGGING
 void CWDebugLog(const char *format, ...)
 {
-#ifdef CW_DEBUGGING
-	char *logStr = NULL;
+	int _errno = errno;
 	va_list args;
-	time_t now;
-	char *nowReadable = NULL;
 
-	if (!gEnabledLog) {
+	if (!gEnabledLog)
 		return;
-	}
 
 	if (format == NULL) {
 #ifdef WRITE_STD_OUTPUT
 		printf("\n");
 #endif
+		errno = _errno;
 		return;
 	}
 
-	now = time(NULL);
-	nowReadable = ctime(&now);
-
-	nowReadable[strlen(nowReadable) - 1] = '\0';
-
-	// return in case of memory err: we're not performing a critical task
-	CW_CREATE_STRING_ERR(logStr, (strlen(format) + strlen(nowReadable) + 100), return;
-	    );
-
-	//sprintf(logStr, "[[CAPWAP::%s]]\t\t %s\n", nowReadable, format);
-	sprintf(logStr, "[CAPWAP::%s]\t%08x\t %s\n", nowReadable, (unsigned int)CWThreadSelf(), format);
-
 	va_start(args, format);
-
-	if (gLogFile != NULL) {
-		char fileLine[256];
-
-#ifndef CW_SINGLE_THREAD
-		CWThreadMutexLock(&gFileMutex);
-		fseek(gLogFile, 0L, SEEK_END);
-#endif
-
-		vsnprintf(fileLine, 255, logStr, args);
-
-		if (!checkResetFile()) {
-			CWThreadMutexUnlock(&gFileMutex);
-			exit(1);
-		}
-
-		fwrite(fileLine, strlen(fileLine), 1, gLogFile);
-
-		fflush(gLogFile);
-
-#ifndef CW_SINGLE_THREAD
-		CWThreadMutexUnlock(&gFileMutex);
-#endif
-	}
-#ifdef WRITE_STD_OUTPUT
-	vprintf(logStr, args);
-#endif
-
+	CWVLog(format, args);
 	va_end(args);
-	CW_FREE_OBJECT(logStr);
-#endif
+
+	errno = _errno;
 }
+#endif
