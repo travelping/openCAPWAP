@@ -118,6 +118,16 @@ CWBool CWWaitElementFromSafeList(CWSafeList safeList)
 	return CWWaitThreadCondition(pList->pThreadCond, pList->pThreadMutex);
 }
 
+CWBool CWWaitElementFromSafeListTimeout(CWSafeList safeList, const struct timespec * pTimeout)
+{
+	CWPrivateSafeList *pList = (CWPrivateSafeList *) safeList;
+
+	if ((pList == NULL) || (pList->pThreadMutex == NULL) || (pList->pThreadCond == NULL))
+		return CW_FALSE;
+
+	return CWWaitThreadConditionTimeout(pList->pThreadCond, pList->pThreadMutex, pTimeout);
+}
+
 CWBool CWSignalElementSafeList(CWSafeList safeList)
 {
 	CWPrivateSafeList *pList = (CWPrivateSafeList *) safeList;

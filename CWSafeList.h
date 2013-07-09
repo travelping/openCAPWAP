@@ -58,6 +58,7 @@ void CWSetConditionSafeList(CWSafeList safeList, CWThreadCondition * pThreadCond
 CWBool CWLockSafeList(CWSafeList safeList);
 void CWUnlockSafeList(CWSafeList safeList);
 CWBool CWWaitElementFromSafeList(CWSafeList safeList);
+CWBool CWWaitElementFromSafeListTimeout(CWSafeList safeList, const struct timespec * pTimeout);
 CWBool CWSignalElementSafeList(CWSafeList safeList);
 
 unsigned long CWGetCountElementFromSafeList(CWSafeList safeList);

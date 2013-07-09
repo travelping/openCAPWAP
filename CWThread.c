@@ -103,7 +103,7 @@ CWBool CWWaitThreadCondition(CWThreadCondition * theCondition, CWThreadMutex * t
 
 // Wait for a thread condition (wrapper for pthread_cond_wait)
 CWBool CWWaitThreadConditionTimeout(CWThreadCondition * theCondition, CWThreadMutex * theMutex,
-				    struct timespec * pTimeout)
+				    const struct timespec * pTimeout)
 {
 	if (theCondition == NULL || theMutex == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);

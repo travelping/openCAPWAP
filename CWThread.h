@@ -90,7 +90,7 @@ void CWDestroyThreadCondition(CWThreadCondition * theCondition);
 CWBool CWWaitThreadCondition(CWThreadCondition * theCondition, CWThreadMutex * theMutex);
 
 CWBool CWWaitThreadConditionTimeout(CWThreadCondition * theCondition,
-				    CWThreadMutex * theMutex, struct timespec *pTimeout);
+				    CWThreadMutex * theMutex, const struct timespec *pTimeout);
 
 void CWSignalThreadCondition(CWThreadCondition * theCondition);
 CWBool CWCreateThreadMutex(CWThreadMutex * theMutex);
