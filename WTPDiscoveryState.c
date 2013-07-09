@@ -249,6 +249,9 @@ CWBool CWReceiveDiscoveryResponse()
 	if (!CWErr(CWNetworkReceiveUnsafe(gWTPSocket, buf, CW_BUFFER_SIZE - 1, 0, &addr, &readBytes))) {
 		return CW_FALSE;
 	}
+	if (readBytes == 0)
+		/* no error, but no data == orderly shutdown */
+		return CW_FALSE;
 
 	CW_CREATE_OBJECT_ERR(ACInfoPtr, CWACInfoValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );

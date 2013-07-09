@@ -83,6 +83,9 @@ CWStateTransition CWWTPEnterSulking()
 				    (CWNetworkReceiveUnsafe(gWTPSocket, buf, CW_BUFFER_SIZE, 0, &addr, &readBytes))) {
 					return CW_QUIT;
 				}
+				if (readBytes == 0)
+					/* no error, but not data == orderly shutdown */
+					return CW_QUIT;
 			}
 		case CW_ERROR_INTERRUPTED:
 			/*

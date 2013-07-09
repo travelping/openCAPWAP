@@ -127,8 +127,14 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveDtlsPacket(void *arg)
 		CWLockSafeList(gPacketReceiveList);
 		CWAddElementToSafeListTailwitDataFlag(gPacketReceiveList, pData, readBytes, CW_FALSE);
 		CWUnlockSafeList(gPacketReceiveList);
+
+		if (readBytes == 0)
+			/* no error, but no data == orderly shutdown
+			 * the zero lenght payload packet signals the BIO read to terminate */
+			break;
 	}
 
+	CWLog("CWWTPReceiveDtlsPacket:: exited");
 	return NULL;
 }
 
@@ -176,6 +182,9 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveDataPacket(void *arg)
 
 			break;
 		}
+		if (readBytes == 0)
+			/* no error, but no data == orderly shutdown */
+			break;
 
 		msgPtr.msg = NULL;
 		msgPtr.offset = 0;
@@ -315,6 +324,7 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveDataPacket(void *arg)
 		}
 	}
 
+	CWLog("CWWTPReceiveDataPacket:: exited");
 	return NULL;
 }
 

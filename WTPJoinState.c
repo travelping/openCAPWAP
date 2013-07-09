@@ -62,6 +62,7 @@ CWStateTransition CWWTPEnterJoin()
 
 	/* reset Join state */
 	CWNetworkCloseSocket(gWTPSocket);
+	CWNetworkCloseSocket(gWTPDataSocket);
 #ifndef CW_NO_DTLS
 	CWSecurityDestroySession(&gWTPSession);
 	CWSecurityDestroyContext(&gWTPSecurityContext);
@@ -73,9 +74,8 @@ CWStateTransition CWWTPEnterJoin()
 	gACInfoPtr->ACIPv6ListInfo.ACIPv6ListCount = 0;
 	gACInfoPtr->ACIPv6ListInfo.ACIPv6List = NULL;
 
-	if ((waitJoinTimer = timer_add(gCWWaitJoin, 0, CWWTPWaitJoinExpired, NULL)) == -1) {
+	if ((waitJoinTimer = timer_add(gCWWaitJoin, 0, CWWTPWaitJoinExpired, NULL)) == -1)
 		return CW_ENTER_DISCOVERY;
-	}
 
 	if (gWTPForceACAddress != NULL) {
 		CW_CREATE_OBJECT_ERR(gACInfoPtr, CWACInfoValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
@@ -85,76 +85,47 @@ CWStateTransition CWWTPEnterJoin()
 	}
 
 	/* Init DTLS session */
-	if (!CWErr(CWNetworkInitSocketClient(&gWTPSocket, &(gACInfoPtr->preferredAddress)))) {
+	if (!CWErr(CWNetworkInitSocketClient(&gWTPSocket, &(gACInfoPtr->preferredAddress))))
+		goto cw_join_err;
 
-		timer_rem(waitJoinTimer, NULL);
-		return CW_ENTER_DISCOVERY;
-	}
-	if (!CWErr(CWNetworkInitSocketClientDataChannel(&gWTPDataSocket, &(gACInfoPtr->preferredAddress)))) {
-		return CW_ENTER_DISCOVERY;
-	}
+	if (!CWErr(CWNetworkInitSocketClientDataChannel(&gWTPDataSocket, &(gACInfoPtr->preferredAddress))))
+		goto cw_join_err;
+
 	CWLog("Initiate Data Channel");
 	CWDebugLog("gWTPSocket:%d, gWTPDataSocket:%d", gWTPSocket, gWTPDataSocket);
 
 #ifndef CW_NO_DTLS
 	if (gACInfoPtr->security == CW_X509_CERTIFICATE) {
 		if (!CWErr(CWSecurityInitContext(&gWTPSecurityContext,
-						 "root.pem", "client.pem", "prova", CW_TRUE, NULL))) {
-
-			timer_rem(waitJoinTimer, NULL);
-			CWNetworkCloseSocket(gWTPSocket);
-			gWTPSecurityContext = NULL;
-			return CW_ENTER_DISCOVERY;
-		}
+						 "root.pem", "client.pem", "prova", CW_TRUE, NULL)))
+			goto cw_join_err;
 	} else {
 		/* pre-shared keys */
-		if (!CWErr(CWSecurityInitContext(&gWTPSecurityContext, NULL, NULL, NULL, CW_TRUE, NULL))) {
-
-			timer_rem(waitJoinTimer, NULL);
-			CWNetworkCloseSocket(gWTPSocket);
-			gWTPSecurityContext = NULL;
-			return CW_ENTER_DISCOVERY;
-		}
+		if (!CWErr(CWSecurityInitContext(&gWTPSecurityContext, NULL, NULL, NULL, CW_TRUE, NULL)))
+			goto cw_join_err;
 	}
 #endif
 	CWThread thread_receiveFrame;
 	if (!CWErr(CWCreateThread(&thread_receiveFrame, CWWTPReceiveDtlsPacket, (void *)gWTPSocket))) {
-
 		CWLog("Error starting Thread that receive DTLS packet");
-		timer_rem(waitJoinTimer, NULL);
-		CWNetworkCloseSocket(gWTPSocket);
-#ifndef CW_NO_DTLS
-		CWSecurityDestroyContext(gWTPSecurityContext);
-		gWTPSecurityContext = NULL;
-		gWTPSession = NULL;
-#endif
-		return CW_ENTER_DISCOVERY;
+		goto cw_join_err;
 	}
 
 	CWThread thread_receiveDataFrame;
 	if (!CWErr(CWCreateThread(&thread_receiveDataFrame, CWWTPReceiveDataPacket, (void *)gWTPDataSocket))) {
-
 		CWLog("Error starting Thread that receive data packet");
-		return CW_ENTER_DISCOVERY;
+		goto cw_join_err;
 	}
-#ifndef CW_NO_DTLS
 
+#ifndef CW_NO_DTLS
 	if (!CWErr(CWSecurityInitSessionClient(gWTPSocket,
 					       &(gACInfoPtr->preferredAddress),
-					       gPacketReceiveList, gWTPSecurityContext, &gWTPSession, &gWTPPathMTU))) {
-
-		/* error setting up DTLS session */
-		timer_rem(waitJoinTimer, NULL);
-		CWNetworkCloseSocket(gWTPSocket);
-		CWSecurityDestroyContext(gWTPSecurityContext);
-		gWTPSecurityContext = NULL;
-		gWTPSession = NULL;
-		return CW_ENTER_DISCOVERY;
-	}
+					       gPacketReceiveList, gWTPSecurityContext, &gWTPSession, &gWTPPathMTU)))
+		goto cw_join_err;
 #endif
-	if (gCWForceMTU > 0) {
+
+	if (gCWForceMTU > 0)
 		gWTPPathMTU = gCWForceMTU;
-	}
 
 	CWDebugLog("Path MTU for this Session: %d", gWTPPathMTU);
 
@@ -165,37 +136,39 @@ CWStateTransition CWWTPEnterJoin()
 					       NULL,
 					       CWAssembleJoinRequest,
 					       (void *)CWParseJoinResponseMessage,
-					       (void *)CWSaveJoinResponseMessage, &values))) {
- cw_join_err:
-		timer_rem(waitJoinTimer, NULL);
-		CWNetworkCloseSocket(gWTPSocket);
-#ifndef CW_NO_DTLS
-		CWSecurityDestroySession(gWTPSession);
-		CWSecurityDestroyContext(gWTPSecurityContext);
-		gWTPSecurityContext = NULL;
-		gWTPSession = NULL;
-#endif
-		return CW_ENTER_DISCOVERY;
-	}
+					       (void *)CWSaveJoinResponseMessage, &values)))
+		goto cw_join_err;
 
 	timer_rem(waitJoinTimer, NULL);
-
-	if (!gSuccessfulHandshake) {
+	if (!gSuccessfulHandshake)
 		/* timer expired */
 		goto cw_join_err;
-	}
 
 	CWLog("Join Completed");
 
 	return CW_ENTER_CONFIGURE;
+
+ cw_join_err:
+	timer_rem(waitJoinTimer, NULL);
+	CWNetworkCloseSocket(gWTPSocket);
+	CWNetworkCloseSocket(gWTPDataSocket);
+#ifndef CW_NO_DTLS
+	CWSecurityDestroySession(&gWTPSession);
+	CWSecurityDestroyContext(&gWTPSecurityContext);
+#endif
+	return CW_ENTER_DISCOVERY;
+
 }
 
 void CWWTPWaitJoinExpired(CWTimerArg arg)
 {
 
 	CWLog("WTP Wait Join Expired");
+	CWDebugLog("gWTPSocket:%d, gWTPDataSocket:%d", gWTPSocket, gWTPDataSocket);
 	gSuccessfulHandshake = CW_FALSE;
+
 	CWNetworkCloseSocket(gWTPSocket);
+	CWNetworkCloseSocket(gWTPDataSocket);
 }
 
 CWBool CWAssembleJoinRequest(CWProtocolMessage ** messagesPtr,
