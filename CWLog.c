@@ -86,24 +86,19 @@ static void CWLogCloseFile()
 
 void CWVLog(const char *format, va_list args)
 {
-	char *logStr = NULL;
+	static __thread char logStr[256];
+	char nowReadable[30];
 	time_t now;
-	char *nowReadable = NULL;
 
 	if (format == NULL)
 		return;
 
 	now = time(NULL);
-	nowReadable = ctime(&now);
+	ctime_r(&now, nowReadable);
 
 	nowReadable[strlen(nowReadable) - 1] = '\0';
 
-	// return in case of memory err: we're not performing a critical task
-	CW_CREATE_STRING_ERR(logStr, (strlen(format) + strlen(nowReadable) + 100), return;
-	    );
-
-	//sprintf(logStr, "[CAPWAP::%s]\t\t %s\n", nowReadable, format);
-	sprintf(logStr, "[CAPWAP::%s]\t%08x\t %s\n", nowReadable, (unsigned int)CWThreadSelf(), format);
+	snprintf(logStr, sizeof(logStr) - 1, "[CAPWAP::%s]\t%08x\t %s\n", nowReadable, (unsigned int)CWThreadSelf(), format);
 
 	if (gLogFile != NULL) {
 		char fileLine[256];
@@ -113,7 +108,7 @@ void CWVLog(const char *format, va_list args)
 		fseek(gLogFile, 0L, SEEK_END);
 #endif
 
-		vsnprintf(fileLine, 255, logStr, args);
+		vsnprintf(fileLine, sizeof(fileLine) - 1, logStr, args);
 
 		if (!checkResetFile()) {
 			CWThreadMutexUnlock(&gFileMutex);
@@ -130,8 +125,6 @@ void CWVLog(const char *format, va_list args)
 #ifdef WRITE_STD_OUTPUT
 	vprintf(logStr, args);
 #endif
-
-	CW_FREE_OBJECT(logStr);
 }
 
 void CWLog(const char *format, ...)
