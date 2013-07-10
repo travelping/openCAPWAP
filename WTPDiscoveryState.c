@@ -91,6 +91,7 @@ CWStateTransition CWWTPEnterDiscovery()
 	 * note: gCWACList can be freed and reallocated (reading from config file)
 	 * at each transition to the discovery state to save memory space
 	 */
+	CWDebugLog("gCWACCount: %d", gCWACCount);
 	for (i = 0; i < gCWACCount; i++)
 		gCWACList[i].received = CW_FALSE;
 
@@ -123,11 +124,13 @@ CWStateTransition CWWTPEnterDiscovery()
 				CW_CREATE_OBJECT_ERR(gACInfoPtr, CWACInfoValues, return CW_QUIT;
 				    );
 
-				CWNetworkGetAddressForHost(gCWACList[i].address, &(gACInfoPtr->preferredAddress));
+				CWDebugLog("cCWACList[%d].address: %s, %d", i, gCWACList[i].address, gCWACList[i].received);
+				CWErr(CWNetworkGetAddressForHost(gCWACList[i].address, &(gACInfoPtr->preferredAddress)));
 
-				CWUseSockNtop(&(gACInfoPtr->preferredAddress), CWDebugLog(str);
+				CWUseSockNtop(&(gACInfoPtr->preferredAddress), CWDebugLog("preferredAddress: %s", str);
 				    );
 
+				CWDebugLog("cCWACList[%d].address: %s, %d", i, gCWACList[i].address, gCWACList[i].received);
 				j = CWErr(CWNetworkSendUnsafeUnconnected(gWTPSocket,
 									 &(gACInfoPtr->preferredAddress),
 									 (*msgPtr).msg, (*msgPtr).offset));

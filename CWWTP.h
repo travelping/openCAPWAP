@@ -189,9 +189,7 @@ CWBool CWStartHeartbeatTimer();
 CWBool CWStopHeartbeatTimer();
 CWBool CWStartNeighborDeadTimer();
 CWBool CWStopNeighborDeadTimer();
-CWBool CWResetTimers();
 
-void CWWTPHeartBeatTimerExpiredHandler(void *arg);
 void CWWTPRetransmitTimerExpiredHandler(CWTimerArg arg);
 
 extern CWBool WTPExitOnUpdateCommit;
