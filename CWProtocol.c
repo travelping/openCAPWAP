@@ -546,7 +546,7 @@ CWBool CWAssembleMessage(CWProtocolMessage ** completeMsgPtr, int *fragmentsNumP
 		*fragmentsNumPtr = 1;
 	}
 
-	transportVal.bindingValuesPtr = NULL;
+	transportVal = (CWProtocolTransportHeaderValues){ .bindingValuesPtr = NULL };
 
 	if (*fragmentsNumPtr == 1) {
 		CWDebugLog("1 Fragment");
@@ -589,10 +589,12 @@ CWBool CWAssembleMessage(CWProtocolMessage ** completeMsgPtr, int *fragmentsNumP
 		for (i = 0; i < *fragmentsNumPtr; i++) {	// for each fragment to assemble
 			int fragSize;
 
-			transportVal.isFragment = 1;
-			transportVal.fragmentOffset = msg.offset / 8;
-			transportVal.fragmentID = fragID;
-			transportVal.payloadType = CW_PACKET_PLAIN;
+			transportVal = (CWProtocolTransportHeaderValues)
+				{ .isFragment = 1,
+				  .fragmentOffset = msg.offset / 8,
+				  .fragmentID = fragID,
+				  .payloadType = CW_PACKET_PLAIN
+				};
 
 			if (i < ((*fragmentsNumPtr) - 1)) {	// not last fragment
 				fragSize = PMTU;

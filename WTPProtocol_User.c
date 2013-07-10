@@ -25,6 +25,14 @@
  *           Mauro Bisson (mauro.bis@gmail.com)                                            *
  *******************************************************************************************/
 
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <linux/if_ether.h>
+#include <net/if.h>
+#include <sys/ioctl.h>
+#include <netpacket/packet.h>
+#include "common.h"
+
 #include "CWWTP.h"
 
 #define MAC_ADDR_LEN        6
@@ -93,20 +101,20 @@ CWBool CWWTPGetBoardData(CWWTPVendorInfos * valPtr)
 	// my vendor identifier (IANA assigned "SMI Network Management Private Enterprise Code")
 	(valPtr->vendorInfos)[0].vendorIdentifier = 23456;
 	(valPtr->vendorInfos)[0].type = CW_WTP_MODEL_NUMBER;
-	(valPtr->vendorInfos)[0].length = sizeof(long int);	// just one int
+	(valPtr->vendorInfos)[0].length = sizeof(u64);	// just one int
 	CW_CREATE_OBJECT_SIZE_ERR((((valPtr->vendorInfos)[0]).valuePtr), (valPtr->vendorInfos)[0].length,
 				  return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
-	*(int *)(((valPtr->vendorInfos)[0]).valuePtr) = 123456;	// MODEL NUMBER
+	*(u64 *)(((valPtr->vendorInfos)[0]).valuePtr) = host_to_be64(123456);	// MODEL NUMBER
 
 	// my vendor identifier (IANA assigned "SMI Network Management Private Enterprise Code")
 	(valPtr->vendorInfos)[1].vendorIdentifier = 23456;
 	(valPtr->vendorInfos)[1].type = CW_WTP_SERIAL_NUMBER;
-	(valPtr->vendorInfos)[1].length = sizeof(long int);	// just one int
+	(valPtr->vendorInfos)[1].length = sizeof(u64);	// just one int
 	CW_CREATE_OBJECT_SIZE_ERR((((valPtr->vendorInfos)[1]).valuePtr), (valPtr->vendorInfos)[1].length,
 				  return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
-	*(int *)(((valPtr->vendorInfos)[1]).valuePtr) = 123456;	// SERIAL NUMBER
+	*(u64 *)(((valPtr->vendorInfos)[1]).valuePtr) = host_to_be64(123456);	// SERIAL NUMBER
 
 	return CW_TRUE;
 }
@@ -124,29 +132,29 @@ CWBool CWWTPGetVendorInfos(CWWTPVendorInfos * valPtr)
 	// my vendor identifier (IANA assigned "SMI Network Management Private Enterprise Code")
 	(valPtr->vendorInfos)[0].vendorIdentifier = 23456;
 	(valPtr->vendorInfos)[0].type = CW_WTP_HARDWARE_VERSION;
-	(valPtr->vendorInfos)[0].length = sizeof(long int);	// just one int
+	(valPtr->vendorInfos)[0].length = sizeof(u64);	// just one int
 	CW_CREATE_OBJECT_SIZE_ERR((((valPtr->vendorInfos)[0]).valuePtr), (valPtr->vendorInfos)[0].length,
 				  return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
-	*(int *)(((valPtr->vendorInfos)[0]).valuePtr) = 123456;	// HW version
+	*(u64 *)(((valPtr->vendorInfos)[0]).valuePtr) = host_to_be64(123456);	// HW version
 
 	// my vendor identifier (IANA assigned "SMI Network Management Private Enterprise Code")
 	((valPtr->vendorInfos)[1]).vendorIdentifier = 23456;
 	((valPtr->vendorInfos)[1]).type = CW_WTP_SOFTWARE_VERSION;
-	((valPtr->vendorInfos)[1]).length = sizeof(long int);	// just one int
+	((valPtr->vendorInfos)[1]).length = sizeof(u64);	// just one int
 	CW_CREATE_OBJECT_SIZE_ERR((((valPtr->vendorInfos)[1]).valuePtr), (valPtr->vendorInfos)[1].length,
 				  return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
-	*(int *)(((valPtr->vendorInfos)[1]).valuePtr) = 12347;	// SW version
+	*(u64 *)(((valPtr->vendorInfos)[1]).valuePtr) = host_to_be64(12347);	// SW version
 
 	// my vendor identifier (IANA assigned "SMI Network Management Private Enterprise Code")
 	(valPtr->vendorInfos)[2].vendorIdentifier = 23456;
 	(valPtr->vendorInfos)[2].type = CW_BOOT_VERSION;
-	(valPtr->vendorInfos)[2].length = sizeof(long int);	// just one int
+	(valPtr->vendorInfos)[2].length = sizeof(u64);	// just one int
 	CW_CREATE_OBJECT_SIZE_ERR((((valPtr->vendorInfos)[2]).valuePtr), (valPtr->vendorInfos)[2].length,
 				  return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
-	*(int *)(((valPtr->vendorInfos)[2]).valuePtr) = 1234568;	// Boot version
+	*(u64 *)(((valPtr->vendorInfos)[2]).valuePtr) = host_to_be64(1234568);	// Boot version
 
 	return CW_TRUE;
 }

@@ -76,7 +76,7 @@ CWBool CWAssembleDataMessage(CWProtocolMessage ** completeMsgPtr, int *fragments
 		*fragmentsNumPtr = 1;
 	}
 
-	transportVal.bindingValuesPtr = bindingValuesPtr;
+	transportVal = (CWProtocolTransportHeaderValues){ .bindingValuesPtr = bindingValuesPtr };
 
 	if (frame->data_msgType == CW_IEEE_802_11_FRAME_TYPE)
 		transportVal.type = 1;

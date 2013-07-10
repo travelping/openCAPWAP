@@ -45,9 +45,12 @@
 #define CW_SKIP_BITS(buf, bits, type)                   (buf) = (type*)(((char*) (buf)) + ((bits) / 8))
 #define CW_BYTES_TO_STORE_BITS(bits)                    ((((bits) % 8) == 0) ? ((bits) / 8) : (((bits) / 8)+1))
 
-#define     CW_CREATE_PROTOCOL_MESSAGE(mess, size, err)     CW_CREATE_OBJECT_SIZE_ERR(((mess).msg), (size), err);       \
-                                    CW_ZERO_MEMORY(((mess).msg), (size));                       \
-                                    (mess).offset = 0;
+#define CW_CREATE_PROTOCOL_MESSAGE(mess, size, err) do {		\
+		CW_ZERO_MEMORY(&(mess), sizeof((mess)));		\
+		CW_CREATE_OBJECT_SIZE_ERR(((mess).msg), (size), err);	\
+		CW_ZERO_MEMORY(((mess).msg), (size));			\
+		(mess).offset = 0;					\
+	} while (0)
 
 #define     CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(ar_name, ar_size, on_err)  {\
                                             CW_CREATE_ARRAY_ERR(ar_name, ar_size, CWProtocolMessage, on_err)\
