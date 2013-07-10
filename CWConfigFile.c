@@ -41,7 +41,7 @@ int gConfigValuesCount;
  */
 char *CWFgets(char *buf, int bufSize, FILE * f)
 {
-	int i = -1;
+	int c, i = -1;
 
 	if (buf == NULL || f == NULL || bufSize <= 0)
 		return NULL;
@@ -49,18 +49,16 @@ char *CWFgets(char *buf, int bufSize, FILE * f)
 	CW_ZERO_MEMORY(buf, bufSize);
 
 	do {
-		i++;
-		buf[i] = getc(f);
-		if (buf[i] == EOF) {
-			i--;
+		if ((c = getc(f)) == EOF)
 			break;
-		}
+
+		buf[++i] = (char)c;
 	} while (i < bufSize && buf[i] != '\n' && buf[i] != '\r');
 
 	if (i == -1)
 		return NULL;
-	i++;
-	buf[i] = '\0';
+
+	buf[++i] = '\0';
 
 	return buf;
 }
