@@ -28,7 +28,18 @@
 #ifndef __CAPWAP_CWRandom_HEADER__
 #define __CAPWAP_CWRandom_HEADER__
 
-void CWRandomInitLib();
-int CWRandomIntInRange(int min, int max);
+static inline void CWRandomInitLib()
+{
+	// set seed
+	srand((unsigned)time(NULL));
+}
+
+static inline int CWRandomIntInRange(int min, int max)
+{
+	if (min >= max)
+		return min;
+
+	return min + (rand() % (max - min));
+}
 
 #endif

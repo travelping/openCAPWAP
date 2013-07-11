@@ -20,7 +20,6 @@ libcapwap_la_SOURCES = \
 	CWSafeList.c \
 	CWNetwork.c \
 	CWProtocol.c \
-	CWRandom.c \
 	CWStevens.c \
 	CWThread.c \
 	CWBinding.c \
