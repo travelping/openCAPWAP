@@ -30,60 +30,58 @@
 #endif
 
 #include "CWWTP.h"
+#include "CWConfigFile.h"
 
 #ifdef DMALLOC
 #include "../dmalloc-5.5.0/dmalloc.h"
 #endif
 
 char *gCWConfigFileName   = SYSCONFDIR "/config.wtp";
+CWConfigValue gConfigValues[] = {
+	{ .type = CW_STRING_ARRAY,
+	  .code = "<AC_ADDRESSES>",
+	  .endCode = "</AC_ADDRESSES>",
+	  .value.str_array_value = NULL,
+	  .count = 0
+	},
+	{ .type = CW_INTEGER,
+	  .code = "</WTP_FORCE_MTU>",
+	  .value.int_value = 0
+	},
+	{ .type = CW_STRING,
+	  .code = "</WTP_LEV3_PROTOCOL>",
+	  .value.str_value = NULL
+	},
+	{ .type = CW_STRING,
+	  .code = "</WTP_NAME>",
+	  .value.str_value = NULL
+	},
+	{ .type = CW_STRING,
+	  .code = "</WTP_LOCATION>",
+	  .value.str_value = NULL
+	},
+	{ .type = CW_STRING,
+	  .code = "</WTP_FORCE_AC_ADDRESS>",
+	  .value.str_value = NULL
+	},
+	{ .type = CW_STRING,
+	  .code = "</WTP_FORCE_SECURITY>",
+	  .value.str_value = NULL
+	},
+	{ .type = CW_INTEGER,
+	  .code = "</AC_LOG_FILE_ENABLE>",
+	  .value.int_value = 0
+	},
+	{ .type = CW_INTEGER,
+	  .code = "</AC_LOG_FILE_SIZE>",
+	  .value.int_value = DEFAULT_LOG_SIZE
+	},
+};
+
+int gConfigValuesCount = sizeof(gConfigValues) / sizeof(CWConfigValue);
 
 CWBool CWConfigFileInitLib()
 {
-
-	gConfigValuesCount = 9;
-
-	CW_CREATE_ARRAY_ERR(gConfigValues, gConfigValuesCount, CWConfigValue,
-			    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
-
-	gConfigValues[0].type = CW_STRING_ARRAY;
-	gConfigValues[0].code = "<AC_ADDRESSES>";
-	gConfigValues[0].endCode = "</AC_ADDRESSES>";
-	gConfigValues[0].value.str_array_value = NULL;
-	gConfigValues[0].count = 0;
-
-	gConfigValues[1].type = CW_INTEGER;
-	gConfigValues[1].code = "</WTP_FORCE_MTU>";
-	gConfigValues[1].value.int_value = 0;
-
-	gConfigValues[2].type = CW_STRING;
-	gConfigValues[2].code = "</WTP_LEV3_PROTOCOL>";
-	gConfigValues[2].value.str_value = NULL;
-
-	gConfigValues[3].type = CW_STRING;
-	gConfigValues[3].code = "</WTP_NAME>";
-	gConfigValues[3].value.str_value = NULL;
-
-	gConfigValues[4].type = CW_STRING;
-	gConfigValues[4].code = "</WTP_LOCATION>";
-	gConfigValues[4].value.str_value = NULL;
-
-	gConfigValues[5].type = CW_STRING;
-	gConfigValues[5].code = "</WTP_FORCE_AC_ADDRESS>";
-	gConfigValues[5].value.str_value = NULL;
-
-	gConfigValues[6].type = CW_STRING;
-	gConfigValues[6].code = "</WTP_FORCE_SECURITY>";
-	gConfigValues[6].value.str_value = NULL;
-
-	gConfigValues[7].type = CW_INTEGER;
-	gConfigValues[7].code = "</AC_LOG_FILE_ENABLE>";
-	gConfigValues[7].value.int_value = 0;
-
-	gConfigValues[8].type = CW_INTEGER;
-	gConfigValues[8].code = "</AC_LOG_FILE_SIZE>";
-	gConfigValues[8].value.int_value = DEFAULT_LOG_SIZE;
-
 	return CW_TRUE;
 }
 
@@ -149,8 +147,6 @@ CWBool CWConfigFileDestroyLib()
 
 	gEnabledLog = gConfigValues[7].value.int_value;
 	gMaxLogFileSize = gConfigValues[8].value.int_value;
-
-	CW_FREE_OBJECT(gConfigValues);
 
 	return CW_TRUE;
 }

@@ -33,9 +33,6 @@
 
 FILE *gCWConfigFile = NULL;
 
-CWConfigValue *gConfigValues;
-int gConfigValuesCount;
-
 /*
  * Replacement for std fgets which seems to dislike windows return character
  */

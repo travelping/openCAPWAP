@@ -49,7 +49,7 @@ typedef struct {
 	int count;
 } CWConfigValue;
 
-extern CWConfigValue *gConfigValues;
+extern CWConfigValue gConfigValues[];
 extern int gConfigValuesCount;
 
 CWBool CWParseConfigFile();
