@@ -101,7 +101,7 @@ int main(int argc, char * const argv[])
 	setrlimit(RLIMIT_CORE, &rlim);
 #endif
 
-	while (-1 != (c = getopt(argc, argv, "hf"))) {
+	while (-1 != (c = getopt(argc, argv, "hfc:s:"))) {
 		switch(c) {
 		case 'h':
 			usage();
@@ -110,6 +110,14 @@ int main(int argc, char * const argv[])
 
 		case 'f':
 			run_daemon = 0;
+			break;
+
+		case 'c':
+			gCWConfigFileName = optarg;
+			break;
+
+		case 's':
+			gCWSettingsFileName = optarg;
 			break;
 
 		default:

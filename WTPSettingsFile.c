@@ -25,13 +25,17 @@
  *           Mauro Bisson (mauro.bis@gmail.com)                                            *
  *******************************************************************************************/
 
+#if HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include "CWCommon.h"
 
 #ifdef DMALLOC
 #include "../dmalloc-5.5.0/dmalloc.h"
 #endif
 
-#define CW_SETTINGS_FILE    "settings.wtp.txt"
+char *gCWSettingsFileName = SYSCONFDIR "/settings.wtp.txt";
 
 FILE *gSettingsFile = NULL;
 char *gInterfaceName = NULL;
@@ -56,7 +60,7 @@ CWBool CWParseSettingsFile()
 {
 	char *line = NULL;
 
-	gSettingsFile = fopen(CW_SETTINGS_FILE, "rb");
+	gSettingsFile = fopen(gCWSettingsFileName, "rb");
 	if (gSettingsFile == NULL) {
 		CWErrorRaiseSystemError(CW_ERROR_GENERAL);
 	}

@@ -136,7 +136,7 @@ CWBool CWParseTheFile(CWBool isCount)
 		}
 	}
 
-	gCWConfigFile = fopen(CW_CONFIG_FILE, "rb");
+	gCWConfigFile = fopen(gCWConfigFileName, "rb");
 	if (gCWConfigFile == NULL)
 		CWErrorRaiseSystemError(CW_ERROR_GENERAL);
 

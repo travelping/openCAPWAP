@@ -41,5 +41,8 @@ AS_IF([test "x$enable_dtls" != "xno"], [
 ], [
   CFLAGS="$CFLAGS -DCW_NO_DTLS -DCW_NO_DTLSCWParseConfigurationUpdateRequest"
 ])
+
+AC_DEFINE_DIR([SYSCONFDIR], [sysconfdir], [System config directory.])
+
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

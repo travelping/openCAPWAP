@@ -82,7 +82,9 @@ typedef enum {
 	CW_QUIT
 } CWStateTransition;
 
-extern const char *CW_CONFIG_FILE;
+extern char *gCWConfigFileName;
+extern char *gCWSettingsFileName;
+
 extern int gCWForceMTU;
 extern int gCWRetransmitTimer;
 extern int gCWNeighborDeadInterval;

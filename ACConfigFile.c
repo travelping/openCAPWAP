@@ -25,13 +25,17 @@
  *           Mauro Bisson (mauro.bis@gmail.com)                                            *
  *******************************************************************************************/
 
+#if HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include "CWAC.h"
 
 #ifdef DMALLOC
 #include "../dmalloc-5.5.0/dmalloc.h"
 #endif
 
-const char *CW_CONFIG_FILE = "config.ac";
+char *gCWConfigFileName = SYSCONFDIR "/config.ac";
 
 CWBool CWConfigFileInitLib()
 {
