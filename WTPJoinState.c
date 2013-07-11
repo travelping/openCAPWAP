@@ -179,9 +179,9 @@ void CWWTPWaitJoinExpired(CWTimerArg arg)
 CWBool CWAssembleJoinRequest(CWProtocolMessage ** messagesPtr,
 			     int *fragmentsNumPtr, int PMTU, int seqNum, CWList msgElemList)
 {
-
+	CWBool msgOK;
 	CWProtocolMessage *msgElems = NULL;
-	const int msgElemCount = 9;
+	int msgElemCount = 9;
 	CWProtocolMessage *msgElemsBinding = NULL;
 	const int msgElemBindingCount = 0;
 	int k = -1;
@@ -195,16 +195,17 @@ CWBool CWAssembleJoinRequest(CWProtocolMessage ** messagesPtr,
 	CWLog("Sending Join Request...");
 
 	/* Assemble Message Elements */
-	if ((!(CWAssembleMsgElemLocationData(&(msgElems[++k])))) ||
-	    (!(CWAssembleMsgElemWTPBoardData(&(msgElems[++k])))) ||
-	    (!(CWAssembleMsgElemWTPDescriptor(&(msgElems[++k])))) ||
-	    (!(CWAssembleMsgElemWTPIPv4Address(&(msgElems[++k])))) ||
-	    (!(CWAssembleMsgElemWTPName(&(msgElems[++k])))) ||
-	    (!(CWAssembleMsgElemSessionID(&(msgElems[++k]), &gWTPSessionID[0]))) ||
-	    (!(CWAssembleMsgElemWTPFrameTunnelMode(&(msgElems[++k])))) ||
-	    (!(CWAssembleMsgElemWTPMACType(&(msgElems[++k])))) ||
-	    (!(CWAssembleMsgElemWTPRadioInformation(&(msgElems[++k]))))
-	    ) {
+	msgOK = CWAssembleMsgElemLocationData(&(msgElems[++k])) &&
+		CWAssembleMsgElemWTPBoardData(&(msgElems[++k])) &&
+		CWAssembleMsgElemWTPDescriptor(&(msgElems[++k])) &&
+		CWAssembleMsgElemWTPIPv4Address(&(msgElems[++k])) &&
+		CWAssembleMsgElemWTPName(&(msgElems[++k])) &&
+		CWAssembleMsgElemSessionID(&(msgElems[++k]), &gWTPSessionID[0]) &&
+		CWAssembleMsgElemWTPFrameTunnelMode(&(msgElems[++k])) &&
+		CWAssembleMsgElemWTPMACType(&(msgElems[++k])) &&
+		CWAssembleMsgElemWTPRadioInformation(&(msgElems[++k]));
+
+	if (!msgOK) {
 		int i;
 		for (i = 0; i <= k; i++) {
 			CW_FREE_PROTOCOL_MESSAGE(msgElems[i]);
