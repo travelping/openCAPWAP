@@ -25,6 +25,10 @@
  *           Mauro Bisson (mauro.bis@gmail.com)                                            *
  *******************************************************************************************/
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+
 #include "CWWTP.h"
 
 #ifdef DMALLOC
@@ -55,6 +59,7 @@ int gCWMaxDiscoveryInterval = 20;
 /*  *******************___PROTOTYPES___*******************  */
 CWBool CWReceiveDiscoveryResponse();
 void CWWTPEvaluateAC(CWACInfoValues * ACInfoPtr);
+static CWBool CWWTPPickAC();
 CWBool CWReadResponses();
 CWBool CWAssembleDiscoveryRequest(CWProtocolMessage ** messagesPtr, int seqNum);
 CWBool CWParseDiscoveryResponseMessage(char *msg, int len, int *seqNumPtr, CWACInfoValues * ACInfoPtr);
@@ -175,8 +180,9 @@ CWStateTransition CWWTPEnterDiscovery()
 		return CW_ENTER_DISCOVERY;
 	}
 
-	/* if the AC is multi homed, we select our favorite AC's interface */
-	CWWTPPickACInterface();
+	if (!CWWTPPickAC())
+		/* if the AC is multi homed, we select our favorite AC's interface */
+		CWWTPPickACInterface();
 
 	CWUseSockNtop(&(gACInfoPtr->preferredAddress),
 		      CWLog("Preferred AC: \"%s\", at address: %s", gACInfoPtr->name, str);
@@ -276,15 +282,15 @@ CWBool CWReceiveDiscoveryResponse()
 
 	CW_COPY_NET_ADDR_PTR(&(ACInfoPtr->incomingAddress), &(addr));
 
-	/* see if this AC is better than the one we have stored */
-	CWWTPEvaluateAC(ACInfoPtr);
-
 	CWLog("WTP Receives Discovery Response");
 
 	/* check if the sequence number we got is correct */
 	for (i = 0; i < gCWACCount; i++) {
 
 		if (gCWACList[i].seqNum == seqNum) {
+
+			/* see if this AC is better than the one we have stored */
+			CWWTPEvaluateAC(ACInfoPtr);
 
 			CWUseSockNtop(&addr, CWLog("Discovery Response from:%s", str);
 			    );
@@ -295,6 +301,7 @@ CWBool CWReceiveDiscoveryResponse()
 		}
 	}
 
+	CW_FREE_OBJECT(ACInfoPtr);
 	return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Sequence Number of Response doesn't macth Request");
 }
 
@@ -320,6 +327,55 @@ void CWWTPEvaluateAC(CWACInfoValues * ACInfoPtr)
 	 * We can also consider to remember all the Discovery Responses we
 	 * received and not just the best.
 	 */
+}
+
+/*
+ * Pick on IP from the AC List if one has been received.
+ *
+ * Note: This a quick fix only and not in line with the CAPWAP RFC,
+ *       full support for AC IPv4/IPv6 List requires a lot more
+ */
+CWBool CWWTPPickAC()
+{
+       int i;
+       if (gACInfoPtr == NULL)
+               return CW_FALSE;
+
+       switch (gNetworkPreferredFamily) {
+       case CW_IPv6:
+	       if (gACInfoPtr->ACIPv6ListInfo.ACIPv6List != NULL &&
+		   gACInfoPtr->ACIPv6ListInfo.ACIPv6ListCount > 0) {
+		       struct sockaddr_in6 *sockaddr = (struct sockaddr_in6 *)&(gACInfoPtr->preferredAddress);
+
+		       sockaddr->sin6_family = AF_INET6;
+		       sockaddr->sin6_port = htons(CW_CONTROL_PORT);
+
+		       i = CWRandomIntInRange(0, gACInfoPtr->ACIPv6ListInfo.ACIPv6ListCount - 1);
+		       CW_COPY_MEMORY(&(sockaddr->sin6_addr), &(gACInfoPtr->ACIPv6ListInfo.ACIPv6List[i]), 16);
+
+		       break;
+	       }
+
+	       /* FALL THROUGH */
+
+       default: {
+	       struct sockaddr_in *sockaddr = (struct sockaddr_in *)&(gACInfoPtr->preferredAddress);
+
+	       if (gACInfoPtr->ACIPv4ListInfo.ACIPv4List == NULL ||
+		   gACInfoPtr->ACIPv4ListInfo.ACIPv4ListCount <= 0)
+		       return CW_FALSE;
+
+	       sockaddr->sin_family = AF_INET;
+	       sockaddr->sin_port = htons(CW_CONTROL_PORT);
+
+	       i = CWRandomIntInRange(0, gACInfoPtr->ACIPv4ListInfo.ACIPv4ListCount - 1);
+	       CW_COPY_MEMORY(&(sockaddr->sin_addr), &(gACInfoPtr->ACIPv4ListInfo.ACIPv4List[i]), 4);
+
+	       break;
+       }
+       }
+
+       return CW_TRUE;
 }
 
 /*
@@ -491,6 +547,12 @@ CWBool CWParseDiscoveryResponseMessage(char *msg, int len, int *seqNumPtr, CWACI
 
 	ACInfoPtr->IPv4AddressesCount = 0;
 	ACInfoPtr->IPv6AddressesCount = 0;
+
+	ACInfoPtr->ACIPv4ListInfo.ACIPv4ListCount = 0;
+	ACInfoPtr->ACIPv4ListInfo.ACIPv4List = NULL;
+	ACInfoPtr->ACIPv6ListInfo.ACIPv6ListCount = 0;
+	ACInfoPtr->ACIPv6ListInfo.ACIPv6List = NULL;
+
 	/* parse message elements */
 	while ((completeMsg.offset - offsetTillMessages) < controlVal.msgElemsLen) {
 		unsigned short int type = 0;	/* = CWProtocolRetrieve32(&completeMsg); */
@@ -530,6 +592,14 @@ CWBool CWParseDiscoveryResponseMessage(char *msg, int len, int *seqNumPtr, CWACI
 			 */
 			ACInfoPtr->IPv6AddressesCount++;
 			completeMsg.offset += len;
+			break;
+		case CW_MSG_ELEMENT_AC_IPV4_LIST_CW_TYPE:
+			if (!(CWParseACIPv4List(&completeMsg, len, &(ACInfoPtr->ACIPv4ListInfo))))
+				return CW_FALSE;
+			break;
+		case CW_MSG_ELEMENT_AC_IPV6_LIST_CW_TYPE:
+			if (!(CWParseACIPv6List(&completeMsg, len, &(ACInfoPtr->ACIPv6ListInfo))))
+				return CW_FALSE;
 			break;
 		default:
 			return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Unrecognized Message Element");
