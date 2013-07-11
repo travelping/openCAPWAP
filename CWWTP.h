@@ -96,6 +96,9 @@ extern CWSafeList gFrameList;
 extern CWThreadCondition gInterfaceWait;
 extern CWThreadMutex gInterfaceMutex;
 
+extern char *gWtpSerialNumber;
+extern char *gWtpModelNumber;
+
 /*__________________________________________________________*/
 /*  *******************___PROTOTYPES___*******************  */
 

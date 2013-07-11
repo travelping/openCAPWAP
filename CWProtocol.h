@@ -82,6 +82,7 @@
 #define     CW_PROTOCOL_VERSION                 0
 #define     CW_IANA_ENTERPRISE_NUMBER               13277
 #define     CW_IANA_ENTERPRISE_NUMBER_VENDOR_IANA           18357
+#define     CW_IANA_ENTERPRISE_NUMBER_VENDOR_TRAVELPING     18681
 #define     CW_CONTROL_HEADER_OFFSET_FOR_MSG_ELEMS          3	//Offset "Seq Num" - "Message Elements"
 #define     CW_MAX_SEQ_NUM                      255
 #define     CW_MAX_FRAGMENT_ID                  65535

@@ -43,6 +43,8 @@ char *gEthInterfaceName = NULL;
 char *gRadioInterfaceName_0 = NULL;
 char *gBaseMACInterfaceName = NULL;
 char gBoardReversionNo;
+char *gWtpModelNumber = NULL;
+char *gWtpSerialNumber = NULL;
 
 int gHostapd_port;
 char *gHostapd_unix_path;
@@ -189,6 +191,38 @@ CWBool CWParseSettingsFile()
 			strncpy(gHostapd_unix_path, startValue, offset);
 			gHostapd_unix_path[offset] = '\0';
 			CWLog(": %s", gHostapd_unix_path);
+			CW_FREE_OBJECT(line);
+			continue;
+		}
+		if (!strncmp(startTag + 1, "WTP_MODEL_NUM", endTag - startTag - 1)) {
+			char *startValue = NULL;
+			char *endValue = NULL;
+			int offset = 0;
+
+			CWExtractValue(endTag, &startValue, &endValue, &offset);
+
+			CW_CREATE_STRING_ERR(gWtpModelNumber, offset,
+					     return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+			    );
+			strncpy(gWtpModelNumber, startValue, offset);
+			gWtpModelNumber[offset] = '\0';
+			CWLog(": %s", gWtpModelNumber);
+			CW_FREE_OBJECT(line);
+			continue;
+		}
+		if (!strncmp(startTag + 1, "WTP_SERIAL_NUM", endTag - startTag - 1)) {
+			char *startValue = NULL;
+			char *endValue = NULL;
+			int offset = 0;
+
+			CWExtractValue(endTag, &startValue, &endValue, &offset);
+
+			CW_CREATE_STRING_ERR(gWtpSerialNumber, offset,
+					     return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+			    );
+			strncpy(gWtpSerialNumber, startValue, offset);
+			gWtpSerialNumber[offset] = '\0';
+			CWLog(": %s", gWtpSerialNumber);
 			CW_FREE_OBJECT(line);
 			continue;
 		}
