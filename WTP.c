@@ -26,6 +26,10 @@
  *           Antonio Davoli (antonio.davoli@gmail.com)                                          *
  ************************************************************************************************/
 
+#if HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include "CWWTP.h"
 
 #ifdef DMALLOC
@@ -371,6 +375,8 @@ int main(int argc, char * const argv[])
 	/* unlimited size for cores */
 	setrlimit(RLIMIT_CORE, &rlim);
 #endif
+
+	printf("WTP, v%s, %s, %s\n", PACKAGE_VERSION, __DATE__, __TIME__);
 
 	while (-1 != (c = getopt(argc, argv, "hfc:s:"))) {
 		switch(c) {
