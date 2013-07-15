@@ -189,6 +189,11 @@ CWBool CWAssembleJoinRequest(CWProtocolMessage ** messagesPtr,
 	if (messagesPtr == NULL || fragmentsNumPtr == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
+#ifdef PA_EXTENSION
+	if (gWwanIccId)
+		msgElemCount++;
+#endif
+
 	CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(msgElems, msgElemCount, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
@@ -204,6 +209,12 @@ CWBool CWAssembleJoinRequest(CWProtocolMessage ** messagesPtr,
 		CWAssembleMsgElemWTPFrameTunnelMode(&(msgElems[++k])) &&
 		CWAssembleMsgElemWTPMACType(&(msgElems[++k])) &&
 		CWAssembleMsgElemWTPRadioInformation(&(msgElems[++k]));
+
+#ifdef PA_EXTENSION
+	if (gWwanIccId)
+		// Assemble the WTP WWAN ICCID message element.
+		msgOK &= CWAssembleMsgElemVendorSpecificPayloadWtpWwanIccId(&(msgElems[++k]));
+#endif
 
 	if (!msgOK) {
 		int i;

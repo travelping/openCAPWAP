@@ -105,6 +105,10 @@ CWPendingRequestMessage gPendingRequestMsgs[MAX_PENDING_REQUEST_MSGS];
 CWBool WTPExitOnUpdateCommit = CW_FALSE;
 #define CW_SINGLE_THREAD
 
+#ifdef PA_EXTENSION
+char *gWwanIccId = NULL;
+#endif
+
 /*
  * Receive a message, that can be fragmented. This is useful not only for the Join State
  */

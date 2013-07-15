@@ -113,6 +113,10 @@ CWBool CWAssembleMsgElemWTPRebootStatistics(CWProtocolMessage * msgPtr);	//44
 
 //CWBool CWAssembleMsgElemWTPRadioInformation(CWProtocolMessage *msgPtr);
 
+#ifdef PA_EXTENSION
+CWBool CWAssembleMsgElemVendorSpecificPayloadWtpWwanIccId(CWProtocolMessage * msgPtr);
+#endif
+
 //---------------------------------------------------------/
 CWBool CWParseACDescriptor(CWProtocolMessage * msgPtr, int len, CWACInfoValues * valPtr);	// 1
 CWBool CWParseACIPv4List(CWProtocolMessage * msgPtr, int len, ACIPv4ListValues * valPtr);	// 2
