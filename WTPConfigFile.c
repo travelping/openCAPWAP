@@ -76,6 +76,12 @@ CWConfigValue gConfigValues[] = {
 	  .code = "</AC_LOG_FILE_SIZE>",
 	  .value.int_value = DEFAULT_LOG_SIZE
 	},
+#ifdef PA_EXTENSION
+	{ .type = CW_STRING,
+	  .code = "</WWAN_ICCID>",
+	  .value.str_value = NULL
+	},
+#endif
 };
 
 int gConfigValuesCount = sizeof(gConfigValues) / sizeof(CWConfigValue);
@@ -136,6 +142,14 @@ CWBool CWConfigFileDestroyLib()
 	} else {		// default
 		gWTPForceSecurity = CW_X509_CERTIFICATE;
 	}
+
+#ifdef PA_EXTENSION
+	if (gConfigValues[9].value.str_value != NULL) {
+		CW_CREATE_STRING_FROM_STRING_ERR(gWwanIccId, (gConfigValues[9].value.str_value),
+						 return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+		    );
+	}
+#endif
 
 	for (i = 0; i < gConfigValuesCount; i++) {
 		if (gConfigValues[i].type == CW_STRING) {

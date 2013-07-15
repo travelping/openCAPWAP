@@ -227,6 +227,42 @@ CWBool CWAssembleMsgElemWTPBoardData(CWProtocolMessage * msgPtr)
 	return CWAssembleMsgElem(msgPtr, CW_MSG_ELEMENT_WTP_BOARD_DATA_CW_TYPE);
 }
 
+#ifdef PA_EXTENSION
+CWBool CWAssembleMsgElemVendorSpecificPayloadWtpWwanIccId(CWProtocolMessage * msgPtr)
+{
+	const int VENDOR_ID_LENGTH = 4;	//Vendor Identifier is 4 bytes long
+	const int ELEMENT_ID = 2;	//Type and Length of a TLV field is 4 byte long
+	const int DATA_LEN = sizeof(unsigned char) + strlen(gWwanIccId);
+	CWWTPVendorInfos infos;
+	int size = 0;
+	const int element_id = 3;
+	const unsigned char wwan_id = 1;
+
+	if (msgPtr == NULL)
+		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
+
+	// get infos
+	if (!CWWTPGetBoardData(&infos)) {
+		return CW_FALSE;
+	}
+	//Calculate msg elem size
+	size = VENDOR_ID_LENGTH + ELEMENT_ID + DATA_LEN;
+
+	// create message
+	CW_CREATE_PROTOCOL_MESSAGE(*msgPtr, size, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	    );
+
+	CWProtocolStore32(msgPtr, ((infos.vendorInfos)[0].vendorIdentifier));
+	CWProtocolStore16(msgPtr, element_id);
+	CWProtocolStore8(msgPtr, wwan_id);
+	CWProtocolStoreStr(msgPtr, gWwanIccId);
+
+	CWWTPDestroyVendorInfos(&infos);
+
+	return CWAssembleMsgElem(msgPtr, CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_BW_CW_TYPE);
+}
+#endif
+
 CWBool CWAssembleMsgElemVendorSpecificPayload(CWProtocolMessage * msgPtr)
 {
 	const int VENDOR_ID_LENGTH = 4;	//Vendor Identifier is 4 bytes long
