@@ -85,13 +85,19 @@
 #include <linux/socket.h>	/* for "struct sockaddr" et al  */
 #include <linux/if.h>		/* for IFNAMSIZ and co... */
 #else
+#ifdef PA_EXTENSION
+#include <linux/types.h>
+#else
 #include <sys/types.h>
+#endif
 #include <net/if.h>
+#ifndef PA_EXTENSION
 typedef __uint32_t __u32;
 typedef __int32_t __s32;
 typedef __uint16_t __u16;
 typedef __int16_t __s16;
 typedef __uint8_t __u8;
+#endif
 #ifndef __user
 #define __user
 #endif				/* __user */
