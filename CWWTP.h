@@ -37,7 +37,11 @@
 
 /*______________________________________________________*/
 /*  *******************___DEFINE___*******************  */
+#ifdef PA_EXTENSION
+#define WTP_LOG_FILE_NAME   "/var/tmp/wtp.log.txt"
+#else
 #define WTP_LOG_FILE_NAME   "/var/log/wtp.log.txt"
+#endif
 
 /*_____________________________________________________*/
 /*  *******************___TYPES___*******************  */
@@ -98,6 +102,10 @@ extern CWThreadMutex gInterfaceMutex;
 
 extern char *gWtpSerialNumber;
 extern char *gWtpModelNumber;
+
+#ifdef PA_EXTENSION
+extern char *gWwanIccId;
+#endif
 
 /*__________________________________________________________*/
 /*  *******************___PROTOTYPES___*******************  */
