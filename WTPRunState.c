@@ -490,6 +490,10 @@ CWStateTransition CWWTPEnterRun()
 	CWSecurityDestroyContext(&gWTPSecurityContext);
 #endif
 
+	/* shutdown wifi before leaving RUN state */
+	unsigned char dummy_ssid[3] = {0,};
+	CWWTPsend_command_to_hostapd_DEL_WLAN(dummy_ssid, sizeof(dummy_ssid));
+
 	return CW_ENTER_RESET;
 }
 
