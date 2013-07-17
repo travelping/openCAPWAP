@@ -478,6 +478,10 @@ CWStateTransition CWWTPEnterRun()
 
 	}
 
+#ifdef PA_EXTENSION
+	CWWTPsend_command_to_hostapd_DEL_WLAN_CONN_LOST();
+#endif
+
 	wtpInRunState = 0;
 	CWStopHeartbeatTimer();
 	CWStopDataChannelKeepAlive();
@@ -489,10 +493,6 @@ CWStateTransition CWWTPEnterRun()
 	CWSecurityDestroySession(&gWTPSession);
 	CWSecurityDestroyContext(&gWTPSecurityContext);
 #endif
-
-	/* shutdown wifi before leaving RUN state */
-	unsigned char dummy_ssid[3] = {0,};
-	CWWTPsend_command_to_hostapd_DEL_WLAN(dummy_ssid, sizeof(dummy_ssid));
 
 	return CW_ENTER_RESET;
 }
