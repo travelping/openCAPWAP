@@ -204,6 +204,31 @@ void CWWTPsend_command_to_hostapd_DEL_WLAN(unsigned char *buf, int len)
 
 }
 
+#ifdef PA_EXTENSION
+void CWWTPsend_command_to_hostapd_DEL_WLAN_CONN_LOST(void)
+{
+	int len = 3;
+	char buf[len];
+
+ WAITHOSTAPDDEL:
+
+	if (!connected) {
+		sleep(0.2);
+		goto WAITHOSTAPDDEL;
+	}
+	buf[0] = DEL_WLAN;
+	// Very dirty hack.
+	buf[1] = 1;
+	buf[2] = 1;
+
+	if (sendto(sock, buf, len, 0, (struct sockaddr *)&client, address_size) < 0) {
+		CWLog("Error to send command DEL WLAN on socket");
+		return;
+	}
+
+}
+#endif
+
 void CWWTPsend_command_to_hostapd_DEL_ADDR(unsigned char *buf, int len)
 {
 
