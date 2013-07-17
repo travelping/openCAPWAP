@@ -88,9 +88,12 @@ extern char *gCWSettingsFileName;
 extern int gCWForceMTU;
 extern int gCWRetransmitTimer;
 extern int gCWNeighborDeadInterval;
+extern int gCWNeighborDeadRestartDelta;
 extern int gCWMaxRetransmit;
 extern int gMaxLogFileSize;
 extern int gEnabledLog;
+extern int gDataChannelKeepAliveInterval;
+extern int gEchoInterval;
 
 #define CW_FREE_OBJECT(obj_name)        {if(obj_name){free((obj_name)); (obj_name) = NULL;}}
 #define CW_FREE_OBJECTS_ARRAY(ar_name, ar_size) {int _i = 0; for(_i = ((ar_size)-1); _i >= 0; _i--) {if(((ar_name)[_i]) != NULL){ free((ar_name)[_i]);}} free(ar_name); (ar_name) = NULL; }

@@ -100,9 +100,6 @@ CWTimerID gCWKeepAliveTimerID;
 CWTimerID gCWNeighborDeadTimerID;
 CWBool gNeighborDeadTimerSet = CW_FALSE;
 
-int gEchoInterval = CW_ECHO_INTERVAL_DEFAULT;
-int gDataChannelKeepAlive = CW_DATA_CHANNEL_KEEP_ALIVE_DEFAULT;
-
 /* record the state of the control and data channel keep alives */
 static enum tRunChannelState {
 	CS_OK,
@@ -395,7 +392,7 @@ CWStateTransition CWWTPEnterRun()
 		return CW_ENTER_RESET;
 
 	/* Wait packet */
-	timenow.tv_sec = time(0) + gCWNeighborDeadInterval + CW_NEIGHBORDEAD_RESTART_DISCOVERY_DELTA;	/* greater than NeighborDeadInterval */
+	timenow.tv_sec = time(0) + gCWNeighborDeadInterval + gCWNeighborDeadRestartDelta;	/* greater than NeighborDeadInterval */
 	timenow.tv_nsec = 0;
 
 	wtpInRunState = 1;
@@ -469,7 +466,7 @@ CWStateTransition CWWTPEnterRun()
 			}
 
 			/* Wait packet */
-			timenow.tv_sec = time(0) + gCWNeighborDeadInterval + CW_NEIGHBORDEAD_RESTART_DISCOVERY_DELTA;	/* greater than NeighborDeadInterval */
+	        timenow.tv_sec = time(0) + gCWNeighborDeadInterval + gCWNeighborDeadRestartDelta;	/* greater than NeighborDeadInterval */
 			timenow.tv_nsec = 0;
 		}
 
@@ -829,11 +826,11 @@ CWBool CWResetHeartbeatTimer()
 
 CWBool CWStartDataChannelKeepAlive()
 {
-	gCWKeepAliveTimerID = timer_add(gDataChannelKeepAlive, 0, &CWWTPKeepAliveDataTimerExpiredHandler, NULL);
+	gCWKeepAliveTimerID = timer_add(gDataChannelKeepAliveInterval, 0, &CWWTPKeepAliveDataTimerExpiredHandler, NULL);
 	if (gCWKeepAliveTimerID == -1)
 		return CW_FALSE;
 
-	CWDebugLog("DataChannelKeepAlive Timer Started with %d seconds", gDataChannelKeepAlive);
+	CWDebugLog("DataChannelKeepAlive Timer Started with %d seconds", gDataChannelKeepAliveInterval);
 	return CW_TRUE;
 }
 
@@ -849,11 +846,11 @@ CWBool CWStopDataChannelKeepAlive()
 CWBool CWResetDataChannelKeepAlive()
 {
 	timer_rem(gCWKeepAliveTimerID, NULL);
-	gCWKeepAliveTimerID = timer_add(gDataChannelKeepAlive, 0, &CWWTPKeepAliveDataTimerExpiredHandler, NULL);
+	gCWKeepAliveTimerID = timer_add(gDataChannelKeepAliveInterval, 0, &CWWTPKeepAliveDataTimerExpiredHandler, NULL);
 	if (gCWKeepAliveTimerID == -1)
 		return CW_FALSE;
 
-	CWDebugLog("DataChannelKeepAlive Timer Reset with %d seconds", gDataChannelKeepAlive);
+	CWDebugLog("DataChannelKeepAlive Timer Reset with %d seconds", gDataChannelKeepAliveInterval);
 	return CW_TRUE;
 }
 

@@ -93,8 +93,7 @@ unsigned char CWProtocolRetrieve8(CWProtocolMessage * msgPtr)
 	CW_COPY_MEMORY(&val, &((msgPtr->msg)[(msgPtr->offset)]), 1);
 	(msgPtr->offset) += 1;
 
-	return val;
-}
+	return val; }
 
 // retrieves 16 bits from the message, increments the current offset in bytes.
 unsigned short CWProtocolRetrieve16(CWProtocolMessage * msgPtr)

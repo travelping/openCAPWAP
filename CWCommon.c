@@ -32,9 +32,12 @@
 #endif
 
 int gCWForceMTU = 0;
-int gCWRetransmitTimer = CW_RETRANSMIT_INTERVAL_DEFAULT;	//Default value for RetransmitInterval
-int gCWNeighborDeadInterval = CW_NEIGHBORDEAD_INTERVAL_DEFAULT;	//Default value for NeighbourDeadInterval (no less than 2*EchoInterval and no greater than 240)
-int gCWMaxRetransmit = CW_MAX_RETRANSMIT_DEFAULT;	//Default value for MaxRetransmit
+int gCWRetransmitTimer = CW_RETRANSMIT_INTERVAL_DEFAULT;       //Default value for RetransmitInterval
+int gCWNeighborDeadInterval = CW_NEIGHBORDEAD_INTERVAL_DEFAULT;        //Default value for NeighbourDe
+int gCWNeighborDeadRestartDelta = CW_NEIGHBORDEAD_RESTART_DELTA_DEFAULT;
+int gCWMaxRetransmit = CW_MAX_RETRANSMIT_DEFAULT;      //Default value for MaxRetransmit
+int gEchoInterval = CW_ECHO_INTERVAL_DEFAULT;
+int gDataChannelKeepAliveInterval = CW_DATA_CHANNEL_KEEP_ALIVE_INTERVAL_DEFAULT;
 
 int CWTimevalSubtract(struct timeval *res, const struct timeval *x, const struct timeval *y)
 {

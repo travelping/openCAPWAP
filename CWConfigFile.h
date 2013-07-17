@@ -54,7 +54,6 @@ extern int gConfigValuesCount;
 
 CWBool CWParseConfigFile();
 char *CWGetCommand(FILE * configFile);
-CWBool CWConfigFileInitLib(void);
 CWBool CWConfigFileDestroyLib(void);
 
 #endif

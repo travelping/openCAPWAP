@@ -76,14 +76,25 @@ CWConfigValue gConfigValues[] = {
 	  .code = "</AC_LOG_FILE_SIZE>",
 	  .value.int_value = DEFAULT_LOG_SIZE
 	},
+    { .type = CW_INTEGER,
+      .code = "</DATA_CHANNEL_DEAD_INTERVAL>",
+      .value.int_value = CW_NEIGHBORDEAD_INTERVAL_DEFAULT
+    },
+    { .type = CW_INTEGER,
+      .code = "</DATA_CHANNEL_DEAD_RESTART_DELTA>",
+      .value.int_value = CW_NEIGHBORDEAD_RESTART_DELTA_DEFAULT
+    },
+    { .type = CW_INTEGER,
+      .code = "</ECHO_INTERVAL>",
+      .value.int_value = CW_ECHO_INTERVAL_DEFAULT
+    },
+    { .type = CW_INTEGER,
+      .code = "</DATA_CHANNEL_KEEP_ALIVE_INTERVAL>",
+      .value.int_value = CW_DATA_CHANNEL_KEEP_ALIVE_INTERVAL_DEFAULT
+    },
 };
 
 int gConfigValuesCount = sizeof(gConfigValues) / sizeof(CWConfigValue);
-
-CWBool CWConfigFileInitLib()
-{
-	return CW_TRUE;
-}
 
 CWBool CWConfigFileDestroyLib()
 {
@@ -147,6 +158,10 @@ CWBool CWConfigFileDestroyLib()
 
 	gEnabledLog = gConfigValues[7].value.int_value;
 	gMaxLogFileSize = gConfigValues[8].value.int_value;
+	gCWNeighborDeadInterval = gConfigValues[9].value.int_value;
+	gCWNeighborDeadRestartDelta = gConfigValues[10].value.int_value;
+	gEchoInterval = gConfigValues[11].value.int_value;
+	gDataChannelKeepAliveInterval = gConfigValues[12].value.int_value;
 
 	return CW_TRUE;
 }

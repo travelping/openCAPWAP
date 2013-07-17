@@ -216,9 +216,6 @@ CWBool CWParseTheFile(CWBool isCount)
 CWBool CWParseConfigFile()
 {
 
-	if (!(CWConfigFileInitLib()))
-		return CW_FALSE;
-
 	/* just count the objects */
 	if (!CWParseTheFile(CW_TRUE))
 		return CW_FALSE;

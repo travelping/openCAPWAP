@@ -89,11 +89,6 @@ CWConfigValue gConfigValues[] = {
 
 int gConfigValuesCount = sizeof(gConfigValues) / sizeof(CWConfigValue);
 
-CWBool CWConfigFileInitLib()
-{
-	return CW_TRUE;
-}
-
 CWBool CWConfigFileDestroyLib()
 {
 	int i;
