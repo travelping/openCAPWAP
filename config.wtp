@@ -27,7 +27,7 @@
 </WTP_LEV3_PROTOCOL> IPv4
 
 # This value needs to be 20 bytes less than the actual MTU you want to achieve, because these 20 bytes will be added internally
-</WTP_FORCE_MTU> 1420
+</WTP_FORCE_MTU> 1368
 
 # If you uncomment the following line, the WTP will jump to Join State
 # (without doing Discovery) and the address will be considered the AC's address.
