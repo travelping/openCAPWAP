@@ -26,8 +26,7 @@
 # setting IPv6
 </WTP_LEV3_PROTOCOL> IPv4
 
-# Force MTU to 50 bytes, used to debug fragmentation ;-) If you don't need this, simply
-# comment the line by adding a #.
+# This value needs to be 20 bytes less than the actual MTU you want to achieve, because these 20 bytes will be added internally
 </WTP_FORCE_MTU> 1420
 
 # If you uncomment the following line, the WTP will jump to Join State
