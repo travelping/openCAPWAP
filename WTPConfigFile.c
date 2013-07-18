@@ -156,7 +156,7 @@ CWBool CWConfigFileDestroyLib()
 
 #ifdef PA_EXTENSION
 	if (gConfigValues[9].value.str_value != NULL) {
-		CW_CREATE_STRING_FROM_STRING_ERR(gWwanIccId, (gConfigValues[9].value.str_value),
+		CW_CREATE_STRING_FROM_STRING_ERR(gWwanIccId, (gConfigValues[13].value.str_value),
 						 return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 		    );
 	}
