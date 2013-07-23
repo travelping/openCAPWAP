@@ -97,6 +97,9 @@ extern CWPendingRequestMessage gPendingRequestMsgs[MAX_PENDING_REQUEST_MSGS];
 
 extern CWSafeList gPacketReceiveList;
 extern CWSafeList gFrameList;
+#ifdef PA_EXTENSION
+extern CWSafeList gEventRequestList;
+#endif
 extern CWThreadCondition gInterfaceWait;
 extern CWThreadMutex gInterfaceMutex;
 

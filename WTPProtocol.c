@@ -261,6 +261,41 @@ CWBool CWAssembleMsgElemVendorSpecificPayloadWtpWwanIccId(CWProtocolMessage * ms
 
 	return CWAssembleMsgElem(msgPtr, CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_BW_CW_TYPE);
 }
+
+/* the original implementation sends only two zeros, we need more than that */
+CWBool CWAssembleMsgElemVendorSpecificPayload_generic(CWProtocolMessage * msgPtr, struct wtp_event_request *req)
+{
+	if (msgPtr == NULL || req == NULL || req->type != CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_BW_CW_TYPE) {
+		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
+	}
+
+	CW_CREATE_PROTOCOL_MESSAGE(*msgPtr, req->elementLength, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	    );
+
+	CWProtocolStore32(msgPtr, 		req->msg_element.vendor_spec.vendorID);
+	CWProtocolStore16(msgPtr, 		req->msg_element.vendor_spec.elementID);
+	CWProtocolStoreRawBytes(msgPtr, (char *)req->msg_element.vendor_spec.data, req->elementLength - sizeof(uint32_t) - sizeof(uint16_t));
+
+	return CWAssembleMsgElem(msgPtr, req->type);
+} /* CWAssembleMsgElemVendorSpecificPayload_generic */
+
+
+CWBool CWAssembleMsgElemDeleteStation_generic(CWProtocolMessage * msgPtr, struct wtp_event_request *req)
+{
+	if (msgPtr == NULL || req == NULL || req->type != CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_BW_CW_TYPE) {
+		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
+	}
+
+	CW_CREATE_PROTOCOL_MESSAGE(*msgPtr, req->elementLength, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	    );
+
+	CWProtocolStore8(msgPtr, 		req->msg_element.del_station.radioID);
+	CWProtocolStore8(msgPtr, 		req->msg_element.del_station.MACLength);
+	CWProtocolStoreRawBytes(msgPtr, (char *)req->msg_element.del_station.MAC, req->msg_element.del_station.MACLength);
+
+
+	return CWAssembleMsgElem(msgPtr, req->type);
+}
 #endif
 
 CWBool CWAssembleMsgElemVendorSpecificPayload(CWProtocolMessage * msgPtr)

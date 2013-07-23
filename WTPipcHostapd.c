@@ -319,7 +319,6 @@ CW_THREAD_RETURN_TYPE CWWTPThread_read_data_from_hostapd(void *arg)
 	}
 
 	CWDebugLog("WTP ipc HOSTAPD: Trying to connect to hostapd (wtp)...");
-
 #if defined(LOCALUDP)
 	server.sun_family = AF_UNIX;
 	strcpy(server.sun_path, gHostapd_unix_path);
@@ -392,6 +391,66 @@ CW_THREAD_RETURN_TYPE CWWTPThread_read_data_from_hostapd(void *arg)
 			continue;
 		}
 
+#ifdef PA_EXTENSION
+		if (buffer[0] == EVENT_REQ_VENDOR_SPEC || buffer[0] == EVENT_REQ_DEL_STATION) {
+			struct wtp_event_request *req;
+			uint8_t r = EVENT_REQUEST_ERROR_INVALID_FORMAT;
+			uint8_t type;
+			int payloadLength = len - 6;
+			
+			if (!wtpInRunState) {
+				CWLog("Event Request not in run state, ignoring.");
+				continue;
+			}
+			
+			req = (struct wtp_event_request *) &buffer[1];
+			
+			/* consistency check */
+			switch(buffer[0]) {
+			case EVENT_REQ_VENDOR_SPEC:
+				if(payloadLength >= 7) {
+					type = CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_BW_CW_TYPE;
+					r = EVENT_REQUEST_ACCEPTED_AND_QUEUED_FOR_TRANSFER;
+				}
+				break;
+			case EVENT_REQ_DEL_STATION:
+				if(payloadLength == ((struct msg_element_delete_station *)&buffer[6])->MACLength + 2) {
+					type = CW_MSG_ELEMENT_DELETE_STATION_CW_TYPE;
+					r = EVENT_REQUEST_ACCEPTED_AND_QUEUED_FOR_TRANSFER;
+				}
+				break;
+			default:
+				r = EVENT_REQUEST_ERROR_UNKNOWN_TYPE;
+				break;
+			} /* switch */
+			
+			if(r == EVENT_REQUEST_ACCEPTED_AND_QUEUED_FOR_TRANSFER) {
+				struct wtp_event_request *req;
+				int header_length;
+				
+				header_length = sizeof(*req) - sizeof(req->msg_element);
+				CW_CREATE_OBJECT_SIZE_ERR(req, payloadLength + header_length, EXIT_FRAME_THREAD(sock); ); /* one more byte for type */
+
+				req->type = type;
+				req->elementLength = payloadLength;
+				memcpy(&req->msg_element, buffer + 6, req->elementLength);
+
+				CWLog("Queue Event Request to AC, type %d, length %d", buffer[0], payloadLength);
+		
+				CWLockSafeList(gEventRequestList);
+				CWAddElementToSafeListTail(gEventRequestList, req, payloadLength);
+				CWUnlockSafeList(gEventRequestList);
+			}
+			else {
+				CWLog("Invalid Event Request, type %d, error %d", buffer[0], r);
+			}
+		
+			cmd[0] = EVENT_REQ_R;
+			cmd[1] = r;
+			sendto(sock, cmd, 2, 0, (struct sockaddr *)&client, address_size);
+		}
+		else
+#endif
 		if (buffer[0] == DATE_TO_AC) {
 
 			if (!wtpInRunState)

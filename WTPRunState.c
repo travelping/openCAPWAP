@@ -170,7 +170,13 @@ extern int gRawSock;
  */
 
 #define HLEN_80211  24
+#ifdef PA_EXTENSION
+/* VBn only called with signed char, from this file */
+static int isEAPOL_Frame(const char *buf, unsigned int len)
+#else
 int isEAPOL_Frame(unsigned char *buf, unsigned int len)
+#endif
+
 {
 	unsigned char rfc1042_header[6] = { 0xaa, 0xaa, 0x03, 0x00, 0x00, 0x00 };
 	int i;
@@ -400,6 +406,9 @@ CWStateTransition CWWTPEnterRun()
 	CW_REPEAT_FOREVER {
 		CWBool bReceivePacket = CW_FALSE;
 		CWBool bReveiveBinding = CW_FALSE;
+#ifdef PA_EXTENSION
+		CWBool bEventReq = CW_FALSE;
+#endif
 
 		CWThreadMutexLock(&gInterfaceMutex);
 
@@ -414,6 +423,9 @@ CWStateTransition CWWTPEnterRun()
 		 * and no packets from AC...
 		 */
 		if ((CWGetCountElementFromSafeList(gPacketReceiveList) == 0)
+#ifdef PA_EXTENSION
+			&& (CWGetCountElementFromSafeList(gEventRequestList) == 0)
+#endif
 		    && (CWGetCountElementFromSafeList(gFrameList) == 0)) {
 			/*
 			 * ...wait at most 4 mins for a frame or packet.
@@ -433,6 +445,9 @@ CWStateTransition CWWTPEnterRun()
 
 		bReceivePacket = ((CWGetCountElementFromSafeList(gPacketReceiveList) != 0) ? CW_TRUE : CW_FALSE);
 		bReveiveBinding = ((CWGetCountElementFromSafeList(gFrameList) != 0) ? CW_TRUE : CW_FALSE);
+#ifdef PA_EXTENSION
+		bEventReq = ((CWGetCountElementFromSafeList(gEventRequestList) != 0) ? CW_TRUE : CW_FALSE);
+#endif
 
 		CWThreadMutexUnlock(&gInterfaceMutex);
 
@@ -473,6 +488,11 @@ CWStateTransition CWWTPEnterRun()
 		if (bReveiveBinding)
 			CWWTPCheckForBindingFrame();
 
+#ifdef PA_EXTENSION
+		if(bEventReq) {
+			CWWTPCheckForWTPEventRequest();
+		}
+#endif
 	}
 
 #ifdef PA_EXTENSION
@@ -666,6 +686,9 @@ CWBool CWWTPManageGenericRunMessage(CWProtocolMessage * msgPtr)
 
 		case CW_MSG_TYPE_VALUE_WTP_EVENT_RESPONSE:
 			CWLog("WTP Event Response received");
+#ifdef PA_EXTENSION
+			CWParseWTPEventResponseMessage((msgPtr->msg) + (msgPtr->offset), len, controlVal.seqNum, NULL);//char *msg, int len, int seqNum, void *values)
+#endif
 			break;
 
 		case CW_MSG_TYPE_VALUE_DATA_TRANSFER_RESPONSE:
@@ -1046,6 +1069,19 @@ CWBool CWAssembleWTPEventRequest(CWProtocolMessage ** messagesPtr,
 			if (!(CWAssembleMsgElemWTPRebootStatistics(&(msgElems[++k]))))
 				goto cw_assemble_error;
 			break;
+#ifdef PA_EXTENSION
+		case CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_BW_CW_TYPE:
+			if (!CWAssembleMsgElemVendorSpecificPayload_generic(&(msgElems[++k]), ((CWMsgElemData *) current->data)->event_request_desc)) {
+				goto cw_assemble_error;
+			}
+			break;
+		case CW_MSG_ELEMENT_DELETE_STATION_CW_TYPE:
+			if (!CWAssembleMsgElemDeleteStation_generic(&(msgElems[++k]), ((CWMsgElemData *) current->data)->event_request_desc)) {
+				goto cw_assemble_error;
+			}
+			break;
+#endif
+
 		default:
 			goto cw_assemble_error;
 			break;

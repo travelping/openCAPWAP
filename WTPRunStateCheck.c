@@ -31,6 +31,10 @@
 #include "../dmalloc-5.5.0/dmalloc.h"
 #endif
 
+#ifdef PA_EXTENSION
+#include "smac_code.h"
+#endif
+
 /*_______________________________________________________________*/
 /*  *******************___CHECK FUNCTIONS___*******************  */
 
@@ -112,9 +116,34 @@ CWBool CWWTPCheckForWTPEventRequest()
 	CW_CREATE_OBJECT_ERR(msgElemList->data, CWMsgElemData, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 	msgElemList->next = NULL;
+
+#ifdef PA_EXTENSION
+	{
+		struct wtp_event_request *req;
+		
+		/* we will send one event at a time to ensure compability */
+		CWLockSafeList(gEventRequestList);
+
+		if(CWGetCountElementFromSafeList(gEventRequestList) ) {
+			
+			if(NULL != (req = CWGetHeadElementFromSafeList(gEventRequestList, NULL))) {
+			
+				((CWMsgElemData *) (msgElemList->data))->type = req->type;
+				((CWMsgElemData *) (msgElemList->data))->value = 0;
+				((CWMsgElemData *) (msgElemList->data))->event_request_desc = req;
+			}
+		}
+		CWUnlockSafeList(gEventRequestList);
+		
+		if(!req) {
+			return CW_FALSE;
+		}
+	}
+#else
 	//Change type and value to change the msg elem to send
 	((CWMsgElemData *) (msgElemList->data))->type = CW_MSG_ELEMENT_CW_DECRYPT_ER_REPORT_CW_TYPE;
 	((CWMsgElemData *) (msgElemList->data))->value = 0;
+#endif
 
 	if (!CWAssembleWTPEventRequest(&messages, &fragmentsNum, gWTPPathMTU, seqNum, msgElemList)) {
 		int i;
@@ -123,6 +152,10 @@ CWBool CWWTPCheckForWTPEventRequest()
 				CW_FREE_PROTOCOL_MESSAGE(messages[i]);
 			}
 		CW_FREE_OBJECT(messages);
+#ifdef PA_EXTENSION
+		/* TBD msgElemList should be freed on all exits */
+		CWDeleteList(&msgElemList, CWProtocolDestroyMsgElemData);
+#endif
 		return CW_FALSE;
 	}
 
@@ -137,6 +170,14 @@ CWBool CWWTPCheckForWTPEventRequest()
 		CWDeleteList(&msgElemList, CWProtocolDestroyMsgElemData);
 		return CW_FALSE;
 	}
+#ifdef PA_EXTENSION
+	CWLog("WTP Event Request sent");
+	/* remove event from list if successfully queued for sending */
+	CWLockSafeList(gEventRequestList);
+	CWRemoveHeadElementFromSafeList(gEventRequestList, NULL);
+	CWUnlockSafeList(gEventRequestList);
+#endif
+
 	CWUpdatePendingMsgBox(&(gPendingRequestMsgs[*pendingReqIndex]),
 			      CW_MSG_TYPE_VALUE_WTP_EVENT_RESPONSE,
 			      seqNum,

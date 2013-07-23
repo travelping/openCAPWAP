@@ -47,4 +47,8 @@ void CWWTP_get_WTP_MDC(unsigned char *buf);
 void CWWTP_get_WTP_Rates(unsigned char *buf);
 unsigned char CWTP_get_WTP_Radio_Information(void);
 
+#ifdef PA_EXTENSION
+void CWWTPsend_command_to_hostapd_DEL_WLAN_CONN_LOST(void);
+#endif
+
 #endif

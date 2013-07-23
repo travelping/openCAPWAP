@@ -138,5 +138,47 @@ enum {
 	CONNECT_R = 103,
 
 	GOWAITWLAN = 104,
-	GOWAITWLAN_R = 105
+	GOWAITWLAN_R = 105,
+
+#ifdef PA_EXTENSION
+	EVENT_REQ_VENDOR_SPEC	= 106,
+	EVENT_REQ_DEL_STATION	= 107,
+	EVENT_REQ_R	= 108,
+#endif
 };
+
+#ifdef PA_EXTENSION
+#include <stdint.h>
+
+/* We assume that hostapd will send either
+	struct msg_element_vendor_specific or
+	struct msg_element_delete_station
+	
+	after EVENT_REQ_VENDOR_SPEC or EVENT_REQ_DEL_STATION respectively;
+*/
+
+struct wtp_event_request {		/* used only in WTP so it could be placed to some other header */
+	uint8_t type;				/* type of msg_element */
+	int elementLength;
+	
+	union {
+		struct msg_element_vendor_specific {
+			uint32_t vendorID;
+			uint16_t elementID;
+			uint8_t data[1];	/* maybe more, set by length field */
+		} __attribute__((packed)) vendor_spec;	
+		
+		struct msg_element_delete_station {
+			uint8_t radioID;
+			uint8_t MACLength;
+			uint8_t MAC[6];		/* maybe more, set by length field and MACLength */
+		} __attribute__((packed)) del_station;
+	} msg_element;
+};
+
+/* result codes for EVENT_REQ_R, stored as uint8 */
+#define EVENT_REQUEST_ACCEPTED_AND_QUEUED_FOR_TRANSFER		0
+#define EVENT_REQUEST_ERROR_UNKNOWN_TYPE					1
+#define EVENT_REQUEST_ERROR_INVALID_FORMAT					2
+
+#endif

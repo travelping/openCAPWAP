@@ -115,6 +115,8 @@ CWBool CWAssembleMsgElemWTPRebootStatistics(CWProtocolMessage * msgPtr);	//44
 
 #ifdef PA_EXTENSION
 CWBool CWAssembleMsgElemVendorSpecificPayloadWtpWwanIccId(CWProtocolMessage * msgPtr);
+CWBool CWAssembleMsgElemVendorSpecificPayload_generic(CWProtocolMessage * msgPtr, struct wtp_event_request *req);
+CWBool CWAssembleMsgElemDeleteStation_generic(CWProtocolMessage * msgPtr, struct wtp_event_request *req);
 #endif
 
 //---------------------------------------------------------/

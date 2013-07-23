@@ -77,6 +77,11 @@ CWSafeList gFrameList;
 /* list used to pass CAPWAP packets from AC to main thread */
 CWSafeList gPacketReceiveList;
 
+#ifdef PA_EXTENSION
+/* list used to pass events from wireless interface to AC */
+CWSafeList gEventRequestList;
+#endif
+
 /* used to synchronize access to the lists */
 CWThreadCondition gInterfaceWait;
 CWThreadMutex gInterfaceMutex;
@@ -441,13 +446,26 @@ int main(int argc, char * const argv[])
 		CWLog("Can't start WTP");
 		exit(1);
 	}
+#ifdef PA_EXTENSION
+	/* Event Request list */
+	if (!CWErr(CWCreateSafeList(&gEventRequestList))) {
+		CWLog("Can't start WTP");
+		exit(1);
+	}
+#endif
 
 	CWCreateThreadMutex(&gInterfaceMutex);
 	CWSetMutexSafeList(gPacketReceiveList, &gInterfaceMutex);
 	CWSetMutexSafeList(gFrameList, &gInterfaceMutex);
+#ifdef PA_EXTENSION
+	CWSetMutexSafeList(gEventRequestList, &gInterfaceMutex);
+#endif
 	CWCreateThreadCondition(&gInterfaceWait);
 	CWSetConditionSafeList(gPacketReceiveList, &gInterfaceWait);
 	CWSetConditionSafeList(gFrameList, &gInterfaceWait);
+#ifdef PA_EXTENSION
+	CWSetConditionSafeList(gEventRequestList, &gInterfaceWait);
+#endif
 
 	CWLog("Starting WTP...");
 
