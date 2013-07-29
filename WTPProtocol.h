@@ -86,6 +86,7 @@ typedef struct {
 	/*Update 2009:
 	   add new non-binding specific values */
 	void *protocolValues;
+	uint32_t timeStamp;
 } CWProtocolConfigurationUpdateRequestValues;
 
 /*__________________________________________________________*/
