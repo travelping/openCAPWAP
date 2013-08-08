@@ -30,6 +30,7 @@
 #include <linux/if_ether.h>
 #include <net/if.h>
 #include <sys/ioctl.h>
+#include <sys/time.h>
 #include <netpacket/packet.h>
 
 #include "CWWTP.h"
@@ -1365,6 +1366,7 @@ CWBool CWParseConfigurationUpdateRequest(char *msg,
 	/*Update 2009:
 	   added protocolValues (non-binding) */
 	valuesPtr->protocolValues = NULL;
+	valuesPtr->timeStamp = 0;
 
 	/* parse message elements */
 	while (completeMsg.offset < len) {
@@ -1389,6 +1391,11 @@ CWBool CWParseConfigurationUpdateRequest(char *msg,
 			/*Update 2009:
 			   Added case for vendor specific payload
 			   (Used mainly to parse UCI messages)... */
+
+		case CW_MSG_ELEMENT_TIMESTAMP_CW_TYPE:
+			valuesPtr->timeStamp = CWProtocolRetrieve32(&completeMsg);
+			break;
+
 		case CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_CW_TYPE:
 			vendorMsgElemFound = CW_TRUE;
 			completeMsg.offset += elemLen;
@@ -1641,6 +1648,20 @@ CWBool CWSaveConfigurationUpdateRequest(CWProtocolConfigurationUpdateRequestValu
 		if (!CWSaveVendorMessage(valuesPtr->protocolValues, resultCode))
 			return CW_FALSE;
 	}
+
+	if (valuesPtr->timeStamp != 0) {
+		struct timeval tv;
+
+		CWLog("Setting WTP Time");
+
+		tv.tv_sec = (valuesPtr->timeStamp & 0x80000000) ?
+			valuesPtr->timeStamp - 2208988800 : (time_t)2085978496 + valuesPtr->timeStamp;
+		tv.tv_usec = 0;
+		settimeofday(&tv, NULL);
+
+		*resultCode = CW_PROTOCOL_SUCCESS;
+	}
+
 	return CW_TRUE;
 }
 
