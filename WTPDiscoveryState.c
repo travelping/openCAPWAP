@@ -83,10 +83,6 @@ CWStateTransition CWWTPEnterDiscovery()
 
 	CWNetworkCloseSocket(gWTPSocket);
 	CWNetworkCloseSocket(gWTPDataSocket);
-#ifndef CW_NO_DTLS
-	CWSecurityDestroySession(&gWTPSession);
-	CWSecurityDestroyContext(&gWTPSecurityContext);
-#endif
 
 	if (!CWErr(CWNetworkInitSocketClient(&gWTPSocket, NULL))) {
 		return CW_QUIT;
