@@ -456,7 +456,11 @@ int main(int argc, char * const argv[])
 		exit(1);
 	}
 
+#ifdef CW_NO_DTLS
 	if (!CWErr(CWWTPLoadConfiguration())) {
+#else
+	if (!CWErr(CWSecurityInitLib()) || !CWErr(CWWTPLoadConfiguration())) {
+#endif
 		CWLog("Can't start WTP");
 		exit(1);
 	}

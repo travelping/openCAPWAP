@@ -57,14 +57,6 @@ CWStateTransition CWWTPEnterJoin()
 	int seqNum;
 	CWProtocolJoinResponseValues values;
 
-#ifndef CW_NO_DTLS
-    CWSslCleanUp();
-    if (!CWErr(CWSecurityInitLib())) {
-        CWLog("Can't initiate ssl library");
-        exit(1);
-    }
-#endif
-
 	CWLog("\n");
 	CWLog("######### Join State #########");
 
@@ -134,7 +126,6 @@ CWStateTransition CWWTPEnterJoin()
 	if (!CWErr(CWSecurityInitSessionClient(gWTPSocket,
 					       &(gACInfoPtr->preferredAddress),
 					       gPacketReceiveList, gWTPSecurityContext, &gWTPSession, &gWTPPathMTU)))
-		CWLog("Error initializing secure connection during join");
 		goto cw_join_err;
 #endif
 
@@ -151,13 +142,11 @@ CWStateTransition CWWTPEnterJoin()
 					       CWAssembleJoinRequest,
 					       (void *)CWParseJoinResponseMessage,
 					       (void *)CWSaveJoinResponseMessage, &values)))
-        CWDebugLog("Error while receiving the join response message");
 		goto cw_join_err;
 
 	timer_rem(waitJoinTimer, NULL);
 	if (!gSuccessfulHandshake)
 		/* timer expired */
-        CWDebugLog("Join timer expired and no successfull handshake was performed");
 		goto cw_join_err;
 
 	CWLog("Join Completed");
