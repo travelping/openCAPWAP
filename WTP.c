@@ -611,9 +611,6 @@ CWBool CWWTPInitConfiguration()
 	CWDebugLog("CWWTPInitConfiguration");
 	int i;
 
-	//Generate 128-bit Session ID,
-	initWTPSessionID(&gWTPSessionID[0]);
-
 	CWWTPResetRebootStatistics(&gWTPRebootStatistics);
 
 	gRadiosInfo.radioCount = CWWTPGetMaxRadios();

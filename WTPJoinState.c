@@ -205,6 +205,9 @@ CWBool CWAssembleJoinRequest(CWProtocolMessage ** messagesPtr,
 
 	CWLog("Sending Join Request...");
 
+	//Generate 128-bit Session ID,
+	initWTPSessionID(&gWTPSessionID[0]);
+
 	/* Assemble Message Elements */
 	msgOK = CWAssembleMsgElemLocationData(&(msgElems[++k])) &&
 		CWAssembleMsgElemWTPBoardData(&(msgElems[++k])) &&
