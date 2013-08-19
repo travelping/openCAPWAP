@@ -71,14 +71,17 @@ typedef struct {
 typedef struct {
 	ACIPv4ListValues ACIPv4ListInfo;
 	ACIPv6ListValues ACIPv6ListInfo;
-	int discoveryTimer;
-	int echoRequestTimer;
 	int radioOperationalInfoCount;
 	CWRadioOperationalInfoValues *radioOperationalInfo;
 	WTPDecryptErrorReport radiosDecryptErrorPeriod;
 	int idleTimeout;
 	int fallback;
 	void *bindingValues;
+	CWTimersValues CWTimers;
+
+	unsigned short int vendorTP_IEEE80211WLanHoldTime;
+	unsigned short int vendorTP_DataChannelDeadInterval;
+	unsigned short int vendorTP_ACJoinTimeout;
 } CWProtocolConfigureResponseValues;
 
 typedef struct {
@@ -87,6 +90,11 @@ typedef struct {
 	   add new non-binding specific values */
 	void *protocolValues;
 	uint32_t timeStamp;
+	CWTimersValues CWTimers;
+
+	unsigned short int vendorTP_IEEE80211WLanHoldTime;
+	unsigned short int vendorTP_DataChannelDeadInterval;
+	unsigned short int vendorTP_ACJoinTimeout;
 } CWProtocolConfigurationUpdateRequestValues;
 
 /*__________________________________________________________*/
@@ -122,7 +130,7 @@ CWBool CWParseAddStation(CWProtocolMessage * msgPtr, int len);	// 8
 CWBool CWParseDeleteStation(CWProtocolMessage * msgPtr, int len);	// 18
 CWBool CWParseCWControlIPv4Addresses(CWProtocolMessage * msgPtr, int len, CWProtocolIPv4NetworkInterface * valPtr);	//10
 CWBool CWParseCWControlIPv6Addresses(CWProtocolMessage * msgPtr, int len, CWProtocolIPv6NetworkInterface * valPtr);	//11
-CWBool CWParseCWTimers(CWProtocolMessage * msgPtr, int len, CWProtocolConfigureResponseValues * valPtr);	//12
+CWBool CWParseCWTimers(CWProtocolMessage * msgPtr, int len, CWTimersValues * valPtr);	//12
 CWBool CWParseDecryptErrorReportPeriod(CWProtocolMessage * msgPtr, int len, WTPDecryptErrorReportValues * valPtr);	//16
 CWBool CWParseIdleTimeout(CWProtocolMessage * msgPtr, int len, CWProtocolConfigureResponseValues * valPtr);	//26
 CWBool CWParseWTPFallback(CWProtocolMessage * msgPtr, int len, CWProtocolConfigureResponseValues * valPtr);	//37
@@ -130,6 +138,7 @@ CWBool CWParseWTPRadioInformation_FromAC(CWProtocolMessage * msgPtr, int len, ch
 
 //si trova in CWProtocol.h
 //CWBool CWParseACName(CWProtocolMessage *msgPtr, int len, char **valPtr);                      // 4
+CWBool CWAssembleMsgElemVendorTPWTPTimestamp(CWProtocolMessage * msgPtr, struct timeval *tv);
 
 //---------------------------------------------------------/
 void CWWTPResetRebootStatistics(WTPRebootStatisticsInfo * rebootStatistics);
@@ -159,6 +168,8 @@ CWBool CWAssembleMsgElemVendorSpecificPayload(CWProtocolMessage * msgPtr);
 
 CWBool CWParseAddWLAN(CWProtocolMessage * msgPtr, int len);
 CWBool CWParseDeleteWLAN(CWProtocolMessage * msgPtr, int len);
+
+CWBool CWParseVendorTPWTPTimestamp(CWProtocolMessage * msgPtr, int len, struct timeval *tv);
 
 //---------------------------------------------------------/
 void CWWTPDestroyVendorInfos(CWWTPVendorInfos * valPtr);

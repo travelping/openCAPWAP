@@ -32,6 +32,23 @@
 #include "../dmalloc-5.5.0/dmalloc.h"
 #endif
 
+struct ntp_time_t {
+	uint32_t   second;
+	uint32_t   fraction;
+};
+
+static inline void convert_ntp_time_into_unix_time(struct ntp_time_t *ntp, struct timeval *tv)
+{
+    tv->tv_sec = ntp->second - 0x83AA7E80; // the seconds from Jan 1, 1900 to Jan 1, 1970
+    tv->tv_usec = (uint32_t)( (double)ntp->fraction * 1.0e6 / (double)(1LL<<32) );
+}
+
+static inline void convert_unix_time_into_ntp_time(struct timeval *tv, struct ntp_time_t *ntp)
+{
+    ntp->second = tv->tv_sec + 0x83AA7E80;
+    ntp->fraction = (uint32_t)( (double)(tv->tv_usec+1) * (double)(1LL<<32) * 1.0e-6 );
+}
+
 /*____________________________________________________________________________*/
 /*  *****************************___ASSEMBLE___*****************************  */
 CWBool CWAssembleMsgElemACName(CWProtocolMessage * msgPtr)
@@ -885,6 +902,28 @@ CWBool CWAssembleMsgElemWTPRadioInformation(CWProtocolMessage *msgPtr) {
 }
 */
 
+CWBool CWAssembleMsgElemVendorTPWTPTimestamp(CWProtocolMessage * msgPtr, struct timeval *tv)
+{
+	struct ntp_time_t ntp_time;
+
+	if (msgPtr == NULL)
+		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
+
+
+	convert_unix_time_into_ntp_time(tv, &ntp_time);
+
+	// create message
+	CW_CREATE_PROTOCOL_MESSAGE(*msgPtr, 14, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	    );
+
+	CWProtocolStore32(msgPtr, CW_IANA_ENTERPRISE_NUMBER_VENDOR_TRAVELPING);
+	CWProtocolStore16(msgPtr, CW_MSG_ELEMENT_TRAVELPING_WTP_TIMESTAMP);
+	CWProtocolStore32(msgPtr, ntp_time.second);
+	CWProtocolStore32(msgPtr, ntp_time.fraction);
+
+	return CWAssembleMsgElem(msgPtr, CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_BW_CW_TYPE);
+}
+
 /*_________________________________________________________________________*/
 /*  *****************************___PARSE___*****************************  */
 CWBool CWParseWTPRadioInformation_FromAC(CWProtocolMessage * msgPtr, int len, char *valPtr)
@@ -1240,7 +1279,7 @@ CWBool CWParseCWControlIPv6Addresses(CWProtocolMessage * msgPtr, int len, CWProt
 	CWParseMessageElementEnd();
 }
 
-CWBool CWParseCWTimers(CWProtocolMessage * msgPtr, int len, CWProtocolConfigureResponseValues * valPtr)
+CWBool CWParseCWTimers(CWProtocolMessage * msgPtr, int len, CWTimersValues * valPtr)
 {
 	CWParseMessageElementStart();
 
@@ -1279,6 +1318,19 @@ CWBool CWParseWTPFallback(CWProtocolMessage * msgPtr, int len, CWProtocolConfigu
 
 	valPtr->fallback = CWProtocolRetrieve8(msgPtr);
 //  CWDebugLog("WTP Fallback: %d", valPtr->fallback);
+
+	CWParseMessageElementEnd();
+}
+
+CWBool CWParseVendorTPWTPTimestamp(CWProtocolMessage * msgPtr, int len, struct timeval * valPtr)
+{
+	struct ntp_time_t ntp_time;
+
+	CWParseMessageElementStart();
+
+	ntp_time.second = CWProtocolRetrieve32(msgPtr);
+	ntp_time.fraction = CWProtocolRetrieve32(msgPtr);
+	convert_ntp_time_into_unix_time(&ntp_time, valPtr);
 
 	CWParseMessageElementEnd();
 }

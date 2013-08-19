@@ -49,6 +49,7 @@
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include <sys/file.h>
+#include <sys/time.h>
 #include <sys/resource.h>
 #include "wireless_copy.h"
 
@@ -89,6 +90,7 @@ extern int gCWForceMTU;
 extern int gCWRetransmitTimer;
 extern int gCWNeighborDeadInterval;
 extern int gCWNeighborDeadRestartDelta;
+extern int gCWWaitJoin;
 extern int gCWMaxRetransmit;
 extern int gMaxLogFileSize;
 extern int gEnabledLog;

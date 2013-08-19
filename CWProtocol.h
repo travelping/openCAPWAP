@@ -259,6 +259,13 @@
 #define     CW_MSG_ELEMENT_IEEE80211_SUPPORTED_RATES_CW_TYPE                1040
 #define     CW_MSG_ELEMENT_IEEE80211_WTP_RADIO_INFORMATION_CW_TYPE          1048
 
+// Travelping Vendor Extensions
+#define     CW_MSG_ELEMENT_TRAVELPING_WTP_WWAN_STATISTICS             1
+#define     CW_MSG_ELEMENT_TRAVELPING_WTP_TIMESTAMP                   2
+#define     CW_MSG_ELEMENT_TRAVELPING_IEEE_80211_WLAN_HOLD_TIME       4
+#define     CW_MSG_ELEMENT_TRAVELPING_DATA_CHANNEL_DEAD_INTERVAL      5
+#define     CW_MSG_ELEMENT_TRAVELPING_AC_JOIN_TIMEOUT                 6
+
 // CAPWAP Protocol Variables
 #define     CW_MAX_RETRANSMIT_DEFAULT       5
 #define     CW_WAIT_JOIN_DEFAULT            60
@@ -628,6 +635,11 @@ typedef struct {
 	CWWTPRadioInfoValues *radiosInfo;
 } CWWTPRadiosInfo;
 
+typedef struct {
+	unsigned char discoveryTimer;
+	unsigned char echoRequestTimer;
+} CWTimersValues;
+
 /*Update 2009:
     Helper structure to keep track of
     requested UCI commands (via Vendor specific
@@ -693,5 +705,9 @@ CWBool CWParseACName(CWProtocolMessage * msgPtr, int len, char **valPtr);
 CWBool CWParseWTPRadioOperationalState(CWProtocolMessage * msgPtr, int len, CWRadioOperationalInfoValues * valPtr);	//30
 CWBool CWParseResultCode(CWProtocolMessage * msgPtr, int len, CWProtocolResultCode * valPtr);	//31
 char *CWParseSessionID(CWProtocolMessage * msgPtr, int len);
+
+CWBool CWParseTPIEEE80211WLanHoldTime(CWProtocolMessage * msgPtr, int len, unsigned short int * valPtr);
+CWBool CWParseTPDataChannelDeadInterval(CWProtocolMessage * msgPtr, int len, unsigned short int * valPtr);
+CWBool CWParseTPACJoinTimeout(CWProtocolMessage * msgPtr, int len, unsigned short int * valPtr);
 
 #endif
