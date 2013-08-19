@@ -102,6 +102,10 @@ extern CWThreadMutex gInterfaceMutex;
 extern char *gWtpSerialNumber;
 extern char *gWtpModelNumber;
 
+extern char *gWtpHardwareVersion;
+extern char *gWtpActiveSoftwareVersion;
+extern char *gWtpBootVersion;
+
 /*__________________________________________________________*/
 /*  *******************___PROTOTYPES___*******************  */
 

@@ -130,6 +130,21 @@ CWBool CWParseSettingsFile()
 				);
 			CWLog(": %s", gWtpSerialNumber);
 		}
+		else if (!strcmp(startTag, "WTP_HARDWARE_VERSION")) {
+			CW_CREATE_STRING_FROM_STRING_ERR(gWtpHardwareVersion, Value, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+				);
+			CWLog(": %s", gWtpHardwareVersion);
+		}
+		else if (!strcmp(startTag, "WTP_ACTIVE_SOFTWARE_VERSION")) {
+			CW_CREATE_STRING_FROM_STRING_ERR(gWtpActiveSoftwareVersion, Value, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+				);
+			CWLog(": %s", gWtpActiveSoftwareVersion);
+		}
+		else if (!strcmp(startTag, "WTP_BOOT_VERSION")) {
+			CW_CREATE_STRING_FROM_STRING_ERR(gWtpBootVersion, Value, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+				);
+			CWLog(": %s", gWtpBootVersion);
+		}
 		else
 			CWLog(": unknown Tag: %s = %s", startTag, Value);
 
