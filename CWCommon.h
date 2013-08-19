@@ -151,6 +151,9 @@ extern int gEchoInterval;
 		CW_ON_ERROR((s), on_err);				\
 	} while (0)
 
+#define CW_CREATE_STRING_FROM_STRING(src)				\
+	strdup((src))
+
 #define CW_CREATE_STRING_FROM_STRING_ERR(dest, src, on_err)		\
 	do {								\
 		(dest) = strdup((src));					\
