@@ -97,26 +97,65 @@ extern int gEnabledLog;
 extern int gDataChannelKeepAliveInterval;
 extern int gEchoInterval;
 
-#define CW_FREE_OBJECT(obj_name)        {if(obj_name){free((obj_name)); (obj_name) = NULL;}}
-#define CW_FREE_OBJECTS_ARRAY(ar_name, ar_size) {int _i = 0; for(_i = ((ar_size)-1); _i >= 0; _i--) {if(((ar_name)[_i]) != NULL){ free((ar_name)[_i]);}} free(ar_name); (ar_name) = NULL; }
-#define CW_PRINT_STRING_ARRAY(ar_name, ar_size) {int i = 0; for(i = 0; i < (ar_size); i++) printf("[%d]: **%s**\n", i, ar_name[i]);}
+#define CW_ON_ERROR(cond, on_err)					\
+	do {								\
+		if (!(cond)) {						\
+			on_err						\
+		}							\
+	} while (0)
+
+#define CW_FREE_OBJECT(ptr)						\
+	do {								\
+		free((ptr));						\
+		(ptr) = NULL;						\
+	} while (0)
+
+#define CW_FREE_OBJECTS_ARRAY(array, size)				\
+	do {								\
+		int _i = 0;						\
+		for(_i = ((size)-1); _i >= 0; _i--)			\
+			free((array)[_i]);				\
+		free((array));						\
+		(array) = NULL;						\
+	} while (0)
+
+#define CW_PRINT_STRING_ARRAY(array, size)				\
+	do {								\
+		int i = 0;						\
+		for(i = 0; i < (size); i++)				\
+			printf("[%d]: **%s**\n", i, (array)[i]);	\
+	} while (0)
 
 // custom error
-#define CW_CREATE_OBJECT_ERR(obj_name, obj_type, on_err)    {obj_name = (obj_type*) (malloc(sizeof(obj_type))); if(!(obj_name)) {on_err}}
-#define CW_CREATE_OBJECT_SIZE_ERR(obj_name, obj_size,on_err)    {obj_name = (malloc(obj_size)); if(!(obj_name)) {on_err}}
-#define CW_CREATE_ARRAY_ERR(ar_name, ar_size, ar_type, on_err)  {ar_name = (ar_type*) (malloc(sizeof(ar_type) * (ar_size))); if(!(ar_name)) {on_err}}
-#define CW_CREATE_STRING_ERR(str_name, str_length, on_err)  {str_name = (char*) (malloc(sizeof(char) * ((str_length)+1) ) ); if(!(str_name)) {on_err}}
-#define CW_CREATE_STRING_FROM_STRING_ERR(str_name, str, on_err) {CW_CREATE_STRING_ERR(str_name, strlen(str), on_err); strcpy((str_name), str);}
+#define CW_CREATE_OBJECT_ERR(ptr, type, on_err)				\
+	do {								\
+		(ptr) = (type *)malloc(sizeof(type));			\
+		CW_ON_ERROR((ptr), on_err);				\
+	} while (0)
 
-#ifdef CW_DEBUGGING
+#define CW_CREATE_OBJECT_SIZE_ERR(ptr, size, on_err)			\
+	do {								\
+		(ptr) = malloc((size));					\
+		CW_ON_ERROR((ptr), on_err);				\
+	} while (0)
 
-#define CW_CREATE_ARRAY_ERR2(ar_name, ar_size, ar_type, on_err)     {ar_name = (ar_type*) (malloc(sizeof(ar_type) * (ar_size))); if((ar_name)) {on_err}}
-#define CW_CREATE_OBJECT_ERR2(obj_name, obj_type, on_err)       {obj_name = (obj_type*) (malloc(sizeof(obj_type))); if((obj_name)) {on_err}}
-#define CW_CREATE_OBJECT_SIZE_ERR2(obj_name, obj_size,on_err)       {obj_name = (malloc(obj_size)); if((obj_name)) {on_err}}
-#define CW_CREATE_STRING_ERR2(str_name, str_length, on_err)     {str_name = (char*) (malloc(sizeof(char) * ((str_length)+1) ) ); if((str_name)) {on_err}}
-#define CW_CREATE_STRING_FROM_STRING_ERR2(str_name, str, on_err)    {CW_CREATE_STRING_ERR2(str_name, strlen(str), on_err); strcpy((str_name), str);}
+#define CW_CREATE_ARRAY_ERR(ptr, size, type, on_err)			\
+	do {								\
+		(ptr) = (type *)calloc(sizeof(type), (size));		\
+		CW_ON_ERROR((ptr), on_err);				\
+	} while (0)
 
-#endif
+#define CW_CREATE_STRING_ERR(s, length, on_err)				\
+	do {								\
+		(s) = (char *)malloc(sizeof(char) * ((length)+1));	\
+		CW_ON_ERROR((s), on_err);				\
+	} while (0)
+
+#define CW_CREATE_STRING_FROM_STRING_ERR(dest, src, on_err)		\
+	do {								\
+		(dest) = strdup((src));					\
+		CW_ON_ERROR((dest), on_err);				\
+	} while (0)
 
 #include "CWStevens.h"
 #include "config.h"
