@@ -99,6 +99,8 @@ extern CWSafeList gFrameList;
 extern CWThreadCondition gInterfaceWait;
 extern CWThreadMutex gInterfaceMutex;
 
+extern const char gWtpVersion[];
+
 extern char *gWtpSerialNumber;
 extern char *gWtpModelNumber;
 

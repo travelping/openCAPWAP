@@ -382,7 +382,9 @@ typedef struct {
 
 		CW_WTP_HARDWARE_VERSION = 0,
 		CW_WTP_SOFTWARE_VERSION = 1,
-		CW_BOOT_VERSION = 2
+		CW_BOOT_VERSION = 2,
+
+		TP_WTP_VERSION = 0,
 	} type;
 	int length;
 	char *valuePtr;

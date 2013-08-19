@@ -45,6 +45,8 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveStats(void *arg);
 CW_THREAD_RETURN_TYPE CWWTPReceiveFreqStats(void *arg);
 CW_THREAD_RETURN_TYPE gogo(void *arg);
 
+const char gWtpVersion[] = PACKAGE_VERSION;
+
 int gEnabledLog;
 int gMaxLogFileSize;
 char gLogFileName[] = WTP_LOG_FILE_NAME;

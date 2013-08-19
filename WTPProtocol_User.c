@@ -124,7 +124,7 @@ CWBool CWWTPGetVendorInfos(CWWTPVendorInfos * valPtr)
 	if (valPtr == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
-	valPtr->vendorInfosCount = 3;	// we fill 3 information (just the required ones)
+	valPtr->vendorInfosCount = 4;	// we fill 3 information (just the required ones)
 	CW_CREATE_ARRAY_ERR(valPtr->vendorInfos, valPtr->vendorInfosCount, CWWTPVendorInfoValues,
 			    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
@@ -146,6 +146,12 @@ CWBool CWWTPGetVendorInfos(CWWTPVendorInfos * valPtr)
 		.type             = CW_BOOT_VERSION,
 		.length           = strlen(gWtpBootVersion),
 		.valuePtr         = gWtpBootVersion
+	};
+	valPtr->vendorInfos[3] = (CWWTPVendorInfoValues){
+		.vendorIdentifier = CW_IANA_ENTERPRISE_NUMBER_VENDOR_TRAVELPING,
+		.type             = TP_WTP_VERSION,
+		.length           = strlen(gWtpVersion),
+		.valuePtr         = gWtpVersion
 	};
 
 	return CW_TRUE;
