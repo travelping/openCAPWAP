@@ -22,8 +22,11 @@
  *                                                                                         *
  *******************************************************************************************/
 
-#include <linux/types.h>
+#ifndef __SMAC_CODE_H__
+#define __SMAC_CODE_H__
+
 #ifndef PA_EXTENSION
+#include <linux/types.h>
 typedef unsigned char u8;
 typedef unsigned short u16;
 typedef unsigned int u32;
@@ -182,3 +185,4 @@ struct wtp_event_request {		/* used only in WTP so it could be placed to some ot
 #define EVENT_REQUEST_ERROR_INVALID_FORMAT					2
 
 #endif
+#endif /* __SMAC_CODE_H__ */
