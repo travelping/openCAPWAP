@@ -159,25 +159,35 @@ enum {
 	
 	after EVENT_REQ_VENDOR_SPEC or EVENT_REQ_DEL_STATION respectively;
 */
+struct msg_element_vendor_specific {
+	uint32_t vendorID;
+	uint16_t elementID;
+	uint8_t data[1];	/* maybe more, set by length field */
+} __attribute__((packed)) ;	
 
-struct wtp_event_request {		/* used only in WTP so it could be placed to some other header */
-	uint8_t type;				/* type of msg_element */
-	int elementLength;
+struct msg_element_delete_station {
+	uint8_t radioID;
+	uint8_t MACLength;
+	uint8_t MAC[6];		/* maybe more, set by length field and MACLength */
+} __attribute__((packed)) ;
+
+
+struct wtp_event_request {
+	uint8_t type;
+	uint8_t cnt;
 	
-	union {
-		struct msg_element_vendor_specific {
-			uint32_t vendorID;
-			uint16_t elementID;
-			uint8_t data[1];	/* maybe more, set by length field */
-		} __attribute__((packed)) vendor_spec;	
-		
-		struct msg_element_delete_station {
-			uint8_t radioID;
-			uint8_t MACLength;
-			uint8_t MAC[6];		/* maybe more, set by length field and MACLength */
-		} __attribute__((packed)) del_station;
-	} msg_element;
-};
+	/* cnt pieces of structures below */
+	struct msg_element_desc {
+		uint16_t size;	/* size of message element below */
+		union {
+			struct msg_element_delete_station del_station;
+			struct msg_element_vendor_specific vendor_spec;
+			/* more to follow later */
+		};
+	} __attribute__((packed)) msg_elements;
+	
+} __attribute__((packed));
+
 
 /* result codes for EVENT_REQ_R, stored as uint8 */
 #define EVENT_REQUEST_ACCEPTED_AND_QUEUED_FOR_TRANSFER		0

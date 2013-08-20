@@ -403,42 +403,36 @@ CW_THREAD_RETURN_TYPE CWWTPThread_read_data_from_hostapd(void *arg)
 				continue;
 			}
 			
-			req = (struct wtp_event_request *) &buffer[1];
+			req = (struct wtp_event_request *) &buffer[6];
 			
 			/* consistency check */
-			switch(buffer[0]) {
-			case EVENT_REQ_VENDOR_SPEC:
-				if(payloadLength >= 7) {
+			if(req->cnt != 0) {
+				switch(buffer[0]) {
+				case EVENT_REQ_VENDOR_SPEC:
 					type = CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_BW_CW_TYPE;
 					r = EVENT_REQUEST_ACCEPTED_AND_QUEUED_FOR_TRANSFER;
-				}
-				break;
-			case EVENT_REQ_DEL_STATION:
-				if(payloadLength == ((struct msg_element_delete_station *)&buffer[6])->MACLength + 2) {
+					break;
+				case EVENT_REQ_DEL_STATION:
 					type = CW_MSG_ELEMENT_DELETE_STATION_CW_TYPE;
 					r = EVENT_REQUEST_ACCEPTED_AND_QUEUED_FOR_TRANSFER;
-				}
-				break;
-			default:
-				r = EVENT_REQUEST_ERROR_UNKNOWN_TYPE;
-				break;
-			} /* switch */
+					break;
+				default:
+					r = EVENT_REQUEST_ERROR_UNKNOWN_TYPE;
+					break;
+				} /* switch */
+			}
 			
 			if(r == EVENT_REQUEST_ACCEPTED_AND_QUEUED_FOR_TRANSFER) {
-				struct wtp_event_request *req;
-				int header_length;
-				
-				header_length = sizeof(*req) - sizeof(req->msg_element);
-				CW_CREATE_OBJECT_SIZE_ERR(req, payloadLength + header_length, EXIT_FRAME_THREAD(sock); ); /* one more byte for type */
+				struct wtp_event_request *req_list;
+				CW_CREATE_OBJECT_SIZE_ERR(req_list, payloadLength, EXIT_FRAME_THREAD(sock); ); /* one more byte for type */
 
-				req->type = type;
-				req->elementLength = payloadLength;
-				memcpy(&req->msg_element, buffer + 6, req->elementLength);
+				memcpy(req_list, req, payloadLength);
+				req_list->type = type;
 
 				CWLog("Queue Event Request to AC, type %d, length %d", buffer[0], payloadLength);
 		
 				CWLockSafeList(gEventRequestList);
-				CWAddElementToSafeListTail(gEventRequestList, req, payloadLength);
+				CWAddElementToSafeListTail(gEventRequestList, req_list, payloadLength);
 				CWUnlockSafeList(gEventRequestList);
 			}
 			else {

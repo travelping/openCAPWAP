@@ -114,9 +114,10 @@ CWBool CWAssembleMsgElemWTPRebootStatistics(CWProtocolMessage * msgPtr);	//44
 //CWBool CWAssembleMsgElemWTPRadioInformation(CWProtocolMessage *msgPtr);
 
 #ifdef PA_EXTENSION
+#include "smac_code.h"
 CWBool CWAssembleMsgElemVendorSpecificPayloadWtpWwanIccId(CWProtocolMessage * msgPtr);
-CWBool CWAssembleMsgElemVendorSpecificPayload_generic(CWProtocolMessage * msgPtr, struct wtp_event_request *req);
-CWBool CWAssembleMsgElemDeleteStation_generic(CWProtocolMessage * msgPtr, struct wtp_event_request *req);
+CWBool CWAssembleMsgElemVendorSpecificPayload_generic(CWProtocolMessage * msgPtr, struct msg_element_desc *req);
+CWBool CWAssembleMsgElemDeleteStation_generic(CWProtocolMessage * msgPtr, struct msg_element_desc *req);
 #endif
 
 //---------------------------------------------------------/

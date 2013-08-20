@@ -293,7 +293,7 @@ typedef struct {
 	int value;
 #ifdef PA_EXTENSION
 	/* I just couldn't figure out what the plan is when element data does not fit on an integer */
-	struct wtp_event_request *event_request_desc;
+	struct msg_element_desc *msg;
 #endif	
 } CWMsgElemData;
 

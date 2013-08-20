@@ -111,26 +111,36 @@ CWBool CWWTPCheckForWTPEventRequest()
 	CW_CREATE_OBJECT_ERR(pendingReqIndex, int, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
-	CW_CREATE_OBJECT_ERR(msgElemList, CWListElement, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
-	CW_CREATE_OBJECT_ERR(msgElemList->data, CWMsgElemData, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
-	msgElemList->next = NULL;
-
 #ifdef PA_EXTENSION
 	{
 		struct wtp_event_request *req;
 		
-		/* we will send one event at a time to ensure compability */
 		CWLockSafeList(gEventRequestList);
 
 		if(CWGetCountElementFromSafeList(gEventRequestList) ) {
 			
 			if(NULL != (req = CWGetHeadElementFromSafeList(gEventRequestList, NULL))) {
-			
-				((CWMsgElemData *) (msgElemList->data))->type = req->type;
-				((CWMsgElemData *) (msgElemList->data))->value = 0;
-				((CWMsgElemData *) (msgElemList->data))->event_request_desc = req;
+				CWMsgElemData *elemData;
+				CWList *list;
+				int i;
+				struct msg_element_desc *m;
+				
+				list = &msgElemList;
+				for(i = 0, m = &req->msg_elements; i < req->cnt; i++) {
+					CW_CREATE_OBJECT_ERR(*list, CWListElement, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+					    );
+					CW_CREATE_OBJECT_ERR(elemData, CWMsgElemData, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+						);
+
+					elemData->type = req->type;
+					elemData->value = 0;
+					elemData->msg = m;
+					
+					m = (struct msg_element_desc *)((char *)m + m->size + sizeof(m->size));
+					(*list)->data = elemData;
+					(*list)->next = NULL;
+					list = &((*list)->next);
+				}
 			}
 		}
 		CWUnlockSafeList(gEventRequestList);
@@ -140,6 +150,12 @@ CWBool CWWTPCheckForWTPEventRequest()
 		}
 	}
 #else
+	CW_CREATE_OBJECT_ERR(msgElemList, CWListElement, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	    );
+	CW_CREATE_OBJECT_ERR(msgElemList->data, CWMsgElemData, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	    );
+	msgElemList->next = NULL;
+
 	//Change type and value to change the msg elem to send
 	((CWMsgElemData *) (msgElemList->data))->type = CW_MSG_ELEMENT_CW_DECRYPT_ER_REPORT_CW_TYPE;
 	((CWMsgElemData *) (msgElemList->data))->value = 0;

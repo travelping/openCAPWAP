@@ -1020,7 +1020,7 @@ CWBool CWAssembleWTPEventRequest(CWProtocolMessage ** messagesPtr,
 	} else
 		msgElems = NULL;
 
-	CWLog("Assembling WTP Event Request...");
+	CWLog("Assembling WTP Event Request... (number of elements: %d)", msgElemCount);
 
 	current = msgElemList;
 	for (i = 0; i < msgElemCount; i++) {
@@ -1059,12 +1059,12 @@ CWBool CWAssembleWTPEventRequest(CWProtocolMessage ** messagesPtr,
 			break;
 #ifdef PA_EXTENSION
 		case CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_BW_CW_TYPE:
-			if (!CWAssembleMsgElemVendorSpecificPayload_generic(&(msgElems[++k]), ((CWMsgElemData *) current->data)->event_request_desc)) {
+			if (!CWAssembleMsgElemVendorSpecificPayload_generic(&(msgElems[++k]), ((CWMsgElemData *) current->data)->msg)) {
 				goto cw_assemble_error;
 			}
 			break;
 		case CW_MSG_ELEMENT_DELETE_STATION_CW_TYPE:
-			if (!CWAssembleMsgElemDeleteStation_generic(&(msgElems[++k]), ((CWMsgElemData *) current->data)->event_request_desc)) {
+			if (!CWAssembleMsgElemDeleteStation_generic(&(msgElems[++k]), ((CWMsgElemData *) current->data)->msg)) {
 				goto cw_assemble_error;
 			}
 			break;
