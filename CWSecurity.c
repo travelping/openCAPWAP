@@ -135,9 +135,9 @@ CWBool CWSecurityInitLib()
 	CW_CREATE_ARRAY_ERR(mutexOpensslBuf,
 			    CRYPTO_num_locks() * sizeof(CWThreadMutex),
 			    CWThreadMutex, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, "Cannot create openssl mutexes");
-	    )
+		);
 
-	    CW_ZERO_MEMORY(mutexOpensslBuf, CRYPTO_num_locks() * sizeof(CWThreadMutex));
+	CW_ZERO_MEMORY(mutexOpensslBuf, CRYPTO_num_locks() * sizeof(CWThreadMutex));
 
 	for (i = 0; i < CRYPTO_num_locks(); i++) {
 

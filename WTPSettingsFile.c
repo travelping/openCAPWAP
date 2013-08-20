@@ -46,17 +46,18 @@ char gBoardReversionNo;
 char *gWtpModelNumber = NULL;
 char *gWtpSerialNumber = NULL;
 
+char *gWtpHardwareVersion = NULL;
+char *gWtpActiveSoftwareVersion = NULL;
+char *gWtpBootVersion = NULL;
+
 int gHostapd_port;
 char *gHostapd_unix_path;
 
-void CWExtractValue(char *start, char **startValue, char **endValue, int *offset)
-{
-	*offset = strspn(start + 1, " \t\n\r");
-	*startValue = start + 1 + *offset;
-
-	*offset = strcspn(*startValue, " \t\n\r");
-	*endValue = *startValue + *offset - 1;
-}
+#define ltrim(s) ({							\
+	while (*s != '\0' && *s == ' ' && *s == '\t' && *s == '\n' && *s == '\r') \
+		s++;							\
+	s;								\
+})
 
 CWBool CWParseSettingsFile()
 {
@@ -70,162 +71,82 @@ CWBool CWParseSettingsFile()
 	while ((line = (char *)CWGetCommand(gSettingsFile)) != NULL) {
 		char *startTag = NULL;
 		char *endTag = NULL;
+		char *Value = NULL;
 
 		if ((startTag = strchr(line, '<')) == NULL) {
 			CW_FREE_OBJECT(line);
 			continue;
 		}
+		startTag++;
 
-		if ((endTag = strchr(line, '>')) == NULL) {
+		if ((endTag = strchr(startTag, '>')) == NULL) {
 			CW_FREE_OBJECT(line);
 			continue;
 		}
+		*endTag++ = '\0';
 
-		if (!strncmp(startTag + 1, "IF_NAME", endTag - startTag - 1)) {
-			char *startValue = NULL;
-			char *endValue = NULL;
-			int offset = 0;
+		Value = ltrim(endTag);
 
-			CWExtractValue(endTag, &startValue, &endValue, &offset);
-
-			CW_CREATE_STRING_ERR(gInterfaceName, offset, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-			    );
-			strncpy(gInterfaceName, startValue, offset);
-			gInterfaceName[offset] = '\0';
+		if (!strcmp(startTag, "IF_NAME")) {
+			CW_CREATE_STRING_FROM_STRING_ERR(gInterfaceName, Value, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+				);
 			CWLog(": %s", gInterfaceName);
-			CW_FREE_OBJECT(line);
-			continue;
 		}
-
-		if (!strncmp(startTag + 1, "WTP_ETH_IF_NAME", endTag - startTag - 1)) {
-			char *startValue = NULL;
-			char *endValue = NULL;
-			int offset = 0;
-
-			CWExtractValue(endTag, &startValue, &endValue, &offset);
-
-			CW_CREATE_STRING_ERR(gEthInterfaceName, offset,
-					     return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-			    );
-			strncpy(gEthInterfaceName, startValue, offset);
-			gEthInterfaceName[offset] = '\0';
+		else if (!strcmp(startTag, "WTP_ETH_IF_NAME")) {
+			CW_CREATE_STRING_FROM_STRING_ERR(gEthInterfaceName, Value, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+				);
 			CWLog(": %s", gEthInterfaceName);
-			CW_FREE_OBJECT(line);
-			continue;
 		}
-
-		if (!strncmp(startTag + 1, "RADIO_0_IF_NAME", endTag - startTag - 1)) {
-			char *startValue = NULL;
-			char *endValue = NULL;
-			int offset = 0;
-
-			CWExtractValue(endTag, &startValue, &endValue, &offset);
-
-			CW_CREATE_STRING_ERR(gRadioInterfaceName_0, offset,
-					     return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-			    );
-			strncpy(gRadioInterfaceName_0, startValue, offset);
-			gRadioInterfaceName_0[offset] = '\0';
+		else if (!strcmp(startTag, "RADIO_0_IF_NAME")) {
+			CW_CREATE_STRING_FROM_STRING_ERR(gRadioInterfaceName_0, Value, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+				);
 			CWLog(": %s", gRadioInterfaceName_0);
-			CW_FREE_OBJECT(line);
-			continue;
 		}
-
-		if (!strncmp(startTag + 1, "BASE_MAC_IF_NAME", endTag - startTag - 1)) {
-			char *startValue = NULL;
-			char *endValue = NULL;
-			int offset = 0;
-
-			CWExtractValue(endTag, &startValue, &endValue, &offset);
-
-			CW_CREATE_STRING_ERR(gBaseMACInterfaceName, offset,
-					     return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-			    );
-			strncpy(gBaseMACInterfaceName, startValue, offset);
-			gBaseMACInterfaceName[offset] = '\0';
+		else if (!strcmp(startTag, "BASE_MAC_IF_NAME")) {
+			CW_CREATE_STRING_FROM_STRING_ERR(gBaseMACInterfaceName, Value, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+				);
 			CWLog(": %s", gBaseMACInterfaceName);
-			CW_FREE_OBJECT(line);
-			continue;
 		}
-
-		if (!strncmp(startTag + 1, "BOARD_REVISION_NO", endTag - startTag - 1)) {
-			char *startValue = NULL;
-			char *endValue = NULL;
-			int offset = 0;
-			char reversion[16];
-
-			CWExtractValue(endTag, &startValue, &endValue, &offset);
-
-			strncpy(reversion, startValue, offset);
-			reversion[offset] = '\0';
-			gBoardReversionNo = atoi(reversion);
+		else if (!strcmp(startTag, "BOARD_REVISION_NO")) {
+			gBoardReversionNo = atoi(Value);
 			CWLog(": %d", gBoardReversionNo);
-			CW_FREE_OBJECT(line);
-			continue;
 		}
-		if (!strncmp(startTag + 1, "WTP_HOSTAPD_PORT", endTag - startTag - 1)) {
-			char *startValue = NULL;
-			char *endValue = NULL;
-			int offset = 0;
-			char port_str[16];
-
-			CWExtractValue(endTag, &startValue, &endValue, &offset);
-
-			strncpy(port_str, startValue, offset);
-			port_str[offset] = '\0';
-			gHostapd_port = atoi(port_str);
+		else if (!strcmp(startTag, "WTP_HOSTAPD_PORT")) {
+			gHostapd_port = atoi(Value);
 			CWLog(": %d", gHostapd_port);
-			CW_FREE_OBJECT(line);
-			continue;
 		}
-		if (!strncmp(startTag + 1, "WTP_HOSTAPD_UNIX_PATH", endTag - startTag - 1)) {
-			char *startValue = NULL;
-			char *endValue = NULL;
-			int offset = 0;
-
-			CWExtractValue(endTag, &startValue, &endValue, &offset);
-
-			CW_CREATE_STRING_ERR(gHostapd_unix_path, offset,
-					     return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-			    );
-			strncpy(gHostapd_unix_path, startValue, offset);
-			gHostapd_unix_path[offset] = '\0';
+		else if (!strcmp(startTag, "WTP_HOSTAPD_UNIX_PATH")) {
+			CW_CREATE_STRING_FROM_STRING_ERR(gHostapd_unix_path, Value, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+				);
 			CWLog(": %s", gHostapd_unix_path);
-			CW_FREE_OBJECT(line);
-			continue;
 		}
-		if (!strncmp(startTag + 1, "WTP_MODEL_NUM", endTag - startTag - 1)) {
-			char *startValue = NULL;
-			char *endValue = NULL;
-			int offset = 0;
-
-			CWExtractValue(endTag, &startValue, &endValue, &offset);
-
-			CW_CREATE_STRING_ERR(gWtpModelNumber, offset,
-					     return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+		else if (!strcmp(startTag, "WTP_MODEL_NUM")) {
+			CW_CREATE_STRING_FROM_STRING_ERR(gWtpModelNumber, Value, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 			    );
-			strncpy(gWtpModelNumber, startValue, offset);
-			gWtpModelNumber[offset] = '\0';
 			CWLog(": %s", gWtpModelNumber);
-			CW_FREE_OBJECT(line);
-			continue;
 		}
-		if (!strncmp(startTag + 1, "WTP_SERIAL_NUM", endTag - startTag - 1)) {
-			char *startValue = NULL;
-			char *endValue = NULL;
-			int offset = 0;
-
-			CWExtractValue(endTag, &startValue, &endValue, &offset);
-
-			CW_CREATE_STRING_ERR(gWtpSerialNumber, offset,
-					     return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-			    );
-			strncpy(gWtpSerialNumber, startValue, offset);
-			gWtpSerialNumber[offset] = '\0';
+		else if (!strcmp(startTag, "WTP_SERIAL_NUM")) {
+			CW_CREATE_STRING_FROM_STRING_ERR(gWtpSerialNumber, Value, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+				);
 			CWLog(": %s", gWtpSerialNumber);
-			CW_FREE_OBJECT(line);
-			continue;
 		}
+		else if (!strcmp(startTag, "WTP_HARDWARE_VERSION")) {
+			CW_CREATE_STRING_FROM_STRING_ERR(gWtpHardwareVersion, Value, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+				);
+			CWLog(": %s", gWtpHardwareVersion);
+		}
+		else if (!strcmp(startTag, "WTP_ACTIVE_SOFTWARE_VERSION")) {
+			CW_CREATE_STRING_FROM_STRING_ERR(gWtpActiveSoftwareVersion, Value, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+				);
+			CWLog(": %s", gWtpActiveSoftwareVersion);
+		}
+		else if (!strcmp(startTag, "WTP_BOOT_VERSION")) {
+			CW_CREATE_STRING_FROM_STRING_ERR(gWtpBootVersion, Value, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+				);
+			CWLog(": %s", gWtpBootVersion);
+		}
+		else
+			CWLog(": unknown Tag: %s = %s", startTag, Value);
 
 		CW_FREE_OBJECT(line);
 	}

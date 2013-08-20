@@ -80,6 +80,8 @@ extern CWSocket gWTPDataSocket;
 
 extern int gWTPPathMTU;
 
+extern struct timeval gEchoLatency;
+
 extern unsigned char gWTPMACMode;
 extern unsigned char gWTPTunnelMode;
 
@@ -87,6 +89,7 @@ extern CWACDescriptor *gCWACList;
 extern CWACInfoValues *gACInfoPtr;
 
 extern int gEchoInterval;
+extern int gCWMaxDiscoveryInterval;
 extern int gWTPStatisticsTimer;
 extern WTPRebootStatisticsInfo gWTPRebootStatistics;
 extern CWWTPRadiosInfo gRadiosInfo;
@@ -103,8 +106,14 @@ extern CWSafeList gEventRequestList;
 extern CWThreadCondition gInterfaceWait;
 extern CWThreadMutex gInterfaceMutex;
 
+extern const char gWtpVersion[];
+
 extern char *gWtpSerialNumber;
 extern char *gWtpModelNumber;
+
+extern char *gWtpHardwareVersion;
+extern char *gWtpActiveSoftwareVersion;
+extern char *gWtpBootVersion;
 
 #ifdef PA_EXTENSION
 extern char *gWwanIccId;

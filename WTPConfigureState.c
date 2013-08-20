@@ -151,14 +151,7 @@ CWBool CWParseConfigureResponseMessage(char *msg, int len, int seqNum, CWProtoco
 	completeMsg.msg = msg;
 	completeMsg.offset = 0;
 
-	valuesPtr->echoRequestTimer = 0;
-	valuesPtr->radioOperationalInfoCount = 0;
-	valuesPtr->radiosDecryptErrorPeriod.radiosCount = 0;
-	valuesPtr->bindingValues = NULL;
-	valuesPtr->ACIPv4ListInfo.ACIPv4ListCount = 0;
-	valuesPtr->ACIPv4ListInfo.ACIPv4List = NULL;
-	valuesPtr->ACIPv6ListInfo.ACIPv6ListCount = 0;
-	valuesPtr->ACIPv6ListInfo.ACIPv6List = NULL;
+	memset(valuesPtr, 0, sizeof(CWProtocolConfigureResponseValues));
 
 	/* error will be handled by the caller */
 	if (!(CWParseControlHeader(&completeMsg, &controlVal)))
@@ -200,7 +193,7 @@ CWBool CWParseConfigureResponseMessage(char *msg, int len, int seqNum, CWProtoco
 				return CW_FALSE;
 			break;
 		case CW_MSG_ELEMENT_CW_TIMERS_CW_TYPE:
-			if (!(CWParseCWTimers(&completeMsg, len, valuesPtr)))
+			if (!(CWParseCWTimers(&completeMsg, len, &valuesPtr->CWTimers)))
 				return CW_FALSE;
 			break;
 		case CW_MSG_ELEMENT_RADIO_OPERAT_STATE_CW_TYPE:
@@ -223,6 +216,52 @@ CWBool CWParseConfigureResponseMessage(char *msg, int len, int seqNum, CWProtoco
 			if (!(CWParseWTPFallback(&completeMsg, len, valuesPtr)))
 				return CW_FALSE;
 			break;
+
+		case CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_BW_CW_TYPE: {
+			unsigned int vendorId = CWProtocolRetrieve32(&completeMsg);
+			len -= 4;
+
+			CWDebugLog("Parsing Vendor Message Element, Vendor: %u", vendorId);
+			switch (vendorId) {
+			case CW_IANA_ENTERPRISE_NUMBER_VENDOR_TRAVELPING: {
+				unsigned short int vendorElemType = CWProtocolRetrieve16(&completeMsg);
+				len -= 2;
+
+				CWDebugLog("Parsing TP Vendor Message Element: %u", vendorElemType);
+				switch (vendorElemType) {
+				case CW_MSG_ELEMENT_TRAVELPING_IEEE_80211_WLAN_HOLD_TIME:
+					CWParseTPIEEE80211WLanHoldTime(&completeMsg, len, &valuesPtr->vendorTP_IEEE80211WLanHoldTime);
+					break;
+
+				case CW_MSG_ELEMENT_TRAVELPING_DATA_CHANNEL_DEAD_INTERVAL:
+					CWParseTPDataChannelDeadInterval(&completeMsg, len, &valuesPtr->vendorTP_DataChannelDeadInterval);
+					break;
+
+				case CW_MSG_ELEMENT_TRAVELPING_AC_JOIN_TIMEOUT:
+					CWParseTPACJoinTimeout(&completeMsg, len, &valuesPtr->vendorTP_ACJoinTimeout);
+					break;
+
+				default:
+					CWLog("unknown TP Vendor Message Element: %u", vendorElemType);
+
+					/* ignore unknown vendor extensions */
+					completeMsg.offset += len;
+					break;
+				}
+				break;
+
+			default:
+				CWLog("unknown Vendor Message Element, Vendor: %u, Element; %u", vendorId, vendorElemType);
+
+				/* ignore unknown vendor extensions */
+				completeMsg.offset += len;
+				break;
+			}
+			}
+
+			break;
+		}
+
 		default:
 			return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Unrecognized Message Element");
 		}
@@ -324,15 +363,21 @@ CWBool CWSaveConfigureResponseMessage(CWProtocolConfigureResponseValues * config
 		}
 	}
 
-	if (configureResponse->echoRequestTimer > 0) {
+	if (configureResponse->vendorTP_DataChannelDeadInterval != 0)
+		gCWNeighborDeadInterval = configureResponse->vendorTP_DataChannelDeadInterval;
 
-		gEchoInterval = configureResponse->echoRequestTimer;
-	}
+	if (configureResponse->vendorTP_ACJoinTimeout != 0)
+		gCWWaitJoin = configureResponse->vendorTP_ACJoinTimeout;
+
+	if (configureResponse->CWTimers.discoveryTimer != 0)
+		gCWMaxDiscoveryInterval = configureResponse->CWTimers.discoveryTimer;
+
+	if (configureResponse->CWTimers.echoRequestTimer > 0)
+		gEchoInterval = configureResponse->CWTimers.echoRequestTimer;
 
 	/*
 	   ""need to be added""
 
-	   int discoveryTimer;
 	   int radioOperationalInfoCount;
 	   CWRadioOperationalInfoValues *radioOperationalInfo;
 	   WTPDecryptErrorReport radiosDecryptErrorPeriod;

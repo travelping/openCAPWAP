@@ -53,6 +53,7 @@ CWBool CWSaveWTPEventResponseMessage(void *WTPEventResp);
 
 CWBool CWAssembleEchoRequest(CWProtocolMessage ** messagesPtr,
 			     int *fragmentsNumPtr, int PMTU, int seqNum, CWList msgElemList);
+CWBool CWParseEchoResponse(char *msg, int len);
 
 CWBool CWParseConfigurationUpdateRequest(char *msg,
 					 int len,
@@ -98,6 +99,8 @@ CWTimerID gCWHeartBeatTimerID;
 CWTimerID gCWKeepAliveTimerID;
 CWTimerID gCWNeighborDeadTimerID;
 CWBool gNeighborDeadTimerSet = CW_FALSE;
+
+struct timeval gEchoLatency = {0,0};
 
 /* record the state of the control and data channel keep alives */
 static enum tRunChannelState {
@@ -626,10 +629,16 @@ CWBool CWWTPManageGenericRunMessage(CWProtocolMessage * msgPtr)
 
 			}
 
-		case CW_MSG_TYPE_VALUE_ECHO_RESPONSE:
-				CWLog("Echo Response received");
-				break;
+		case CW_MSG_TYPE_VALUE_ECHO_RESPONSE: {
+			struct timeval tv;
+			CWLog("Echo Response received");
 
+			if (!CWParseEchoResponse((msgPtr->msg) + (msgPtr->offset), len))
+				return CW_FALSE;
+
+
+			break;
+		}
 		default:
 			/*
 			 * We can't recognize the received Request so
@@ -902,23 +911,29 @@ CWBool CWResetNeighborDeadTimer()
 CWBool CWAssembleEchoRequest(CWProtocolMessage ** messagesPtr,
 			     int *fragmentsNumPtr, int PMTU, int seqNum, CWList msgElemList)
 {
-
+	struct timeval tv;
 	CWProtocolMessage *msgElems = NULL;
-	const int msgElemCount = 0;
+	const int msgElemCount = 1;
 	CWProtocolMessage *msgElemsBinding = NULL;
 	const int msgElemBindingCount = 0;
 
 	if (messagesPtr == NULL || fragmentsNumPtr == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
+	gettimeofday(&tv, NULL);
+
 	CWLog("Assembling Echo Request...");
 
-	if (!(CWAssembleMessage(messagesPtr,
-				fragmentsNumPtr,
-				PMTU,
-				seqNum,
-				CW_MSG_TYPE_VALUE_ECHO_REQUEST,
-				msgElems, msgElemCount, msgElemsBinding, msgElemBindingCount)))
+        CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(msgElems, msgElemCount, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+            );
+
+	if (!CWAssembleMsgElemVendorTPWTPTimestamp(&(msgElems[0]), &tv) ||
+	    !CWAssembleMessage(messagesPtr,
+			       fragmentsNumPtr,
+			       PMTU,
+			       seqNum,
+			       CW_MSG_TYPE_VALUE_ECHO_REQUEST,
+			       msgElems, msgElemCount, msgElemsBinding, msgElemBindingCount))
 		return CW_FALSE;
 
 	CWLog("Echo Request Assembled");
@@ -1385,10 +1400,7 @@ CWBool CWParseConfigurationUpdateRequest(char *msg,
 	completeMsg.msg = msg;
 	completeMsg.offset = 0;
 
-	valuesPtr->bindingValues = NULL;
-	/*Update 2009:
-	   added protocolValues (non-binding) */
-	valuesPtr->protocolValues = NULL;
+	memset(valuesPtr, 0, sizeof(CWProtocolConfigurationUpdateRequestValues));
 
 	/* parse message elements */
 	while (completeMsg.offset < len) {
@@ -1413,10 +1425,65 @@ CWBool CWParseConfigurationUpdateRequest(char *msg,
 			/*Update 2009:
 			   Added case for vendor specific payload
 			   (Used mainly to parse UCI messages)... */
+
+		case CW_MSG_ELEMENT_TIMESTAMP_CW_TYPE:
+			valuesPtr->timeStamp = CWProtocolRetrieve32(&completeMsg);
+			break;
+
+		case CW_MSG_ELEMENT_CW_TIMERS_CW_TYPE:
+			CWParseCWTimers(&completeMsg, elemLen, &valuesPtr->CWTimers);
+			break;
+
+		case CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_BW_CW_TYPE: {
+			unsigned int vendorId = CWProtocolRetrieve32(&completeMsg);
+			elemLen -= 4;
+
+			CWDebugLog("Parsing Vendor Message Element, Vendor: %u", vendorId);
+			switch (vendorId) {
+			case CW_IANA_ENTERPRISE_NUMBER_VENDOR_TRAVELPING: {
+				unsigned short int vendorElemType = CWProtocolRetrieve16(&completeMsg);
+				elemLen -= 2;
+
+				CWDebugLog("Parsing TP Vendor Message Element: %u", vendorElemType);
+				switch (vendorElemType) {
+				case CW_MSG_ELEMENT_TRAVELPING_IEEE_80211_WLAN_HOLD_TIME:
+					CWParseTPIEEE80211WLanHoldTime(&completeMsg, elemLen, &valuesPtr->vendorTP_IEEE80211WLanHoldTime);
+					break;
+
+				case CW_MSG_ELEMENT_TRAVELPING_DATA_CHANNEL_DEAD_INTERVAL:
+					CWParseTPDataChannelDeadInterval(&completeMsg, elemLen, &valuesPtr->vendorTP_DataChannelDeadInterval);
+					break;
+
+				case CW_MSG_ELEMENT_TRAVELPING_AC_JOIN_TIMEOUT:
+					CWParseTPACJoinTimeout(&completeMsg, elemLen, &valuesPtr->vendorTP_ACJoinTimeout);
+					break;
+
+				default:
+					CWLog("unknown TP Vendor Message Element: %u", vendorElemType);
+
+					/* ignore unknown vendor extensions */
+					completeMsg.offset += elemLen;
+					break;
+				}
+				break;
+
+			default:
+				CWLog("unknown Vendor Message Element, Vendor: %u, Element; %u", vendorId, vendorElemType);
+
+				/* ignore unknown vendor extensions */
+				completeMsg.offset += elemLen;
+				break;
+			}
+			}
+
+			break;
+		}
+
 		case CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_CW_TYPE:
 			vendorMsgElemFound = CW_TRUE;
 			completeMsg.offset += elemLen;
 			break;
+
 		default:
 			return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Unrecognized Message Element");
 		}
@@ -1599,6 +1666,92 @@ CWBool CWParseWTPEventResponseMessage(char *msg, int len, int seqNum, void *valu
 	return CW_TRUE;
 }
 
+
+CWBool CWParseEchoResponse(char *msg, int len)
+{
+	CWProtocolMessage completeMsg;
+
+	if (msg == NULL)
+		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
+
+	CWLog("Parsing Echo Response...");
+
+	completeMsg.msg = msg;
+	completeMsg.offset = 0;
+
+	/* parse message elements */
+	while (completeMsg.offset < len) {
+
+		unsigned short int elemType = 0;  /* = CWProtocolRetrieve32(&completeMsg); */
+		unsigned short int elemLen = 0;	  /* = CWProtocolRetrieve16(&completeMsg); */
+
+		CWParseFormatMsgElem(&completeMsg, &elemType, &elemLen);
+
+		CWLog("Parsing Message Element: %u, elemLen: %u", elemType, elemLen);
+
+		switch (elemType) {
+		case CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_BW_CW_TYPE: {
+			unsigned int vendorId = CWProtocolRetrieve32(&completeMsg);
+			elemLen -= 4;
+
+			CWDebugLog("Parsing Vendor Message Element, Vendor: %u", vendorId);
+			switch (vendorId) {
+			case CW_IANA_ENTERPRISE_NUMBER_VENDOR_TRAVELPING: {
+				unsigned short int vendorElemType = CWProtocolRetrieve16(&completeMsg);
+				elemLen -= 2;
+
+				CWDebugLog("Parsing TP Vendor Message Element: %u", vendorElemType);
+				switch (vendorElemType) {
+
+				case CW_MSG_ELEMENT_TRAVELPING_WTP_TIMESTAMP: {
+					struct timeval tv, now;
+
+					if (!CWParseVendorTPWTPTimestamp(&completeMsg, elemLen, &tv))
+						return CW_FALSE;
+
+					gettimeofday(&now, NULL);
+					timersub(&now, &tv, &gEchoLatency);
+
+					CWLog("Echo Latency: %ld.%03ld ms", gEchoLatency.tv_sec * 1000 + gEchoLatency.tv_usec / 1000, gEchoLatency.tv_usec % 1000);
+					break;
+				}
+
+				default:
+					CWLog("ignore TP Vendor Message Element: %u", vendorElemType);
+
+					/* ignore unknown vendor extensions */
+					completeMsg.offset += elemLen;
+					break;
+				}
+				break;
+
+			default:
+				CWLog("ignore Vendor Message Element, Vendor: %u, Element; %u", vendorId, vendorElemType);
+
+				/* ignore unknown vendor extensions */
+				completeMsg.offset += elemLen;
+				break;
+			}
+			}
+
+			break;
+		}
+
+		default:
+			CWLog("ignore Message Element %u", elemType);
+			completeMsg.offset += elemLen;
+			break;
+		}
+	}
+
+	if (completeMsg.offset != len)
+		return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Garbage at the End of the Message");
+
+	CWLog("Echo Response Parsed");
+
+	return CW_TRUE;
+}
+
 /*______________________________________________________________*/
 /*  *******************___SAVE FUNCTIONS___*******************  */
 CWBool CWSaveWTPEventResponseMessage(void *WTPEventResp)
@@ -1665,6 +1818,32 @@ CWBool CWSaveConfigurationUpdateRequest(CWProtocolConfigurationUpdateRequestValu
 		if (!CWSaveVendorMessage(valuesPtr->protocolValues, resultCode))
 			return CW_FALSE;
 	}
+
+	*resultCode = CW_PROTOCOL_SUCCESS;
+
+	if (valuesPtr->timeStamp != 0) {
+		struct timeval tv;
+
+		CWLog("Setting WTP Time");
+
+		tv.tv_sec = (valuesPtr->timeStamp & 0x80000000) ?
+			valuesPtr->timeStamp - 2208988800 : (time_t)2085978496 + valuesPtr->timeStamp;
+		tv.tv_usec = 0;
+		settimeofday(&tv, NULL);
+	}
+
+	if (valuesPtr->vendorTP_DataChannelDeadInterval != 0)
+		gCWNeighborDeadInterval = valuesPtr->vendorTP_DataChannelDeadInterval;
+
+	if (valuesPtr->vendorTP_ACJoinTimeout != 0)
+		gCWWaitJoin = valuesPtr->vendorTP_ACJoinTimeout;
+
+	if (valuesPtr->CWTimers.discoveryTimer != 0)
+		gCWMaxDiscoveryInterval = valuesPtr->CWTimers.discoveryTimer;
+
+	if (valuesPtr->CWTimers.echoRequestTimer != 0)
+		gEchoInterval = valuesPtr->CWTimers.echoRequestTimer;
+
 	return CW_TRUE;
 }
 

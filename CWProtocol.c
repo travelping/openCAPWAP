@@ -1097,3 +1097,32 @@ char *CWParseSessionID(CWProtocolMessage * msgPtr, int len)
 {
 	return CWProtocolRetrieveRawBytes(msgPtr, 16);
 }
+
+CWBool CWParseTPIEEE80211WLanHoldTime(CWProtocolMessage * msgPtr, int len, unsigned short int * valPtr)
+{
+	CWParseMessageElementStart();
+
+	CWProtocolRetrieve8(msgPtr);   // skip RADIO Id
+	CWProtocolRetrieve8(msgPtr);   // skip WLAN Id
+	*valPtr = CWProtocolRetrieve16(msgPtr);
+
+	CWParseMessageElementEnd();
+}
+
+CWBool CWParseTPDataChannelDeadInterval(CWProtocolMessage * msgPtr, int len, unsigned short int * valPtr)
+{
+	CWParseMessageElementStart();
+
+	*valPtr = CWProtocolRetrieve16(msgPtr);
+
+	CWParseMessageElementEnd();
+}
+
+CWBool CWParseTPACJoinTimeout(CWProtocolMessage * msgPtr, int len, unsigned short int * valPtr)
+{
+	CWParseMessageElementStart();
+
+	*valPtr = CWProtocolRetrieve16(msgPtr);
+
+	CWParseMessageElementEnd();
+}

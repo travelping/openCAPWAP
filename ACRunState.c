@@ -1439,8 +1439,8 @@ CWBool CWSaveChangeStateEventRequestMessage(CWProtocolChangeStateEventRequestVal
 		}
 	}
 
-	CW_FREE_OBJECT(valuesPtr->radioOperationalInfo.radios)
-	    CW_FREE_OBJECT(valuesPtr);
+	CW_FREE_OBJECT(valuesPtr->radioOperationalInfo.radios);
+	CW_FREE_OBJECT(valuesPtr);
 
 	return retValue;
 }

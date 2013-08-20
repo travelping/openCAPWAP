@@ -124,37 +124,35 @@ CWBool CWWTPGetVendorInfos(CWWTPVendorInfos * valPtr)
 	if (valPtr == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
-	valPtr->vendorInfosCount = 3;	// we fill 3 information (just the required ones)
+	valPtr->vendorInfosCount = 4;	// we fill 3 information (just the required ones)
 	CW_CREATE_ARRAY_ERR(valPtr->vendorInfos, valPtr->vendorInfosCount, CWWTPVendorInfoValues,
 			    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
-	// my vendor identifier (IANA assigned "SMI Network Management Private Enterprise Code")
-	valPtr->vendorInfos[0].vendorIdentifier = CW_IANA_ENTERPRISE_NUMBER_VENDOR_TRAVELPING;
-	valPtr->vendorInfos[0].type = CW_WTP_HARDWARE_VERSION;
-	valPtr->vendorInfos[0].length = sizeof(u64);	// just one int
-	CW_CREATE_OBJECT_SIZE_ERR(valPtr->vendorInfos[0].valuePtr, valPtr->vendorInfos[0].length,
-				  return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
-	*(u64 *)(valPtr->vendorInfos[0].valuePtr) = host_to_be64(123456);	// HW version
-
-	// my vendor identifier (IANA assigned "SMI Network Management Private Enterprise Code")
-	valPtr->vendorInfos[1].vendorIdentifier = CW_IANA_ENTERPRISE_NUMBER_VENDOR_TRAVELPING;
-	valPtr->vendorInfos[1].type = CW_WTP_SOFTWARE_VERSION;
-	valPtr->vendorInfos[1].length = sizeof(u64);	// just one int
-	CW_CREATE_OBJECT_SIZE_ERR(valPtr->vendorInfos[1].valuePtr, valPtr->vendorInfos[1].length,
-				  return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
-	*(u64 *)(valPtr->vendorInfos[1].valuePtr) = host_to_be64(12347);	// SW version
-
-	// my vendor identifier (IANA assigned "SMI Network Management Private Enterprise Code")
-	valPtr->vendorInfos[2].vendorIdentifier = CW_IANA_ENTERPRISE_NUMBER_VENDOR_TRAVELPING;
-	valPtr->vendorInfos[2].type = CW_BOOT_VERSION;
-	valPtr->vendorInfos[2].length = sizeof(u64);	// just one int
-	CW_CREATE_OBJECT_SIZE_ERR(valPtr->vendorInfos[2].valuePtr, valPtr->vendorInfos[2].length,
-				  return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
-	*(u64 *)(valPtr->vendorInfos[2].valuePtr) = host_to_be64(1234568);	// Boot version
+	valPtr->vendorInfos[0] = (CWWTPVendorInfoValues){
+		.vendorIdentifier = 0,
+		.type             = CW_WTP_HARDWARE_VERSION,
+		.length           = strlen(gWtpHardwareVersion),
+		.valuePtr         = gWtpHardwareVersion
+	};
+	valPtr->vendorInfos[1] = (CWWTPVendorInfoValues){
+		.vendorIdentifier = 0,
+		.type             = CW_WTP_SOFTWARE_VERSION,
+		.length           = strlen(gWtpActiveSoftwareVersion),
+		.valuePtr         = gWtpActiveSoftwareVersion
+	};
+	valPtr->vendorInfos[2] = (CWWTPVendorInfoValues){
+		.vendorIdentifier = 0,
+		.type             = CW_BOOT_VERSION,
+		.length           = strlen(gWtpBootVersion),
+		.valuePtr         = gWtpBootVersion
+	};
+	valPtr->vendorInfos[3] = (CWWTPVendorInfoValues){
+		.vendorIdentifier = CW_IANA_ENTERPRISE_NUMBER_VENDOR_TRAVELPING,
+		.type             = TP_WTP_VERSION,
+		.length           = strlen(gWtpVersion),
+		.valuePtr         = gWtpVersion
+	};
 
 	return CW_TRUE;
 }
@@ -165,11 +163,6 @@ __inline__ void CWWTPDestroyVendorInfos(CWWTPVendorInfos * valPtr)
 
 	if (valPtr == NULL)
 		return;
-
-	for (i = 0; i < valPtr->vendorInfosCount; i++) {
-		CW_FREE_OBJECT((valPtr->vendorInfos)[i].valuePtr);
-	}
-
 	CW_FREE_OBJECT(valPtr->vendorInfos);
 }
 

@@ -60,36 +60,28 @@ char *CWFgets(char *buf, int bufSize, FILE * f)
 	return buf;
 }
 
+#define rtrim(s)							\
+	({								\
+		char *c = (s) + strlen((s)) - 1;			\
+		while ((c > (s)) && (*c == '\n' || *c == '\r' || *c == '\t' || *c == ' ')) \
+			*c-- = '\0';					\
+		s;							\
+	})
+
 /*
  * Get one "useful" (not a comment, not blank) line from the config file
  */
 char *CWGetCommand(FILE * configFile)
 {
+	char buf[CW_BUFFER_SIZE];
 
-	char *buff = NULL;
-	char *command = NULL;
-	char *ret = NULL;
+	do {
+		if (CWFgets(buf, sizeof(buf), configFile) == NULL)
+			return NULL;
+		rtrim(buf);
+	} while (buf[0] == '#' || buf[0] == '\0');	/* skip comments and empty lines */
 
-	CW_CREATE_STRING_ERR(buff, CW_BUFFER_SIZE, return NULL;
-	    );
-
-	/* skip comments and blank lines */
-	while (((ret = CWFgets(buff, CW_BUFFER_SIZE, configFile)) != NULL) &&
-	       (buff[0] == '\n' || buff[0] == '\r' || buff[0] == '#')) ;
-
-	if (buff != NULL && ret != NULL) {
-
-		int len = strlen(buff);
-		buff[len - 1] = '\0';	/* remove newline */
-
-		CW_CREATE_STRING_ERR(command, len - 1, return NULL;
-		    );
-		strcpy(command, buff);
-	}
-
-	CW_FREE_OBJECT(buff);
-
-	return command;
+	return CW_CREATE_STRING_FROM_STRING(buf);
 }
 
 /*
