@@ -90,7 +90,6 @@ static void CWWTPHeartBeatTimerExpiredHandler(void *arg);
 static void CWWTPKeepAliveDataTimerExpiredHandler(void *arg);
 static void CWWTPNeighborDeadTimerExpired(void *arg);
 static CWBool CWResetHeartbeatTimer();
-static CWBool CWStartDataChannelKeepAlive();
 static CWBool CWStopDataChannelKeepAlive();
 static CWBool CWResetDataChannelKeepAlive();
 static CWBool CWResetNeighborDeadTimer();
@@ -192,7 +191,6 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveDataPacket(void *arg)
 	int n, readBytes;
 	char buf[CW_BUFFER_SIZE];
 	struct sockaddr_ll rawSockaddr;
-	CWSocket sockDTLS = (long) arg;
 	CWNetworkLev4Address addr;
 	CWList fragments = NULL;
 	CWProtocolMessage msgPtr;
@@ -334,7 +332,7 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveDataPacket(void *arg)
 				    || isEAPOL_Frame(msgPtr.msg, msgPtr.offset)) {
 					CWDebugLog("Got 802.11 Management Packet (stype=%d) from AC(hostapd) len:%d",
 						   WLAN_FC_GET_STYPE(fc), msgPtr.offset);
-					CWWTPsend_data_to_hostapd(msgPtr.msg, msgPtr.offset);
+					CWWTPsend_data_to_hostapd((u8 *)msgPtr.msg, msgPtr.offset);
 
 				} else if (WLAN_FC_GET_TYPE(fc) == WLAN_FC_TYPE_DATA) {
 
@@ -342,13 +340,13 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveDataPacket(void *arg)
 
 						CWDebugLog("Got 802.11 Data Packet (stype=%d) from AC(hostapd) len:%d",
 							   WLAN_FC_GET_STYPE(fc), msgPtr.offset);
-						CWWTPsend_data_to_hostapd(msgPtr.msg, msgPtr.offset);
+						CWWTPsend_data_to_hostapd((u8 *)msgPtr.msg, msgPtr.offset);
 
 					} else {
 
 						CWDebugLog("Got 802.11 Data Packet (stype=%d) from AC(hostapd) len:%d",
 							   WLAN_FC_GET_STYPE(fc), msgPtr.offset);
-						CWWTPSendFrame(msgPtr.msg, msgPtr.offset);
+						CWWTPSendFrame((u8 *)msgPtr.msg, msgPtr.offset);
 
 					}
 
@@ -844,16 +842,6 @@ CWBool CWResetHeartbeatTimer()
 		return CW_FALSE;
 
 	CWDebugLog("Echo Heartbeat Timer Reset with %d seconds", gEchoInterval);
-	return CW_TRUE;
-}
-
-CWBool CWStartDataChannelKeepAlive()
-{
-	gCWKeepAliveTimerID = timer_add(gDataChannelKeepAliveInterval, 0, &CWWTPKeepAliveDataTimerExpiredHandler, NULL);
-	if (gCWKeepAliveTimerID == -1)
-		return CW_FALSE;
-
-	CWDebugLog("DataChannelKeepAlive Timer Started with %d seconds", gDataChannelKeepAliveInterval);
 	return CW_TRUE;
 }
 
