@@ -380,8 +380,12 @@ int main(int argc, char * const argv[])
 
 	printf("WTP, v%s, %s, %s\n", PACKAGE_VERSION, __DATE__, __TIME__);
 
-	while (-1 != (c = getopt(argc, argv, "hfc:s:"))) {
+	while (-1 != (c = getopt(argc, argv, "dhfc:s:"))) {
 		switch(c) {
+		case 'd':
+			gEnabledLog = 1;
+			break;
+
 		case 'h':
 			usage();
 			exit(1);
