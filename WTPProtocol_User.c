@@ -477,7 +477,7 @@ int initWTPSessionID(char *sessionID)
 	for (i = 0; i < 16; i++) {
 		if (i % 16 == 0)
 			printf("\n%04x:   ", i);
-		printf("%02x:", buffer[i]);
+		printf("%02x:", (unsigned char)buffer[i]);
 	}
 	printf("\n");
 
