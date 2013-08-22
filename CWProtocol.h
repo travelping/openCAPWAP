@@ -662,16 +662,63 @@ void CWWTPResetRadioStatistics(WTPRadioStatisticsInfo * radioStatistics);
 void CWProtocolDestroyMsgElemData(void *f);
 void CWFreeMessageFragments(CWProtocolMessage * messages, int fragmentsNum);
 
-void CWProtocolStore8(CWProtocolMessage * msgPtr, unsigned char val);
-void CWProtocolStore16(CWProtocolMessage * msgPtr, unsigned short val);
-void CWProtocolStore32(CWProtocolMessage * msgPtr, unsigned int val);
+// stores 8 bits in the message, increments the current offset in bytes
+static inline void CWProtocolStore8(CWProtocolMessage * msgPtr, unsigned char val)
+{
+	*(unsigned char *)(msgPtr->msg + msgPtr->offset) = val;
+	msgPtr->offset += 1;
+}
+
+// stores 16 bits in the message, increments the current offset in bytes
+static inline void CWProtocolStore16(CWProtocolMessage * msgPtr, unsigned short val)
+{
+	*(unsigned short *)(msgPtr->msg + msgPtr->offset) = htons(val);
+	msgPtr->offset += 2;
+}
+
+// stores 32 bits in the message, increments the current offset in bytes
+static inline void CWProtocolStore32(CWProtocolMessage * msgPtr, unsigned int val)
+{
+	*(unsigned int *)(msgPtr->msg + msgPtr->offset) = htonl(val);
+	msgPtr->offset += 4;
+}
+
 void CWProtocolStoreStr(CWProtocolMessage * msgPtr, char *str);
 void CWProtocolStoreMessage(CWProtocolMessage * msgPtr, CWProtocolMessage * msgToStorePtr);
 void CWProtocolStoreRawBytes(CWProtocolMessage * msgPtr, char *bytes, int len);
 
-unsigned char CWProtocolRetrieve8(CWProtocolMessage * msgPtr);
-unsigned short CWProtocolRetrieve16(CWProtocolMessage * msgPtr);
-unsigned int CWProtocolRetrieve32(CWProtocolMessage * msgPtr);
+static inline char *CWProtocolRetrievePtr(CWProtocolMessage * msgPtr)
+{
+	return msgPtr->msg + msgPtr->offset;
+}
+
+// retrieves 8 bits from the message, increments the current offset in bytes.
+static inline unsigned char CWProtocolRetrieve8(CWProtocolMessage * msgPtr)
+{
+	unsigned char val = *(unsigned char *)(msgPtr->msg + msgPtr->offset);
+	msgPtr->offset += 1;
+
+	return val;
+}
+
+// retrieves 16 bits from the message, increments the current offset in bytes.
+static inline unsigned short CWProtocolRetrieve16(CWProtocolMessage * msgPtr)
+{
+	unsigned short val = ntohs(*(unsigned short *)(msgPtr->msg + msgPtr->offset));
+	msgPtr->offset += 2;
+
+	return val;
+}
+
+// retrieves 32 bits from the message, increments the current offset in bytes.
+static inline unsigned int CWProtocolRetrieve32(CWProtocolMessage * msgPtr)
+{
+	unsigned int val = ntohl(*(unsigned int *)(msgPtr->msg + msgPtr->offset));
+	msgPtr->offset += 4;
+
+	return val;
+}
+
 char *CWProtocolRetrieveStr(CWProtocolMessage * msgPtr, int len);
 char *CWProtocolRetrieveRawBytes(CWProtocolMessage * msgPtr, int len);
 

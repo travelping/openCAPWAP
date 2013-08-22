@@ -39,29 +39,6 @@ static const int gMaxDTLSHeaderSize = 25;	// see http://crypto.stanford.edu/~nag
 static const int gMaxCAPWAPHeaderSize = 8;	// note: this include optional Wireless field
 char gRADIO_MAC[6];		// note: this include optional Wireless field
 
-// stores 8 bits in the message, increments the current offset in bytes
-void CWProtocolStore8(CWProtocolMessage * msgPtr, unsigned char val)
-{
-	CW_COPY_MEMORY(&((msgPtr->msg)[(msgPtr->offset)]), &(val), 1);
-	(msgPtr->offset) += 1;
-}
-
-// stores 16 bits in the message, increments the current offset in bytes
-void CWProtocolStore16(CWProtocolMessage * msgPtr, unsigned short val)
-{
-	val = htons(val);
-	CW_COPY_MEMORY(&((msgPtr->msg)[(msgPtr->offset)]), &(val), 2);
-	(msgPtr->offset) += 2;
-}
-
-// stores 32 bits in the message, increments the current offset in bytes
-void CWProtocolStore32(CWProtocolMessage * msgPtr, unsigned int val)
-{
-	val = htonl(val);
-	CW_COPY_MEMORY(&((msgPtr->msg)[(msgPtr->offset)]), &(val), 4);
-	(msgPtr->offset) += 4;
-}
-
 // stores a string in the message, increments the current offset in bytes. Doesn't store
 // the '\0' final character.
 void CWProtocolStoreStr(CWProtocolMessage * msgPtr, char *str)
@@ -83,38 +60,6 @@ void CWProtocolStoreRawBytes(CWProtocolMessage * msgPtr, char *bytes, int len)
 {
 	CW_COPY_MEMORY(&((msgPtr->msg)[(msgPtr->offset)]), bytes, len);
 	(msgPtr->offset) += len;
-}
-
-// retrieves 8 bits from the message, increments the current offset in bytes.
-unsigned char CWProtocolRetrieve8(CWProtocolMessage * msgPtr)
-{
-	unsigned char val;
-
-	CW_COPY_MEMORY(&val, &((msgPtr->msg)[(msgPtr->offset)]), 1);
-	(msgPtr->offset) += 1;
-
-	return val; }
-
-// retrieves 16 bits from the message, increments the current offset in bytes.
-unsigned short CWProtocolRetrieve16(CWProtocolMessage * msgPtr)
-{
-	unsigned short val;
-
-	CW_COPY_MEMORY(&val, &((msgPtr->msg)[(msgPtr->offset)]), 2);
-	(msgPtr->offset) += 2;
-
-	return ntohs(val);
-}
-
-// retrieves 32 bits from the message, increments the current offset in bytes.
-unsigned int CWProtocolRetrieve32(CWProtocolMessage * msgPtr)
-{
-	unsigned int val;
-
-	CW_COPY_MEMORY(&val, &((msgPtr->msg)[(msgPtr->offset)]), 4);
-	(msgPtr->offset) += 4;
-
-	return ntohl(val);
 }
 
 // retrieves a string (not null-terminated) from the message, increments the current offset in bytes.
