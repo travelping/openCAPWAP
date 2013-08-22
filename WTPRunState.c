@@ -1282,7 +1282,7 @@ CWBool CWParseVendorMessage(char *msg, int len, void **valuesPtr)
 	completeMsg.msg = msg;
 	completeMsg.offset = 0;
 
-	CWProtocolVendorSpecificValues *vendPtr;
+	CWProtocolVendorSpecificValues *vendPtr = NULL;
 
 	// parse message elements
 	while (completeMsg.offset < len) {
@@ -1407,14 +1407,12 @@ CWBool CWParseConfigurationUpdateRequest(char *msg,
 
 		case CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_BW_CW_TYPE: {
 			unsigned int vendorId = CWProtocolRetrieve32(&completeMsg);
-			elemLen -= 4;
+			unsigned short int vendorElemType = CWProtocolRetrieve16(&completeMsg);
+			elemLen -= 6;
 
-			CWDebugLog("Parsing Vendor Message Element, Vendor: %u", vendorId);
+			CWDebugLog("Parsing Vendor Message Element, Vendor: %u, Element: %u", vendorId, vendorElemType);
 			switch (vendorId) {
 			case CW_IANA_ENTERPRISE_NUMBER_VENDOR_TRAVELPING: {
-				unsigned short int vendorElemType = CWProtocolRetrieve16(&completeMsg);
-				elemLen -= 2;
-
 				CWDebugLog("Parsing TP Vendor Message Element: %u", vendorElemType);
 				switch (vendorElemType) {
 				case CW_MSG_ELEMENT_TRAVELPING_IEEE_80211_WLAN_HOLD_TIME:
@@ -1448,7 +1446,7 @@ CWBool CWParseConfigurationUpdateRequest(char *msg,
 				break;
 
 			default:
-				CWLog("unknown Vendor Message Element, Vendor: %u, Element; %u", vendorId, vendorElemType);
+				CWLog("unknown Vendor Message Element, Vendor: %u, Element: %u", vendorId, vendorElemType);
 
 				/* ignore unknown vendor extensions */
 				completeMsg.offset += elemLen;
@@ -1672,12 +1670,12 @@ CWBool CWParseEchoResponse(char *msg, int len)
 		switch (elemType) {
 		case CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_BW_CW_TYPE: {
 			unsigned int vendorId = CWProtocolRetrieve32(&completeMsg);
-			elemLen -= 4;
+			unsigned short int vendorElemType = CWProtocolRetrieve16(&completeMsg);
+			elemLen -= 6;
 
-			CWDebugLog("Parsing Vendor Message Element, Vendor: %u", vendorId);
+			CWDebugLog("Parsing Vendor Message Element, Vendor: %u, Element: %u", vendorId, vendorElemType);
 			switch (vendorId) {
 			case CW_IANA_ENTERPRISE_NUMBER_VENDOR_TRAVELPING: {
-				unsigned short int vendorElemType = CWProtocolRetrieve16(&completeMsg);
 				elemLen -= 2;
 
 				CWDebugLog("Parsing TP Vendor Message Element: %u", vendorElemType);
@@ -1706,7 +1704,7 @@ CWBool CWParseEchoResponse(char *msg, int len)
 				break;
 
 			default:
-				CWLog("ignore Vendor Message Element, Vendor: %u, Element; %u", vendorId, vendorElemType);
+				CWLog("ignore Vendor Message Element, Vendor: %u, Element: %u", vendorId, vendorElemType);
 
 				/* ignore unknown vendor extensions */
 				completeMsg.offset += elemLen;

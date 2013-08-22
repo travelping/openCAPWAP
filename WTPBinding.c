@@ -533,8 +533,8 @@ CWBool CWBindingParseConfigurationUpdateRequest(char *msg, int len, void **value
 	completeMsg.msg = msg;
 	completeMsg.offset = 0;
 
-	CWBindingConfigurationUpdateRequestValues *auxBindingPtr;
-	CWBindingConfigurationUpdateRequestValuesOFDM *ofdmBindingPtr;
+	CWBindingConfigurationUpdateRequestValues *auxBindingPtr = NULL;
+	CWBindingConfigurationUpdateRequestValuesOFDM *ofdmBindingPtr = NULL;
 
 	// parse message elements
 	while (completeMsg.offset < len) {

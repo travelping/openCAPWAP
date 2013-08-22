@@ -338,8 +338,8 @@ CWBool CWAssembleVendorMsgElemResultCodeWithPayload(CWProtocolMessage * msgPtr, 
 
 	int payloadSize = 0;
 
-	CWVendorUciValues *uciPayload;
-	CWVendorWumValues *wumPayload;
+	CWVendorUciValues *uciPayload = NULL;
+	CWVendorWumValues *wumPayload = NULL;
 
 	switch (payload->vendorPayloadType) {
 	case CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_UCI:

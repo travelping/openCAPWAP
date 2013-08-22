@@ -905,7 +905,7 @@ CWBool CWSaveConfigurationUpdateResponseMessage(CWProtocolResultCode resultCode,
 
 	if (vendValues != NULL) {
 		char *responseBuffer;
-		int socketIndex, payloadSize, headerSize, netWTPIndex, netresultCode, netpayloadSize;
+		int socketIndex, payloadSize = 0, headerSize, netWTPIndex, netresultCode, netpayloadSize;
 
 		/********************************
 		 *Payload Management        *

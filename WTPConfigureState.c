@@ -220,14 +220,12 @@ CWBool CWParseConfigureResponseMessage(char *msg, int len, int seqNum, CWProtoco
 
 		case CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_BW_CW_TYPE: {
 			unsigned int vendorId = CWProtocolRetrieve32(&completeMsg);
-			len -= 4;
+			unsigned short int vendorElemType = CWProtocolRetrieve16(&completeMsg);
+			len -= 6;
 
-			CWDebugLog("Parsing Vendor Message Element, Vendor: %u", vendorId);
+			CWDebugLog("Parsing Vendor Message Element, Vendor: %u, Element: %u", vendorId, vendorElemType);
 			switch (vendorId) {
 			case CW_IANA_ENTERPRISE_NUMBER_VENDOR_TRAVELPING: {
-				unsigned short int vendorElemType = CWProtocolRetrieve16(&completeMsg);
-				len -= 2;
-
 				CWDebugLog("Parsing TP Vendor Message Element: %u", vendorElemType);
 				switch (vendorElemType) {
 				case CW_MSG_ELEMENT_TRAVELPING_IEEE_80211_WLAN_HOLD_TIME:
@@ -259,14 +257,14 @@ CWBool CWParseConfigureResponseMessage(char *msg, int len, int seqNum, CWProtoco
 					break;
 				}
 				break;
+			}
 
 			default:
-				CWLog("unknown Vendor Message Element, Vendor: %u, Element; %u", vendorId, vendorElemType);
+				CWLog("unknown Vendor Message Element, Vendor: %u, Element: %u", vendorId, vendorElemType);
 
 				/* ignore unknown vendor extensions */
 				completeMsg.offset += len;
 				break;
-			}
 			}
 
 			break;
