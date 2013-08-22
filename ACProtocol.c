@@ -784,7 +784,7 @@ CWBool CWParseWTPRadioInformation(CWProtocolMessage * msgPtr, int len, unsigned 
 {
 
 	CWParseMessageElementStart();
-	int RadioID;
+	__attribute__ ((unused)) int RadioID;			/* TODO: support multiple radios */
 
 	RadioID = CWProtocolRetrieve8(msgPtr);	// Radio ID
 	CWProtocolRetrieve8(msgPtr);	// Res
@@ -800,7 +800,7 @@ CWBool CWParseWTPSupportedRates(CWProtocolMessage * msgPtr, int len, unsigned ch
 {
 
 	CWParseMessageElementStart();
-	int RadioID;
+	__attribute__ ((unused)) int RadioID;			/* TODO: support multiple radios */
 	unsigned char sup_rates[8];
 
 	RadioID = CWProtocolRetrieve8(msgPtr);
@@ -823,7 +823,7 @@ CWBool CWParseWTPMultiDomainCapability(CWProtocolMessage * msgPtr, int len, char
 {
 
 	CWParseMessageElementStart();
-	int RadioID;
+	__attribute__ ((unused)) int RadioID;			/* TODO: support multiple radios */
 	unsigned char sup_cap[6];
 
 	RadioID = CWProtocolRetrieve8(msgPtr);

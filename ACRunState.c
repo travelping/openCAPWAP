@@ -1194,7 +1194,7 @@ CWBool CWSaveWTPEventRequestMessage(CWProtocolWTPEventRequestValues * WTPEventRe
 	if ((WTPEventRequest->WTPOperationalStatisticsCount) > 0) {
 
 		int i, k;
-		CWBool found = CW_FALSE;
+		__attribute__ ((unused)) CWBool found = CW_FALSE;		/* TODO: non-functional code, needs cleanup */
 
 		for (i = 0; i < (WTPEventRequest->WTPOperationalStatisticsCount); i++) {
 
@@ -1229,7 +1229,7 @@ CWBool CWSaveWTPEventRequestMessage(CWProtocolWTPEventRequestValues * WTPEventRe
 	if ((WTPEventRequest->WTPRadioStatisticsCount) > 0) {
 
 		int i, k;
-		CWBool found;
+		__attribute__ ((unused)) CWBool found = CW_FALSE;		/* TODO: non-functional code, needs cleanup */
 
 		for (i = 0; i < (WTPEventRequest->WTPRadioStatisticsCount); i++) {
 			found = CW_FALSE;

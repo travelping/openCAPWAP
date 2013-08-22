@@ -947,51 +947,35 @@ CWBool CWParseACDescriptor(CWProtocolMessage * msgPtr, int len, CWACInfoValues *
 	CWParseMessageElementStart();
 
 	valPtr->stations = CWProtocolRetrieve16(msgPtr);
-//  CWDebugLog("AC Descriptor Stations: %d", valPtr->stations);
-
 	valPtr->limit = CWProtocolRetrieve16(msgPtr);
-//  CWDebugLog("AC Descriptor Limit: %d", valPtr->limit);
-
 	valPtr->activeWTPs = CWProtocolRetrieve16(msgPtr);
-//  CWDebugLog("AC Descriptor Active WTPs: %d", valPtr->activeWTPs);
-
 	valPtr->maxWTPs = CWProtocolRetrieve16(msgPtr);
-//  CWDebugLog("AC Descriptor Max WTPs: %d",    valPtr->maxWTPs);
-
 	valPtr->security = CWProtocolRetrieve8(msgPtr);
-//  CWDebugLog("AC Descriptor Security: %d",    valPtr->security);
-
 	valPtr->RMACField = CWProtocolRetrieve8(msgPtr);
-//  CWDebugLog("AC Descriptor Radio MAC Field: %d", valPtr->security);
+	CWProtocolRetrieve8(msgPtr);					/* Reserved */
+	valPtr->DTLSPolicy = CWProtocolRetrieve8(msgPtr);		/* DTLS Policy */
 
-//  valPtr->WirelessField= CWProtocolRetrieve8(msgPtr);
-//  CWDebugLog("AC Descriptor Wireless Field: %d",  valPtr->security);
-
-	CWProtocolRetrieve8(msgPtr);	//Reserved
-
-	valPtr->DTLSPolicy = CWProtocolRetrieve8(msgPtr);	// DTLS Policy
-//  CWDebugLog("DTLS Policy: %d",   valPtr->DTLSPolicy);
+#if 0
+	CWDebugLog("AC Descriptor Stations: %d",        valPtr->stations);
+	CWDebugLog("AC Descriptor Limit: %d",           valPtr->limit);
+	CWDebugLog("AC Descriptor Active WTPs: %d",     valPtr->activeWTPs);
+	CWDebugLog("AC Descriptor Max WTPs: %d",        valPtr->maxWTPs);
+	CWDebugLog("AC Descriptor Security: %d",        valPtr->security);
+	CWDebugLog("AC Descriptor Radio MAC Field: %d", valPtr->RMACField);
+	CWDebugLog("AC Descriptor Wireless Field: %d",  valPtr->security);
+	CWDebugLog("AC Descriptor DTLS Policy: %d",     valPtr->DTLSPolicy);
+#endif
 
 	valPtr->vendorInfos.vendorInfosCount = 0;
 
 	theOffset = msgPtr->offset;
 
 	// see how many vendor ID we have in the message
-	while ((msgPtr->offset - oldOffset) < len) {	// oldOffset stores msgPtr->offset's value at the beginning of this function.
-		// See the definition of the CWParseMessageElementStart() macro.
-		int tmp, id = 0, type = 0;
+	while ((msgPtr->offset - oldOffset) < len) {
+		CWProtocolRetrieve32(msgPtr);				/* Id */
+		CWProtocolRetrieve16(msgPtr);				/* Type */
 
-		//CWDebugLog("differenza:%d, offset:%d, oldOffset:%d", (msgPtr->offset-oldOffset), (msgPtr->offset), oldOffset);
-
-		id = CWProtocolRetrieve32(msgPtr);
-//      CWDebugLog("ID: %d", id); // ID
-
-		type = CWProtocolRetrieve16(msgPtr);
-//      CWDebugLog("TYPE: %d",type); // type
-
-		tmp = CWProtocolRetrieve16(msgPtr);
-		msgPtr->offset += tmp;	// len
-//      CWDebugLog("offset %d", msgPtr->offset);
+		msgPtr->offset += CWProtocolRetrieve16(msgPtr);		/* Length */
 		valPtr->vendorInfos.vendorInfosCount++;
 	}
 
@@ -1001,10 +985,13 @@ CWBool CWParseACDescriptor(CWProtocolMessage * msgPtr, int len, CWACInfoValues *
 	CW_CREATE_ARRAY_ERR(valPtr->vendorInfos.vendorInfos, valPtr->vendorInfos.vendorInfosCount, CWACVendorInfoValues,
 			    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
-//  CWDebugLog("len %d", len);
-//  CWDebugLog("vendorInfosCount %d", valPtr->vendorInfos.vendorInfosCount);
+
+#if 0
+	CWDebugLog("len %d", len);
+	CWDebugLog("vendorInfosCount %d", valPtr->vendorInfos.vendorInfosCount);
+#endif
+
 	for (i = 0; i < valPtr->vendorInfos.vendorInfosCount; i++) {
-//      CWDebugLog("vendorInfosCount %d vs %d", i, valPtr->vendorInfos.vendorInfosCount);
 		(valPtr->vendorInfos.vendorInfos)[i].vendorIdentifier = CWProtocolRetrieve32(msgPtr);
 		(valPtr->vendorInfos.vendorInfos)[i].type = CWProtocolRetrieve16(msgPtr);
 		(valPtr->vendorInfos.vendorInfos)[i].length = CWProtocolRetrieve16(msgPtr);
@@ -1018,11 +1005,15 @@ CWBool CWParseACDescriptor(CWProtocolMessage * msgPtr, int len, CWACInfoValues *
 			*((valPtr->vendorInfos.vendorInfos)[i].valuePtr) =
 			    ntohl(*((valPtr->vendorInfos.vendorInfos)[i].valuePtr));
 		}
-//      CWDebugLog("AC Descriptor Vendor ID: %d", (valPtr->vendorInfos.vendorInfos)[i].vendorIdentifier);
-//      CWDebugLog("AC Descriptor Type: %d", (valPtr->vendorInfos.vendorInfos)[i].type);
-//      CWDebugLog("AC Descriptor Value: %d", *((valPtr->vendorInfos.vendorInfos)[i].valuePtr));
+
+#if 0
+		CWDebugLog("vendorInfosCount %d vs %d", i, valPtr->vendorInfos.vendorInfosCount);
+		CWDebugLog("AC Descriptor Vendor ID: %d", (valPtr->vendorInfos.vendorInfos)[i].vendorIdentifier);
+		CWDebugLog("AC Descriptor Type: %d", (valPtr->vendorInfos.vendorInfos)[i].type);
+		CWDebugLog("AC Descriptor Value: %d", *((valPtr->vendorInfos.vendorInfos)[i].valuePtr));
+#endif
 	}
-//  CWDebugLog("AC Descriptor Out");
+
 	CWParseMessageElementEnd();
 }
 
@@ -1091,7 +1082,8 @@ CWBool CWParseACIPv6List(CWProtocolMessage * msgPtr, int len, ACIPv6ListValues *
 
 CWBool CWParseDeleteStation(CWProtocolMessage * msgPtr, int len)
 {
-	int radioID = 0, Length = 0;
+	__attribute__ ((unused)) int radioID = 0;			/* TODO: support multiple radios */
+	int Length = 0;
 	unsigned char *StationMacAddress;
 
 	//CWParseMessageElementStart();  sostituire al posto delle righe successive quando passerò valPtr alla funzione CWarseAddStation
@@ -1203,7 +1195,8 @@ CWBool CWParseAddWLAN(CWProtocolMessage * msgPtr, int len)
 
 CWBool CWParseAddStation(CWProtocolMessage * msgPtr, int len)
 {
-	int radioID = 0, Length = 0;
+	__attribute__ ((unused)) int radioID = 0;			/* TODO: support multiple radios */
+	int Length = 0;
 	unsigned char *StationMacAddress;
 
 	//CWParseMessageElementStart();  sostituire al posto delle righe successive quando passerò valPtr alla funzione CWarseAddStation

@@ -128,7 +128,7 @@ CWBool CWParseVendorPayload(CWProtocolMessage * msgPtr, int len, CWProtocolVendo
 		return CW_FALSE;	// will be handled by the caller
 	}
 
-	return CW_TRUE;
+	CWParseMessageElementEnd();
 }
 
 /************************************************************************

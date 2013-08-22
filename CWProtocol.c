@@ -894,28 +894,25 @@ CWBool CWParseTransportHeader(CWProtocolMessage * msgPtr, CWProtocolTransportHea
 // Parse Control Header
 CWBool CWParseControlHeader(CWProtocolMessage * msgPtr, CWControlHeaderValues * valPtr)
 {
-	unsigned char flags = 0;
+	unsigned char flags;
 
 	if (msgPtr == NULL || valPtr == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
-//  CWDebugLog("Parse Control Header");
 	valPtr->messageTypeValue = CWProtocolRetrieve32(msgPtr);
-//  CWDebugLog("MESSAGE_TYPE: %u",  valPtr->messageTypeValue);
-
 	valPtr->seqNum = CWProtocolRetrieve8(msgPtr);
-//  CWDebugLog("SEQUENCE_NUMBER: %u", valPtr->seqNum );
-
 	valPtr->msgElemsLen = CWProtocolRetrieve16(msgPtr);
-//  CWDebugLog("MESSAGE_ELEMENT_LENGTH: %u", valPtr->msgElemsLen );
+	if ((flags = CWProtocolRetrieve8(msgPtr)) != 0)			/* Flags, should be 0 */
+		CWLog("CWParseControlHeader, Flags should be 0 (zero), actual value: %02x", flags);
 
-	flags = CWProtocolRetrieve8(msgPtr);
-//  CWDebugLog("FLAGS: %u", flags);
-
-//  valPtr->timestamp = CWProtocolRetrieve32(msgPtr);
-//  CWDebugLog("TIME_STAMP: %u",    valPtr->timestamp);
-
+#if 0
+	CWDebugLog("Parse Control Header");
+	CWDebugLog("MESSAGE_TYPE: %u",  valPtr->messageTypeValue);
+	CWDebugLog("SEQUENCE_NUMBER: %u", valPtr->seqNum );
+	CWDebugLog("MESSAGE_ELEMENT_LENGTH: %u", valPtr->msgElemsLen );
+	CWDebugLog("FLAGS: %u", flags);
 	CWDebugLog(NULL);
+#endif
 
 	return CW_TRUE;
 }

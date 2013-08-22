@@ -186,7 +186,7 @@ int isEAPOL_Frame(unsigned char *buf, unsigned int len)
 
 CW_THREAD_RETURN_TYPE CWWTPReceiveDataPacket(void *arg)
 {
-	int n, readBytes;
+	int readBytes;
 	char buf[CW_BUFFER_SIZE];
 	struct sockaddr_ll rawSockaddr;
 	CWSocket sockDTLS = (long) arg;
@@ -288,6 +288,7 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveDataPacket(void *arg)
 			case CW_DATA_MSG_KEEP_ALIVE_TYPE:
 			{
 				char *valPtr = NULL;
+
 				unsigned short int elemType = 0;
 				unsigned short int elemLen = 0;
 
@@ -295,7 +296,6 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveDataPacket(void *arg)
 				msgPtr.offset = 0;
 				CWParseFormatMsgElem(&msgPtr, &elemType, &elemLen);
 				valPtr = CWParseSessionID(&msgPtr, elemLen);
-
 				CW_FREE_OBJECT(valPtr);
 				break;
 			}
@@ -317,8 +317,9 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveDataPacket(void *arg)
 
 				rawSockaddr.sll_hatype = htons(msgPtr.msg[12] << 8 | msgPtr.msg[13]);
 
-				n = sendto(gRawSock, msgPtr.msg, msgPtr.offset, 0, (struct sockaddr *)&rawSockaddr,
-					   sizeof(rawSockaddr));
+				if (sendto(gRawSock, msgPtr.msg, msgPtr.offset, 0, (struct sockaddr *)&rawSockaddr,
+					   sizeof(rawSockaddr)) < 0)
+					CWLog("Sending a data packet failed with: %s", strerror(errno));
 				break;
 			}
 
@@ -378,7 +379,7 @@ int wtpInRunState = 0;
 
 CWStateTransition CWWTPEnterRun()
 {
-	int k, msg_len;
+	int k;
 	struct timespec timenow;
 
 	CWLog("\n");
@@ -446,7 +447,6 @@ CWStateTransition CWWTPEnterRun()
 
 			CWProtocolMessage msg;
 
-			msg_len = msg.offset;
 			msg.msg = NULL;
 			msg.offset = 0;
 
@@ -1285,7 +1285,6 @@ CWBool CWAssembleWLANConfigurationResponse(CWProtocolMessage ** messagesPtr, int
     filling in valuesPtr*/
 CWBool CWParseVendorMessage(char *msg, int len, void **valuesPtr)
 {
-	int i;
 	CWProtocolMessage completeMsg;
 	unsigned short int GlobalElemType = 0;	// = CWProtocolRetrieve32(&completeMsg);
 
@@ -1337,7 +1336,6 @@ CWBool CWParseVendorMessage(char *msg, int len, void **valuesPtr)
 		break;
 	}
 
-	i = 0;
 	completeMsg.offset = 0;
 	while (completeMsg.offset < len) {
 		unsigned short int type = 0;

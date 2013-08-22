@@ -62,13 +62,15 @@
 		(mess).offset = 0;			\
 	} while (0)
 
-#define     CWParseMessageElementStart()                int oldOffset;                                              \
-                                    if(msgPtr == NULL || valPtr == NULL) return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL); \
-                                    oldOffset = msgPtr->offset
+#define CWParseMessageElementStart()					\
+	int oldOffset;							\
+	if(msgPtr == NULL || valPtr == NULL) return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL); \
+	oldOffset = msgPtr->offset
 
-#define     CWParseMessageElementEnd()              CWDebugLog(NULL);                                           \
-                                    return ((msgPtr->offset) - oldOffset) == len ? CW_TRUE :    \
-                                    CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Message Element Malformed");
+#define CWParseMessageElementEnd()					\
+	CWDebugLog(NULL);						\
+	return ((msgPtr->offset) - oldOffset) == len ? CW_TRUE :	\
+		CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Message Element Malformed");
 
 /*_________________________________________________________*/
 /*  *******************___CONSTANTS___*******************  */
