@@ -52,15 +52,18 @@ typedef struct {
 	char fileName[64];
 } CWErrorHandlingInfo;
 
-#define CWErrorRaiseSystemError(error)      {                   \
-                            char buf[256];          \
-                            strerror_r(errno, buf, 256);    \
-                            CWErrorRaise(error, buf);   \
-                            return CW_FALSE;        \
-                        }
+#define CWErrorRaiseSystemError(error)			    \
+	do {						    \
+		char buf[256];				    \
+		if (strerror_r(errno, buf, 256) != 0)	    \
+			CWErrorRaise(error, NULL);	    \
+		else					    \
+			CWErrorRaise(error, buf);	    \
+		return CW_FALSE;			    \
+	} while (0)
 
-#define CWErrorRaise(code, msg)         _CWErrorRaise(code, msg, __FILE__, __LINE__)
-#define CWErr(arg)              ((arg) || _CWErrorHandleLast(__FILE__, __LINE__))
+#define CWErrorRaise(code, msg)     _CWErrorRaise(code, msg, __FILE__, __LINE__)
+#define CWErr(arg)                  ((arg) || _CWErrorHandleLast(__FILE__, __LINE__))
 #define CWErrorHandleLast()         _CWErrorHandleLast(__FILE__, __LINE__)
 
 CWBool _CWErrorRaise(CWErrorCode code, const char *msg, const char *fileName, int line);

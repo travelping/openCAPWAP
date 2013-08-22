@@ -230,7 +230,8 @@ CWBool ACEnterRun(int WTPIndex, CWProtocolMessage * msgPtr, CWBool dataFlag)
 		} else if (msgPtr->data_msgType == CW_IEEE_802_3_FRAME_TYPE) {
 
 			CWDebugLog("Write 802.3 data to TAP[%d], len:%d", gWTPs[WTPIndex].tap_fd, msglen);
-			write(gWTPs[WTPIndex].tap_fd, msgPtr->msg, msglen);
+			if (write(gWTPs[WTPIndex].tap_fd, msgPtr->msg, msglen) < 0)
+				CWLog("Sending a data packet to the tap if failed with: %s", strerror(errno));
 
 		} else if (msgPtr->data_msgType == CW_IEEE_802_11_FRAME_TYPE) {
 
@@ -266,7 +267,9 @@ CWBool ACEnterRun(int WTPIndex, CWProtocolMessage * msgPtr, CWBool dataFlag)
 				}
 
 			} else {
-				write(gWTPs[WTPIndex].tap_fd, msgPtr->msg + HLEN_80211, msglen - HLEN_80211);
+				if (write(gWTPs[WTPIndex].tap_fd, msgPtr->msg + HLEN_80211, msglen - HLEN_80211) < 0)
+					CWLog("Sending a data packet to the tap if failed with: %s", strerror(errno));
+
 				CWDebugLog("Control Frame !!!\n");
 			}
 

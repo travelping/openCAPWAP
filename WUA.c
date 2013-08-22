@@ -80,7 +80,6 @@ CWBool WUAStage1(char *CupPath, char *WTPDir);
 CWBool WUAStage2();
 
 void WaitForWTPTermination();
-void daemonize();
 
 /* Log related varibales and functions */
 FILE *log_file = NULL;
@@ -94,7 +93,10 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "Usage: %s cup_file\n", argv[0]);
 	}
 
-	daemonize();
+	if (daemon(1, 0) != 0) {
+		fprintf(stderr, "daemon failed: %s\n", strerror(errno));
+		exit(1);
+	}
 
 	WTPUpdateAgent(argv[1]);
 	return 0;
@@ -503,40 +505,4 @@ void WUALogClose()
 {
 	if (log_file != NULL)
 		fclose(log_file);
-}
-
-void daemonize()
-{
-	pid_t pid;
-	int sid;
-
-	/* already a daemon */
-	if (getppid() == 1)
-		return;
-
-	/* Fork off the parent process */
-	pid = fork();
-	if (pid < 0) {
-		exit(EXIT_FAILURE);
-	}
-	/* If we got a good PID, then we can exit the parent process. */
-	if (pid > 0) {
-		exit(EXIT_SUCCESS);
-	}
-
-	/* At this point we are executing as the child process */
-
-	/* Change the file mode mask */
-	umask(0);
-
-	/* Create a new SID for the child process */
-	sid = setsid();
-	if (sid < 0) {
-		exit(EXIT_FAILURE);
-	}
-
-	/* Redirect standard files to /dev/null */
-	freopen("/dev/null", "r", stdin);
-	freopen("/dev/null", "w", stdout);
-	freopen("/dev/null", "w", stderr);
 }
