@@ -31,27 +31,27 @@
 #include "../dmalloc-5.5.0/dmalloc.h"
 #endif
 
-__inline__ CWBool CWACSupportIPv6()
+CWBool CWACSupportIPv6()
 {
 	return (gNetworkPreferredFamily == CW_IPv6);
 }
 
-__inline__ char *CWACGetName()
+char *CWACGetName()
 {
 	return gACName;
 }
 
-__inline__ int CWACGetStations()
+int CWACGetStations()
 {
 	return gActiveStations;
 }
 
-__inline__ int CWACGetLimit()
+int CWACGetLimit()
 {
 	return gLimit;
 }
 
-__inline__ int CWACGetActiveWTPs()
+int CWACGetActiveWTPs()
 {
 	int tmp;
 	if (!CWErr(CWThreadMutexLock(&gActiveWTPsMutex)))
@@ -62,47 +62,47 @@ __inline__ int CWACGetActiveWTPs()
 	return tmp;
 }
 
-__inline__ int CWACGetMaxWTPs()
+int CWACGetMaxWTPs()
 {
 	return gMaxWTPs;
 }
 
-__inline__ int CWACGetSecurity()
+int CWACGetSecurity()
 {
 	return gACDescriptorSecurity;
 }
 
-__inline__ int CWACGetRMACField()
+int CWACGetRMACField()
 {
 	return gRMACField;
 }
 
-__inline__ int CWACGetWirelessField()
+int CWACGetWirelessField()
 {
 	return gWirelessField;
 }
 
-__inline__ int CWACGetDTLSPolicy()
+int CWACGetDTLSPolicy()
 {
 	return gDTLSPolicy;
 }
 
-__inline__ int CWACGetHWVersion()
+int CWACGetHWVersion()
 {
 	return gACHWVersion;
 }
 
-__inline__ int CWACGetSWVersion()
+int CWACGetSWVersion()
 {
 	return gACSWVersion;
 }
 
-__inline__ int CWACGetInterfacesCount()
+int CWACGetInterfacesCount()
 {
 	return gInterfacesCount;
 }
 
-__inline__ int CWACGetInterfaceIPv4AddressAtIndex(int i)
+int CWACGetInterfaceIPv4AddressAtIndex(int i)
 {
 	struct sockaddr_in *addrPtr;
 
@@ -115,7 +115,7 @@ __inline__ int CWACGetInterfaceIPv4AddressAtIndex(int i)
 	return ntohl(addrPtr->sin_addr.s_addr);
 }
 
-__inline__ char *CWACGetInterfaceIPv6AddressAtIndex(int i)
+char *CWACGetInterfaceIPv6AddressAtIndex(int i)
 {
 	struct sockaddr_in6 *addrPtr;
 
@@ -124,7 +124,7 @@ __inline__ char *CWACGetInterfaceIPv6AddressAtIndex(int i)
 	return (char *)addrPtr->sin6_addr.s6_addr;
 }
 
-__inline__ int CWACGetInterfaceWTPCountAtIndex(int i)
+int CWACGetInterfaceWTPCountAtIndex(int i)
 {
 	return gInterfaces[i].WTPCount;
 }
@@ -160,7 +160,7 @@ CWBool CWACGetVendorInfos(CWACVendorInfos * valPtr)
 	return CW_TRUE;
 }
 
-__inline__ void CWACDestroyVendorInfos(CWACVendorInfos * valPtr)
+void CWACDestroyVendorInfos(CWACVendorInfos * valPtr)
 {
 	int i;
 

@@ -31,19 +31,6 @@
 #include "../dmalloc-5.5.0/dmalloc.h"
 #endif
 
-/*__________________________________________________________*/
-/*  *******************___PROTOTYPES___*******************  */
-
-__inline__ int CWACGetHWVersion();
-__inline__ int CWACGetSWVersion();
-__inline__ int CWACGetStations();
-__inline__ int CWACGetLimit();
-__inline__ int CWACGetActiveWTPs();
-__inline__ int CWACGetMaxWTPs();
-__inline__ int CWACGetSecurity();
-__inline__ char *CWACGetName();
-__inline__ int CWACGetInterfacesCount();
-
 /*_________________________________________________________*/
 /*  *******************___FUNCTIONS___*******************  */
 
