@@ -627,7 +627,7 @@ CWBool CWWTPManageGenericRunMessage(CWProtocolMessage * msgPtr)
 			 * we have to send a corresponding response
 			 * containing a failure result code
 			 */
-			CWLog("--> Not valid Request in Run State... we send a failure Response");
+			CWLog("--> invalid Request %d (0x%04x) in Run State... we send a failure Response", controlVal.messageTypeValue, controlVal.messageTypeValue);
 
 			if (!(CWAssembleUnrecognizedMessageResponse(&messages,
 								    &fragmentsNum,
