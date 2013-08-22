@@ -91,7 +91,6 @@ static void CWWTPHeartBeatTimerExpiredHandler(void *arg);
 static void CWWTPKeepAliveDataTimerExpiredHandler(void *arg);
 static void CWWTPNeighborDeadTimerExpired(void *arg);
 static CWBool CWResetHeartbeatTimer();
-static CWBool CWStartDataChannelKeepAlive();
 static CWBool CWStopDataChannelKeepAlive();
 static CWBool CWResetDataChannelKeepAlive();
 static CWBool CWResetNeighborDeadTimer();
@@ -189,7 +188,6 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveDataPacket(void *arg)
 	int readBytes;
 	char buf[CW_BUFFER_SIZE];
 	struct sockaddr_ll rawSockaddr;
-	CWSocket sockDTLS = (long) arg;
 	CWNetworkLev4Address addr;
 	CWList fragments = NULL;
 	CWProtocolMessage msgPtr;
@@ -621,12 +619,10 @@ CWBool CWWTPManageGenericRunMessage(CWProtocolMessage * msgPtr)
 			}
 
 		case CW_MSG_TYPE_VALUE_ECHO_RESPONSE: {
-			struct timeval tv;
 			CWLog("Echo Response received");
 
 			if (!CWParseEchoResponse((msgPtr->msg) + (msgPtr->offset), len))
 				return CW_FALSE;
-
 
 			break;
 		}
@@ -840,16 +836,6 @@ CWBool CWResetHeartbeatTimer()
 		return CW_FALSE;
 
 	CWDebugLog("Echo Heartbeat Timer Reset with %d seconds", gEchoInterval);
-	return CW_TRUE;
-}
-
-CWBool CWStartDataChannelKeepAlive()
-{
-	gCWKeepAliveTimerID = timer_add(gDataChannelKeepAliveInterval, 0, &CWWTPKeepAliveDataTimerExpiredHandler, NULL);
-	if (gCWKeepAliveTimerID == -1)
-		return CW_FALSE;
-
-	CWDebugLog("DataChannelKeepAlive Timer Started with %d seconds", gDataChannelKeepAliveInterval);
 	return CW_TRUE;
 }
 

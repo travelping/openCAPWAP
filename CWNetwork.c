@@ -193,7 +193,6 @@ CWBool CWNetworkInitSocketClient(CWSocket * sockPtr, CWNetworkLev4Address * addr
 CWBool CWNetworkInitSocketClientDataChannel(CWSocket * sockPtr, CWNetworkLev4Address * addrPtr)
 {
 
-	int yes = 1;
 #ifdef IPv6
 	struct sockaddr_in6 sockaddr;
 #else

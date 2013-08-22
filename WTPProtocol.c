@@ -250,7 +250,7 @@ CWBool CWAssembleMsgElemVendorSpecificPayload(CWProtocolMessage * msgPtr)
 	const int ELEMENT_ID = 2;	//Type and Length of a TLV field is 4 byte long
 	const int DATA_LEN = 2;
 	CWWTPVendorInfos infos;
-	int i, size = 0;
+	int size = 0;
 	int element_id_zero = 0;
 	int data_zero = 0;
 
@@ -1122,9 +1122,6 @@ CWBool CWParseDeleteStation(CWProtocolMessage * msgPtr, int len)
 
 CWBool CWParseDeleteWLAN(CWProtocolMessage * msgPtr, int len)
 {
-	int Length = 0;
-	unsigned char *ssid;
-
 	//CWParseMessageElementStart();  sostituire al posto delle righe successive quando passerò valPtr alla funzione CWarseAddStation
 	/*--------------------------------------------------------------------------------------*/
 	int oldOffset;
@@ -1133,8 +1130,9 @@ CWBool CWParseDeleteWLAN(CWProtocolMessage * msgPtr, int len)
 	oldOffset = msgPtr->offset;
 	/*----------------------------------------------------------------------------------*/
 
-	int radioID = CWProtocolRetrieve8(msgPtr);
-	int wlanID = CWProtocolRetrieve8(msgPtr);
+	__attribute__((unused)) int radioID = CWProtocolRetrieve8(msgPtr);			/* TODO: support multiple radios */
+	__attribute__((unused)) int wlanID = CWProtocolRetrieve8(msgPtr);			/* TODO: support multiple WLANs */
+
 
 	unsigned char tmp_ssid[3];
 

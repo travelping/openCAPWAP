@@ -75,15 +75,6 @@ static CWBool checkResetFile()
 	return 1;
 }
 
-static void CWLogCloseFile()
-{
-#ifndef CW_SINGLE_THREAD
-	CWDestroyThreadMutex(&gFileMutex);
-#endif
-
-	fclose(gLogFile);
-}
-
 void CWVLog(const char *format, va_list args)
 {
 	static __thread char logStr[256];

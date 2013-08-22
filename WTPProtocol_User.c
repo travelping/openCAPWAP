@@ -80,8 +80,6 @@ CWBool CWWTPGetEncCapabilities(CWWTPEncryptCaps * encc)
 
 void CWWTPDestroyEncCapabilities(CWWTPEncryptCaps * encc)
 {
-	int i;
-
 	if (encc == NULL)
 		return;
 
@@ -159,8 +157,6 @@ CWBool CWWTPGetVendorInfos(CWWTPVendorInfos * valPtr)
 
 __inline__ void CWWTPDestroyVendorInfos(CWWTPVendorInfos * valPtr)
 {
-	int i;
-
 	if (valPtr == NULL)
 		return;
 	CW_FREE_OBJECT(valPtr->vendorInfos);
