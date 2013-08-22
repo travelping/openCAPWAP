@@ -580,10 +580,10 @@ void CWProtocolDestroyFragment(void *f)
 	CW_FREE_OBJECT(f);
 }
 
-CWBool CWCompareFragment(void *newFrag, void *oldFrag)
+CWBool CWCompareFragment(const void *newFrag, const void *oldFrag)
 {
-	CWProtocolFragment *newEl = (CWProtocolFragment *) newFrag;
-	CWProtocolFragment *oldEl = (CWProtocolFragment *) oldFrag;
+	const CWProtocolFragment *newEl = (CWProtocolFragment *) newFrag;
+	const CWProtocolFragment *oldEl = (CWProtocolFragment *) oldFrag;
 
 	if ((newEl->transportVal.fragmentID == oldEl->transportVal.fragmentID) &&
 	    (newEl->transportVal.fragmentOffset == oldEl->transportVal.fragmentOffset)) {
