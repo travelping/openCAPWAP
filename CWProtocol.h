@@ -368,7 +368,6 @@ typedef struct {
 	unsigned int messageTypeValue;
 	unsigned char seqNum;
 	unsigned short msgElemsLen;
-//  unsigned int timestamp;
 } CWControlHeaderValues;
 
 typedef struct {

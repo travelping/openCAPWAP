@@ -191,7 +191,7 @@ CWBool CWSecurityInitSessionClient(CWSocket sock,
 		CWSecurityRaiseSystemError(CW_ERROR_GENERAL);
 	}
 
-	BIO_ctrl_set_connected(sbio, 1, &peer);
+	(void)BIO_ctrl_set_connected(sbio, 1, &peer);
 
 	/* BIO_ctrl(sbio, BIO_CTRL_DGRAM_MTU_DISCOVER, 0, NULL); // TO-DO (pass MTU?) */
 	BIO_ctrl(sbio, BIO_CTRL_DGRAM_MTU_DISCOVER, 0, NULL);
