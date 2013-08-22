@@ -37,8 +37,8 @@
 //#define CWSetField32(obj, start, val)                 ((obj)[start/32]) |= ((val) << (start%32))
 //#define CWGetField32(obj, start, len)                 (((obj)[start/32]) & ((0xFFFFFFFFUL >> (32-(len))) << (start%32)) ) >> (start%32)
 
-#define CWSetField32(src,start,len,val)                 src |= ((~(0xFFFFFFFF << len)) & val) << (32 - start - len)
-#define CWGetField32(src,start,len)                 ((~(0xFFFFFFFF<<len)) & (src >> (32 - start - len)))
+#define CWSetField32(src,start,len,val)                 (src) |= ((~(0xFFFFFFFF << (len))) & (val)) << (32 - (start) - (len))
+#define CWGetField32(src,start,len)                     ((~(0xFFFFFFFF<<(len))) & ((src) >> (32 - (start) - (len))))
 
 #define CW_REWIND_BYTES(buf, bytes, type)               (buf) = (type*)(((char*) (buf)) - bytes)
 #define CW_SKIP_BYTES(buf, bytes, type)                 (buf) = (type*)(((char*) (buf)) + bytes)
