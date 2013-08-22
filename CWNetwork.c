@@ -48,8 +48,7 @@ CWBool CWNetworkSendUnsafeUnconnected(CWSocket sock, CWNetworkLev4Address * addr
 	if (buf == NULL || addrPtr == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
-	CWUseSockNtop(addrPtr, CWDebugLog(str);
-	    );
+	CWUseSockNtop(addrPtr, CWDebugLog("CWNetworkSendUnsafeUnconnected: %s", str); );
 
 	while (sendto(sock, buf, len, 0, (struct sockaddr *)addrPtr, CWNetworkGetAddressSize(addrPtr)) < 0) {
 
@@ -93,7 +92,7 @@ CWBool CWNetworkReceiveUnsafeConnected(CWSocket sock, char *buf, int len, int *r
 		if (errno == EINTR)
 			continue;
 
-		CWDebugLog("CWNetworkReceiveUnsafeConnected: recvfrom error Socket %d", sock, errno);
+		CWDebugLog("CWNetworkReceiveUnsafeConnected: recvfrom error on Socket %d (%m)", sock);
 		CWNetworkRaiseSystemError(CW_ERROR_RECEIVING);
 	}
 	return CW_TRUE;
@@ -173,13 +172,10 @@ CWBool CWNetworkInitSocketClient(CWSocket * sockPtr, CWNetworkLev4Address * addr
 	/* NULL addrPtr means that we don't want to connect to a
 	 * specific address */
 	if (addrPtr != NULL) {
-		CWUseSockNtop(((struct sockaddr *)addrPtr), CWDebugLog(str);
-		    );
+		CWUseSockNtop(((struct sockaddr *)addrPtr), CWDebugLog("CWNetworkInitSocketClient: %s", str); );
 
-		if (connect((*sockPtr), ((struct sockaddr *)addrPtr), CWNetworkGetAddressSize(addrPtr)) < 0) {
-
+		if (connect((*sockPtr), ((struct sockaddr *)addrPtr), CWNetworkGetAddressSize(addrPtr)) < 0)
 			CWNetworkRaiseSystemError(CW_ERROR_CREATING);
-		}
 	}
 	/* allow sending broadcast packets */
 	setsockopt(*sockPtr, SOL_SOCKET, SO_BROADCAST, &yes, sizeof(yes));
@@ -239,15 +235,11 @@ CWBool CWNetworkInitSocketClientDataChannel(CWSocket * sockPtr, CWNetworkLev4Add
 	if (addrPtr != NULL) {
 		CW_COPY_NET_ADDR_PTR(&addrPtrDataChannel, addrPtr);
 		sock_set_port_cw((struct sockaddr *)&addrPtrDataChannel, htons(CW_DATA_PORT));
-		CWUseSockNtop((struct sockaddr *)&addrPtrDataChannel, CWDebugLog(str);
-		    );
+		CWUseSockNtop((struct sockaddr *)&addrPtrDataChannel, CWDebugLog("CWNetworkInitSocketClientDataChannel: %s", str); );
 
-		if (connect
-		    ((*sockPtr), (struct sockaddr *)&addrPtrDataChannel,
-		     CWNetworkGetAddressSize(&addrPtrDataChannel)) < 0) {
-
+		if (connect((*sockPtr), (struct sockaddr *)&addrPtrDataChannel,
+			    CWNetworkGetAddressSize(&addrPtrDataChannel)) < 0)
 			CWNetworkRaiseSystemError(CW_ERROR_CREATING);
-		}
 	}
 
 	return CW_TRUE;

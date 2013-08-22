@@ -85,7 +85,7 @@ int psk_key2bn(const char *psk_key, unsigned char *psk, unsigned int max_psk_len
 		if ((r=(arg)) <= 0) {					\
 			{stuff}						\
 			ERR_error_string(/*SSL_get_error((session),r)*/ ERR_get_error(), ___buf); \
-			CWDebugLog(strerror(errno));			\
+			CWDebugLog("%s: %s", __FUNCTION__, strerror(errno)); \
 			CWErrorRaise(CW_ERROR_GENERAL, ___buf);		\
 			return CW_FALSE;				\
 		}							\
@@ -218,8 +218,7 @@ CWBool CWSecurityInitSessionClient(CWSocket sock,
 	SSL_set_connect_state((*sessionPtr));
 
 	CWDebugLog("Before HS");
-	CWSecurityManageSSLError(SSL_do_handshake(*sessionPtr), *sessionPtr, CWSecurityDestroySession(sessionPtr);
-	    );
+	CWSecurityManageSSLError(SSL_do_handshake(*sessionPtr), *sessionPtr, CWSecurityDestroySession(sessionPtr); );
 	CWDebugLog("After HS");
 
 	if (SSL_get_verify_result(*sessionPtr) == X509_V_OK) {
@@ -227,7 +226,7 @@ CWBool CWSecurityInitSessionClient(CWSocket sock,
 		CWDebugLog("Certificate Verified");
 	} else {
 
-		CWDebugLog("Certificate Error (%d)", SSL_get_verify_result(*sessionPtr));
+		CWDebugLog("Certificate Error (%ld)", SSL_get_verify_result(*sessionPtr));
 	}
 
 	/* *PMTUPtr = BIO_ctrl(sbio, BIO_CTRL_DGRAM_QUERY_MTU, 0, NULL); */
@@ -343,7 +342,7 @@ CWBool CWSecurityInitSessionServer(CWWTPManager * pWtp,
 
 		CWDebugLog("Certificate Verified");
 	} else {
-		CWDebugLog("Certificate Error (%d)", SSL_get_verify_result(*sessionPtr));
+		CWDebugLog("Certificate Error (%ld)", SSL_get_verify_result(*sessionPtr));
 	}
 
 	if (useCertificate) {
@@ -573,7 +572,7 @@ int CWSecurityVerifyCB(int ok, X509_STORE_CTX * ctx)
 	err_cert = X509_STORE_CTX_get_current_cert(ctx);
 
 	err = X509_STORE_CTX_get_error(ctx);
-	CWDebugLog(X509_verify_cert_error_string(err));
+	CWDebugLog("X509_verify_cert_error_string: %s", X509_verify_cert_error_string(err));
 
 	depth = X509_STORE_CTX_get_error_depth(ctx);
 

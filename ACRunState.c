@@ -201,7 +201,7 @@ CWBool ACEnterRun(int WTPIndex, CWProtocolMessage * msgPtr, CWBool dataFlag)
 			}
 
 			if (dataSocket == 0) {
-				CWLog("data socket of WTP %d isn't ready.");
+				CWLog("data socket of WTP %d isn't ready.", WTPIndex);
 				return CW_FALSE;
 			}
 
@@ -1014,7 +1014,7 @@ CWBool CWParseWTPDataTransferRequestMessage(CWProtocolMessage * msgPtr, int len,
 
 	offsetTillMessages = msgPtr->offset;
 
-	CWLog("");
+	CWLog("#");
 	CWLog("#________ WTP Data Transfer (Run) ________#");
 	CWLog("Parsing WTP Data Transfer Request...");
 
@@ -1061,7 +1061,7 @@ CWBool CWParseWTPEventRequestMessage(CWProtocolMessage * msgPtr, int len, CWProt
 	 */
 	offsetTillMessages = msgPtr->offset;
 
-	CWLog("");
+	CWLog("#");
 	CWLog("#________ WTP Event (Run) ________#");
 	CWLog("Parsing WTP Event Request...");
 
@@ -1340,7 +1340,7 @@ CWBool CWParseChangeStateEventRequestMessage2(CWProtocolMessage * msgPtr,
 
 	offsetTillMessages = msgPtr->offset;
 
-	CWLog("");
+	CWLog("#");
 	CWLog("#________ WTP Change State Event (Run) ________#");
 
 	(*valuesPtr)->radioOperationalInfo.radiosCount = 0;
@@ -1460,7 +1460,7 @@ CWBool CWParseEchoRequestMessage(CWProtocolMessage * msgPtr, int len)
 
 	offsetTillMessages = msgPtr->offset;
 
-	CWLog("");
+	CWLog("#");
 	CWLog("#________ Echo Request (Run) ________#");
 
 	/* parse message elements */

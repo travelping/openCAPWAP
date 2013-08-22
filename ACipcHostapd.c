@@ -505,7 +505,7 @@ CW_THREAD_RETURN_TYPE CWACipc_with_ac_hostapd(void *arg)
 					}
 
 					if (dataSocket == 0) {
-						CWDebugLog("data socket of WTP %d isn't ready.");
+						CWDebugLog("data socket of WTP %d isn't ready.", tmp_WTPIndex);
 						continue;
 					}
 
@@ -631,7 +631,7 @@ CW_THREAD_RETURN_TYPE CWACipc_with_ac_hostapd(void *arg)
 
 #if defined(LOCALUDP)
 				CWLog("Hostapd_AC Disconnect: %s", ch[tmp_WTPIndex].client.sun_path);
-				sprintf(ch[tmp_WTPIndex].client.sun_path, "");
+				ch[tmp_WTPIndex].client.sun_path[0] = '\0';
 
 #else
 #if defined(USEIPV6)

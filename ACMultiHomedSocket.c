@@ -652,7 +652,7 @@ CWBool CWNetworkUnsafeMultiHomed(CWMultiHomedSocket * sockPtr,
 				}
 
 				if (dataSocket == 0) {
-					CWDebugLog("data socket of WTP %d isn't ready.");
+					CWDebugLog("data socket of WTP %d isn't ready.", i);
 					continue;
 				}
 

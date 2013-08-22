@@ -52,31 +52,34 @@ extern CWNetworkLev3Service gNetworkPreferredFamily;
 #define CW_COPY_NET_ADDR_PTR(addr1, addr2)      sock_cpy_addr_port(((struct sockaddr*)(addr1)), ((struct sockaddr*)(addr2)))
 #define CW_COPY_NET_ADDR(addr1, addr2)      CW_COPY_NET_ADDR_PTR(&(addr1), &(addr2))
 
-#define CWUseSockNtop(sa, block)        {                       \
-                            char __str[128];            \
-                            char *str; str = sock_ntop_r(((struct sockaddr*)(sa)), __str);\
-                            {block}                 \
-                        }
+#define CWUseSockNtop(sa, block)					\
+	do {								\
+		char __str[128];					\
+		char *str = sock_ntop_r(((struct sockaddr*)(sa)), __str); \
+		{block}							\
+	} while (0)
 
-#define CWNetworkRaiseSystemError(error) do {			    \
-		char buf[256];					    \
-								    \
-		if (strerror_r(errno, buf, 256) < 0) {		    \
-			CWErrorRaise(error, NULL);		    \
-			return CW_FALSE;			    \
-		}						    \
-								    \
-		CWErrorRaise(error, buf);			    \
-		return CW_FALSE;				    \
+#define CWNetworkRaiseSystemError(error) do {			\
+		char buf[256];					\
+								\
+		if (strerror_r(errno, buf, 256) < 0) {		\
+			CWErrorRaise(error, NULL);		\
+			return CW_FALSE;			\
+		}						\
+								\
+		CWErrorRaise(error, buf);			\
+		return CW_FALSE;				\
 	} while(0)
 
-#define CWNetworkCloseSocket(x) do {				\
-	if (x != -1) {						\
-		assert(x > 2);					\
-		shutdown(x, SHUT_RDWR);				\
-		close(x);					\
-		x = -1;						\
-	} } while(0)
+#define CWNetworkCloseSocket(x)					\
+	do {							\
+		if (x != -1) {					\
+			assert(x > 2);				\
+			shutdown(x, SHUT_RDWR);			\
+			close(x);				\
+			x = -1;					\
+		}						\
+	} while(0)
 
 /*
  * Assume address is valid
