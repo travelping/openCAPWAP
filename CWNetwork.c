@@ -27,6 +27,12 @@
 
 #include "CWCommon.h"
 
+/*
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
+*/
+
 #ifdef DMALLOC
 #include "../dmalloc-5.5.0/dmalloc.h"
 #endif
@@ -341,4 +347,33 @@ CWBool CWNetworkGetAddressForHost(char *host, CWNetworkLev4Address * addrPtr)
 	freeaddrinfo(ressave);
 
 	return CW_TRUE;
+}
+
+
+CWBool CWNetworkCompareAddress(const void *v1, const void *v2)
+{
+	const CWNetworkLev4Address *a = (CWNetworkLev4Address *)v1;
+	const CWNetworkLev4Address *b = (CWNetworkLev4Address *)v2;
+
+	if (a->ss_family != b->ss_family)
+		return CW_FALSE;
+
+	switch (a->ss_family) {
+#ifdef IPv6
+	case AF_INET6:
+		const struct sockaddr_in6 *a6 = (struct sockaddr_in6 *)v1;
+		const struct sockaddr_in6 *b6 = (struct sockaddr_in6 *)v2;
+		return IN6_ARE_ADDR_EQUAL(&a6->sin6_addr, &b6->sin6_addr) ? CW_TRUE : CW_FALSE;
+#endif
+	case AF_INET: {
+		const struct sockaddr_in *a4 = (struct sockaddr_in *)v1;
+		const struct sockaddr_in *b4 = (struct sockaddr_in *)v2;
+
+		return (a4->sin_addr.s_addr == b4->sin_addr.s_addr) ? CW_TRUE : CW_FALSE;
+	}
+
+	default:
+		break;
+	}
+	return CW_FALSE;
 }

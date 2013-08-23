@@ -41,6 +41,12 @@ typedef struct {
 } ACIPv6ListValues;
 
 typedef struct {
+	unsigned char priority;
+	unsigned char type;
+	unsigned char data[];
+} CWProtocolACAddressListWithPrio;
+
+typedef struct {
 	int stations;
 	int limit;
 	int activeWTPs;

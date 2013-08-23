@@ -1368,6 +1368,7 @@ CWBool CWParseConfigurationUpdateRequest(char *msg,
 
 	CWBool bindingMsgElemFound = CW_FALSE;
 	CWBool vendorMsgElemFound = CW_FALSE;
+	CWBool acAddressWithPrioFound = CW_FALSE;
 	CWProtocolMessage completeMsg;
 	unsigned short int GlobalElementType = 0;
 
@@ -1435,6 +1436,15 @@ CWBool CWParseConfigurationUpdateRequest(char *msg,
 
 				case CW_MSG_ELEMENT_TRAVELPING_AC_JOIN_TIMEOUT:
 					CWParseTPACJoinTimeout(&completeMsg, elemLen, &valuesPtr->vendorTP_ACJoinTimeout);
+					break;
+
+                                case CW_MSG_ELEMENT_TRAVELPING_AC_ADDRESS_LIST_WITH_PRIORITY:
+					if (acAddressWithPrioFound != CW_TRUE) {
+						CWResetDiscoveredACAddresses();
+						acAddressWithPrioFound = CW_TRUE;
+					}
+					if (!(CWParseACAddressListWithPrio(&completeMsg, len)))
+						return CW_FALSE;
 					break;
 
 				default:
