@@ -721,6 +721,7 @@ static inline unsigned int CWProtocolRetrieve32(CWProtocolMessage * msgPtr)
 
 char *CWProtocolRetrieveStr(CWProtocolMessage * msgPtr, int len);
 char *CWProtocolRetrieveRawBytes(CWProtocolMessage * msgPtr, int len);
+void CWProtocolCopyRawBytes(void * dest, CWProtocolMessage * msgPtr, int len);
 
 CWBool CWProtocolParseFragment(char *buf, int readBytes, CWList * fragmentsListPtr, CWProtocolMessage * reassembledMsg,
 			       CWBool * dataFlag, char *RadioMAC);

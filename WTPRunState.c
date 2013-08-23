@@ -295,6 +295,8 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveDataPacket(void *arg)
 				msgPtr.offset = 0;
 				CWParseFormatMsgElem(&msgPtr, &elemType, &elemLen);
 				valPtr = CWParseSessionID(&msgPtr, elemLen);
+
+				CW_FREE_OBJECT(valPtr);
 				break;
 			}
 
@@ -790,6 +792,7 @@ void CWWTPKeepAliveDataTimerExpiredHandler(void *arg)
 		CW_FREE_PROTOCOL_MESSAGE(messages[k]);
 	}
 	CW_FREE_OBJECT(messages);
+	CW_FREE_PROTOCOL_MESSAGE(sessionIDmsgElem);
 }
 
 void CWWTPNeighborDeadTimerExpired(void *arg)

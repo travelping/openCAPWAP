@@ -92,6 +92,13 @@ char *CWProtocolRetrieveRawBytes(CWProtocolMessage * msgPtr, int len)
 	return bytes;
 }
 
+// retrieves len bytes from the message, increments the current offset in bytes.
+void CWProtocolCopyRawBytes(void *dest, CWProtocolMessage * msgPtr, int len)
+{
+	CW_COPY_MEMORY(dest, &((msgPtr->msg)[(msgPtr->offset)]), len);
+	(msgPtr->offset) += len;
+}
+
 void CWProtocolDestroyMsgElemData(void *f)
 {
 	CW_FREE_OBJECT(f);
