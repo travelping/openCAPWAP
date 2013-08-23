@@ -61,31 +61,35 @@ int psk_key2bn(const char *psk_key, unsigned char *psk, unsigned int max_psk_len
 #define CWSecurityGetErrorStr()             ((const char *) ERR_error_string(ERR_get_error(), NULL))
 #define CWDTLSGetError()                "Err"
 
-#define CWSecurityRaiseError(error)         {                       \
-                                char buf[256];              \
-                                ERR_error_string(ERR_get_error(), buf); \
-                                CWErrorRaise(error, buf);       \
-                                return CW_FALSE;            \
-                            }
+#define CWSecurityRaiseError(error)					\
+	do {								\
+		char buf[256];						\
+		ERR_error_string(ERR_get_error(), buf);			\
+		CWErrorRaise(error, buf);				\
+		return CW_FALSE;					\
+	} while (0)
 
-#define CWSecurityRaiseSystemError(error)       {                       \
-                                char buf[256];              \
-                                strerror_r(errno, buf, 256);        \
-                                CWErrorRaise(error, buf);       \
-                                return CW_FALSE;            \
-                            }
+#define CWSecurityRaiseSystemError(error)				\
+	do {								\
+		char buf[256];						\
+		strerror_r(errno, buf, 256);				\
+		CWErrorRaise(error, buf);				\
+		return CW_FALSE;					\
+	} while (0)
 
-#define CWSecurityManageSSLError(arg, session, stuff)   {                       \
-                                char ___buf[256];           \
-                                int r;                  \
-                                                    \
-                                if((r=(arg)) <= 0) {            \
-                                    {stuff}             \
-                                    ERR_error_string(/*SSL_get_error((session),r)*/ ERR_get_error(), ___buf);   \
-                                    CWDebugLog(strerror(errno));CWErrorRaise(CW_ERROR_GENERAL, ___buf);     \
-                                    return CW_FALSE;        \
-                                }                   \
-                            }
+#define CWSecurityManageSSLError(arg, session, stuff)			\
+	do {								\
+		char ___buf[256];					\
+		int r;							\
+									\
+		if ((r=(arg)) <= 0) {					\
+			{stuff}						\
+			ERR_error_string(/*SSL_get_error((session),r)*/ ERR_get_error(), ___buf); \
+			CWDebugLog(strerror(errno));			\
+			CWErrorRaise(CW_ERROR_GENERAL, ___buf);		\
+			return CW_FALSE;				\
+		}							\
+	} while (0)
 
 static void CWSslLockingFunc(int mode, int n, const char *file, int line)
 {
@@ -137,7 +141,7 @@ CWBool CWSecurityInitLib()
 			    CWThreadMutex, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, "Cannot create openssl mutexes");
 		);
 
-	CW_ZERO_MEMORY(mutexOpensslBuf, CRYPTO_num_locks() * sizeof(CWThreadMutex));
+	    CW_ZERO_MEMORY(mutexOpensslBuf, CRYPTO_num_locks() * sizeof(CWThreadMutex));
 
 	for (i = 0; i < CRYPTO_num_locks(); i++) {
 

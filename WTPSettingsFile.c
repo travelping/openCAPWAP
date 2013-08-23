@@ -54,7 +54,7 @@ int gHostapd_port;
 char *gHostapd_unix_path;
 
 #define ltrim(s) ({							\
-	while (*s != '\0' && *s == ' ' && *s == '\t' && *s == '\n' && *s == '\r') \
+      while (*s != '\0' && (*s == ' ' || *s == '\t' || *s == '\n' || *s == '\r')) \
 		s++;							\
 	s;								\
 })

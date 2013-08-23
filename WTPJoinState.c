@@ -52,7 +52,6 @@ CWBool CWSaveJoinResponseMessage(CWProtocolJoinResponseValues * joinResponse);
  */
 CWStateTransition CWWTPEnterJoin()
 {
-
 	CWTimerID waitJoinTimer;
 	int seqNum;
 	CWProtocolJoinResponseValues values;
@@ -68,6 +67,7 @@ CWStateTransition CWWTPEnterJoin()
 	CWSecurityDestroyContext(&gWTPSecurityContext);
 #endif
 
+ cw_restart_join:
 	/* Initialize gACInfoPtr */
 	gACInfoPtr->ACIPv4ListInfo.ACIPv4ListCount = 0;
 	gACInfoPtr->ACIPv4ListInfo.ACIPv4List = NULL;
@@ -161,6 +161,11 @@ CWStateTransition CWWTPEnterJoin()
 	CWSecurityDestroySession(&gWTPSession);
 	CWSecurityDestroyContext(&gWTPSecurityContext);
 #endif
+
+	if (CWWTPPickAC())
+		/* selected a new AC from the list */
+		goto cw_restart_join;
+
 	return CW_ENTER_DISCOVERY;
 
 }

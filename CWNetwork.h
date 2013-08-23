@@ -118,4 +118,6 @@ CWBool CWNetworkGetAddressForHost(char *host, CWNetworkLev4Address * addrPtr);
 //CWBool CWNetworkInitSocketServer(CWSocket *sockPtr, int port);
 //CWBool CWNetworkSendUnsafeConnected(CWSocket sock, const char *buf, int len);
 
+CWBool CWNetworkCompareAddress(const void *v1, const void *v2);
+
 #endif

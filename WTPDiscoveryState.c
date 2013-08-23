@@ -42,6 +42,7 @@ int gCWMaxDiscoveries = 10;
 /*_________________________________________________________*/
 /*  *******************___VARIABLES___*******************  */
 int gCWDiscoveryCount;
+CWList ACList = CW_LIST_INIT;
 
 #ifdef CW_DEBUGGING
 int gCWDiscoveryInterval = 3;	//5;
@@ -59,13 +60,109 @@ int gCWMaxDiscoveryInterval = 20;
 /*  *******************___PROTOTYPES___*******************  */
 CWBool CWReceiveDiscoveryResponse();
 void CWWTPEvaluateAC(CWACInfoValues * ACInfoPtr);
-static CWBool CWWTPPickAC();
 CWBool CWReadResponses();
 CWBool CWAssembleDiscoveryRequest(CWProtocolMessage ** messagesPtr, int seqNum);
 CWBool CWParseDiscoveryResponseMessage(char *msg, int len, int *seqNumPtr, CWACInfoValues * ACInfoPtr);
 
+typedef struct {
+	CWNetworkLev4Address address;
+        CWBool received;
+        int seqNum;
+} CWDiscoverAC;
+
+typedef struct {
+        int priority;
+        CWNetworkLev4Address address;
+} CWDiscoveredAC;
+
+static int DiscoveredACCount = 0;
+static int CurrentDiscoveredAC = 0;
+static CWDiscoveredAC *DiscoveredAC = NULL;
+
+#define DAC_BLOCK_SIZE 32
+
 /*_________________________________________________________*/
 /*  *******************___FUNCTIONS___*******************  */
+
+static void CWDestroyDiscoverAC(void *f)
+{
+       CW_FREE_OBJECT(f);
+}
+
+static void CWDestroyDiscoverACList(CWList *ACList)
+{
+       CWDeleteList(ACList, CWDestroyDiscoverAC);
+       *ACList = NULL;
+}
+
+static CWBool CWAddDiscoverACAddress(CWList *ACList, CWNetworkLev4Address *address)
+{
+       CWUseSockNtop(address, CWDebugLog("CWAddDiscoverACAddress: %s", str);
+               );
+
+       if (!CWSearchInList(*ACList, (void *)address, CWNetworkCompareAddress)) {
+               CWDiscoverAC *AC;
+
+               CW_CREATE_OBJECT_ERR(AC, CWDiscoverAC, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+                       );
+               CW_ZERO_MEMORY(AC, sizeof(CWDiscoverAC));
+               CW_COPY_NET_ADDR_PTR(&AC->address, address);
+               AC->received = 0;
+
+               if (!CWAddElementToList(ACList, AC)) {
+                       CW_FREE_OBJECT(AC);
+                       return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+               }
+       } else
+               CWDebugLog("Duplicate IP, already in List");
+
+       return CW_TRUE;
+}
+
+static CWBool CWAddDiscoverAC(CWList *ACList, const char *host)
+{
+
+       struct addrinfo hints, *result, *rp;
+       char serviceName[5];
+       CWSocket sock;
+
+       CWDebugLog("CWAddDiscoverAC: %s", host);
+
+       if (host == NULL)
+               return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
+
+       CW_ZERO_MEMORY(&hints, sizeof(struct addrinfo));
+
+#ifdef IPv6
+       if (gNetworkPreferredFamily == CW_IPv6) {
+               hints.ai_family = AF_INET6;
+               hints.ai_flags = AI_V4MAPPED;
+       } else {
+               hints.ai_family = AF_INET;
+       }
+#else
+       hints.ai_family = AF_INET;
+#endif
+       hints.ai_socktype = SOCK_DGRAM;
+
+       snprintf(serviceName, sizeof(serviceName), "%d", CW_CONTROL_PORT);
+
+       if (getaddrinfo(host, serviceName, &hints, &result) != 0)
+               return CWErrorRaise(CW_ERROR_GENERAL, "Can't resolve hostname");
+
+       for (rp = result; rp != NULL; rp = rp->ai_next) {
+               sock = socket(rp->ai_family, rp->ai_socktype,
+                            rp->ai_protocol);
+               if (sock == -1)
+                       continue;
+
+               CWAddDiscoverACAddress(ACList, (CWNetworkLev4Address *)rp->ai_addr);
+               close(sock);
+       }
+       freeaddrinfo(result);
+
+       return CW_TRUE;
+}
 
 /*
  * Manage Discovery State
@@ -73,7 +170,6 @@ CWBool CWParseDiscoveryResponseMessage(char *msg, int len, int *seqNumPtr, CWACI
 CWStateTransition CWWTPEnterDiscovery()
 {
 	int i;
-	CWBool j;
 
 	CWLog("\n");
 	CWLog("######### Discovery State #########");
@@ -92,69 +188,73 @@ CWStateTransition CWWTPEnterDiscovery()
 		return CW_QUIT;
 	}
 
+	if (DiscoveredACCount != 0 && CurrentDiscoveredAC < DiscoveredACCount) {
+		/* reset to highes prio AC */
+		CurrentDiscoveredAC = 0;
+
+		/* try to select it*/
+		if (CWWTPPickAC()) {
+			CWUseSockNtop(&(gACInfoPtr->preferredAddress),
+				      CWLog("Preferred AC: \"%s\", at address: %s", gACInfoPtr->name, str);
+				);
+
+			return CW_ENTER_JOIN;
+		}
+	}
+
+	CWResetDiscoveredACAddresses();
+
 	/*
 	 * note: gCWACList can be freed and reallocated (reading from config file)
 	 * at each transition to the discovery state to save memory space
 	 */
 	CWDebugLog("gCWACCount: %d", gCWACCount);
 	for (i = 0; i < gCWACCount; i++)
-		gCWACList[i].received = CW_FALSE;
+		CWAddDiscoverAC(&ACList, gCWACList[i].address);
 
 	/* wait a random time */
 	sleep(CWRandomIntInRange(gCWDiscoveryInterval, gCWMaxDiscoveryInterval));
 
 	CW_REPEAT_FOREVER {
 		CWBool sentSomething = CW_FALSE;
+		CWDiscoverAC *AC;
 
 		/* we get no responses for a very long time */
-		if (gCWDiscoveryCount == gCWMaxDiscoveries)
+		if (gCWDiscoveryCount == gCWMaxDiscoveries) {
+			CWDestroyDiscoverACList(&ACList);
 			return CW_ENTER_SULKING;
+		}
 
 		/* send Requests to one or more ACs */
-		for (i = 0; i < gCWACCount; i++) {
+		for (AC = CWListGetNext(ACList, CW_LIST_ITERATE_RESET);
+		     AC != NULL;
+		     AC = CWListGetNext(ACList, CW_LIST_ITERATE)) {
 
-			/* if this AC hasn't responded to us... */
-			if (!(gCWACList[i].received)) {
-				/* ...send a Discovery Request */
+                        /* if this AC has responded to us... */
+                        if (AC->received)
+                                continue;
 
-				CWProtocolMessage *msgPtr = NULL;
+                        /* ...send a Discovery Request */
 
-				/* get sequence number (and increase it) */
-				gCWACList[i].seqNum = CWGetSeqNum();
+                        CWProtocolMessage *msgPtr = NULL;
 
-				if (!CWErr(CWAssembleDiscoveryRequest(&msgPtr, gCWACList[i].seqNum))) {
-					exit(1);
-				}
+                        /* get sequence number (and increase it) */
+                        AC->seqNum = CWGetSeqNum();
 
-				CW_CREATE_OBJECT_ERR(gACInfoPtr, CWACInfoValues, return CW_QUIT;
-				    );
+                        if (!CWErr(CWAssembleDiscoveryRequest(&msgPtr, AC->seqNum)))
+                                exit(1);
 
-				CWDebugLog("cCWACList[%d].address: %s, %d", i, gCWACList[i].address, gCWACList[i].received);
-				CWErr(CWNetworkGetAddressForHost(gCWACList[i].address, &(gACInfoPtr->preferredAddress)));
+                        CWUseSockNtop(&AC->address, CWLog("WTP sends Discovery Request to: %s", str););
+                        (void)CWErr(CWNetworkSendUnsafeUnconnected(gWTPSocket, &AC->address, (*msgPtr).msg, (*msgPtr).offset));
 
-				CWUseSockNtop(&(gACInfoPtr->preferredAddress), CWDebugLog("preferredAddress: %s", str);
-				    );
+                        CW_FREE_PROTOCOL_MESSAGE(*msgPtr);
+                        CW_FREE_OBJECT(msgPtr);
 
-				CWDebugLog("cCWACList[%d].address: %s, %d", i, gCWACList[i].address, gCWACList[i].received);
-				j = CWErr(CWNetworkSendUnsafeUnconnected(gWTPSocket,
-									 &(gACInfoPtr->preferredAddress),
-									 (*msgPtr).msg, (*msgPtr).offset));
-				/*
-				 * log eventual error and continue
-				 * CWUseSockNtop(&(gACInfoPtr->preferredAddress),
-				 *       CWLog("WTP sends Discovery Request to: %s", str););
-				 */
-
-				CW_FREE_PROTOCOL_MESSAGE(*msgPtr);
-				CW_FREE_OBJECT(msgPtr);
-				CW_FREE_OBJECT(gACInfoPtr);
-
-				/*
-				 * we sent at least one Request in this loop
-				 * (even if we got an error sending it)
-				 */
-				sentSomething = CW_TRUE;
-			}
+                        /*
+                         * we sent at least one Request in this loop
+                         * (even if we got an error sending it)
+                         */
+                        sentSomething = CW_TRUE;
 		}
 
 		/* All AC sent the response (so we didn't send any request) */
@@ -176,6 +276,7 @@ CWStateTransition CWWTPEnterDiscovery()
 
 	/* crit error: we should have received at least one Discovery Response */
 	if (!CWWTPFoundAnAC()) {
+		CWDestroyDiscoverACList(&ACList);
 		CWLog("No Discovery response Received");
 		return CW_ENTER_DISCOVERY;
 	}
@@ -188,6 +289,7 @@ CWStateTransition CWWTPEnterDiscovery()
 		      CWLog("Preferred AC: \"%s\", at address: %s", gACInfoPtr->name, str);
 	    );
 
+	CWDestroyDiscoverACList(&ACList);
 	return CW_ENTER_JOIN;
 }
 
@@ -255,7 +357,7 @@ CWBool CWReadResponses()
 CWBool CWReceiveDiscoveryResponse()
 {
 	char buf[CW_BUFFER_SIZE];
-	int i;
+	CWDiscoverAC *AC;
 	CWNetworkLev4Address addr;
 	CWACInfoValues *ACInfoPtr;
 	int seqNum;
@@ -269,45 +371,133 @@ CWBool CWReceiveDiscoveryResponse()
 		/* no error, but no data == orderly shutdown */
 		return CW_FALSE;
 
+	/* we received response from this address */
+	CWUseSockNtop(&addr, CWLog("Discovery Response from:%s", str);
+		);
+
+	AC = (CWDiscoverAC *)CWSearchInList(ACList, (void *)&addr, CWNetworkCompareAddress);
+	if (!AC)
+		return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "got discovery response from invalid address");
+
 	CW_CREATE_OBJECT_ERR(ACInfoPtr, CWACInfoValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
+	CW_COPY_NET_ADDR_PTR(&(ACInfoPtr->incomingAddress), &(addr));
 
 	/* check if it is a valid Discovery Response */
 	if (!CWErr(CWParseDiscoveryResponseMessage(buf, readBytes, &seqNum, ACInfoPtr))) {
 
 		CW_FREE_OBJECT(ACInfoPtr);
-		return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Received something different from a\
-                     Discovery Response while in Discovery State");
+		return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Received something different from a"
+				    " Discovery Response while in Discovery State");
+
 	}
 
-	CW_COPY_NET_ADDR_PTR(&(ACInfoPtr->incomingAddress), &(addr));
+	if (AC->seqNum != seqNum) {
+		CW_FREE_OBJECT(ACInfoPtr);
+		return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Sequence Number of Response doesn't macth Request");
+	}
+	AC->received = CW_TRUE;
 
-	CWLog("WTP Receives Discovery Response");
+	/* see if this AC is better than the one we have stored */
+	CWWTPEvaluateAC(ACInfoPtr);
 
-	/* check if the sequence number we got is correct */
-	for (i = 0; i < gCWACCount; i++) {
+	return CW_TRUE;
+}
 
-		if (gCWACList[i].seqNum == seqNum) {
+void CWResetDiscoveredACAddresses()
+{
+	DiscoveredACCount = 0;
+	CurrentDiscoveredAC = 0;
+	CW_FREE_OBJECT(DiscoveredAC);
+}
 
-			/* see if this AC is better than the one we have stored */
-			CWWTPEvaluateAC(ACInfoPtr);
+CWBool CWAddDiscoveredACAddress(unsigned char priority,
+				int family,
+				struct sockaddr *addr, socklen_t addrlen)
+{
+	CWDiscoveredAC *AC;
 
-			CWUseSockNtop(&addr, CWLog("Discovery Response from:%s", str);
-			    );
-			/* we received response from this address */
-			gCWACList[i].received = CW_TRUE;
-
-			return CW_TRUE;
-		}
+	if (DiscoveredAC == NULL ||
+	    DiscoveredACCount % DAC_BLOCK_SIZE == 0) {
+		DiscoveredAC = realloc(DiscoveredAC,
+				       (DiscoveredACCount + DAC_BLOCK_SIZE) * sizeof(CWDiscoveredAC));
+		CW_ON_ERROR(DiscoveredAC, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL););
 	}
 
-	CW_FREE_OBJECT(ACInfoPtr);
-	return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Sequence Number of Response doesn't macth Request");
+	AC = DiscoveredAC + DiscoveredACCount;
+	AC->priority = priority;
+
+	switch (family) {
+	case AF_INET: {
+		struct sockaddr_in *sockaddr = (struct sockaddr_in *)&AC->address;
+
+		sockaddr->sin_family = family;
+		sockaddr->sin_port = htons(CW_CONTROL_PORT);
+		CW_COPY_MEMORY(&sockaddr->sin_addr, addr, addrlen);
+
+		break;
+	}
+	case AF_INET6: {
+		struct sockaddr_in6 *sockaddr = (struct sockaddr_in6 *)&AC->address;
+
+		sockaddr->sin6_family = family;
+		sockaddr->sin6_port = htons(CW_CONTROL_PORT);
+		CW_COPY_MEMORY(&sockaddr->sin6_addr, addr, addrlen);
+
+		break;
+	}
+	default:
+		break;
+	}
+
+	DiscoveredACCount++;
+	return CW_TRUE;
+}
+
+CWBool CWParseACAddressListWithPrio(CWProtocolMessage * msgPtr, int len)
+{
+	CWProtocolACAddressListWithPrio *elem =
+		(CWProtocolACAddressListWithPrio *)CWProtocolRetrievePtr(msgPtr);
+
+	if (len < sizeof(CWProtocolACAddressListWithPrio))
+	    return CWErrorRaise(CW_ERROR_INVALID_FORMAT,
+				"Malformed AC Address with Priority Message Element");
+
+	switch (elem->type) {
+	case 0: /* DNS */
+		/* FIXME: not handled yet, needs care with string length and async DNS lookup */
+		break;
+
+	case 1: /* IPv4 */
+		if (len < sizeof(CWProtocolACAddressListWithPrio) + sizeof(struct in_addr))
+			return CWErrorRaise(CW_ERROR_INVALID_FORMAT,
+					    "Malformed AC Address with Priority Message Element");
+
+		CWAddDiscoveredACAddress(elem->priority, AF_INET,
+					 (struct sockaddr *)&elem->data, sizeof(struct in_addr));
+		break;
+
+#ifdef IPv6
+	case 2: /* IPv6 */
+		if (len < sizeof(CWProtocolACAddressListWithPrio) + sizeof(struct in6_addr))
+			return CWErrorRaise(CW_ERROR_INVALID_FORMAT,
+					    "Malformed AC Address with Priority Message Element");
+		CWAddDiscoveredACAddress(elem->priority, AF_INET6,
+					 (struct sockaddr *)&elem->data, sizeof(struct in6_addr));
+		break;
+#endif
+
+	default:
+		break;
+	}
+
+	msgPtr->offset += len;
+
+	return CW_TRUE;
 }
 
 void CWWTPEvaluateAC(CWACInfoValues * ACInfoPtr)
 {
-
 	if (ACInfoPtr == NULL)
 		return;
 
@@ -329,53 +519,32 @@ void CWWTPEvaluateAC(CWACInfoValues * ACInfoPtr)
 	 */
 }
 
-/*
- * Pick on IP from the AC List if one has been received.
- *
- * Note: This a quick fix only and not in line with the CAPWAP RFC,
- *       full support for AC IPv4/IPv6 List requires a lot more
- */
+int CWCompareDiscoveredAC(const void *__v1, const void *__v2)
+{
+	CWDiscoveredAC *v1 = (CWDiscoveredAC *)__v1;
+	CWDiscoveredAC *v2 = (CWDiscoveredAC *)__v2;
+
+	if (v1->priority > v2->priority) return 1;
+	else if (v1->priority < v2->priority) return -1;
+	return 0;
+}
+
 CWBool CWWTPPickAC()
 {
-       int i;
-       if (gACInfoPtr == NULL)
-               return CW_FALSE;
+	CWLog("CWWTPPickAC: %p, %d, %d", gACInfoPtr, DiscoveredACCount, CurrentDiscoveredAC);
+	if (gACInfoPtr == NULL || DiscoveredACCount == 0 ||
+	    CurrentDiscoveredAC >= DiscoveredACCount)
+		return CW_FALSE;
 
-       switch (gNetworkPreferredFamily) {
-       case CW_IPv6:
-	       if (gACInfoPtr->ACIPv6ListInfo.ACIPv6List != NULL &&
-		   gACInfoPtr->ACIPv6ListInfo.ACIPv6ListCount > 0) {
-		       struct sockaddr_in6 *sockaddr = (struct sockaddr_in6 *)&(gACInfoPtr->preferredAddress);
+	if (CurrentDiscoveredAC == 0)
+		qsort(DiscoveredAC, DiscoveredACCount, sizeof(CWDiscoveredAC), CWCompareDiscoveredAC);
 
-		       sockaddr->sin6_family = AF_INET6;
-		       sockaddr->sin6_port = htons(CW_CONTROL_PORT);
+	CW_COPY_NET_ADDR_PTR(&(gACInfoPtr->preferredAddress), &DiscoveredAC[CurrentDiscoveredAC].address);
+	CurrentDiscoveredAC++;
 
-		       i = CWRandomIntInRange(0, gACInfoPtr->ACIPv6ListInfo.ACIPv6ListCount - 1);
-		       CW_COPY_MEMORY(&(sockaddr->sin6_addr), &(gACInfoPtr->ACIPv6ListInfo.ACIPv6List[i]), 16);
+	CWUseSockNtop(&(gACInfoPtr->preferredAddress), CWDebugLog("NEW preferredAddress: %s", str); );
 
-		       break;
-	       }
-
-	       /* FALL THROUGH */
-
-       default: {
-	       struct sockaddr_in *sockaddr = (struct sockaddr_in *)&(gACInfoPtr->preferredAddress);
-
-	       if (gACInfoPtr->ACIPv4ListInfo.ACIPv4List == NULL ||
-		   gACInfoPtr->ACIPv4ListInfo.ACIPv4ListCount <= 0)
-		       return CW_FALSE;
-
-	       sockaddr->sin_family = AF_INET;
-	       sockaddr->sin_port = htons(CW_CONTROL_PORT);
-
-	       i = CWRandomIntInRange(0, gACInfoPtr->ACIPv4ListInfo.ACIPv4ListCount - 1);
-	       CW_COPY_MEMORY(&(sockaddr->sin_addr), &(gACInfoPtr->ACIPv4ListInfo.ACIPv4List[i]), 4);
-
-	       break;
-       }
-       }
-
-       return CW_TRUE;
+	return CW_TRUE;
 }
 
 /*
@@ -548,11 +717,6 @@ CWBool CWParseDiscoveryResponseMessage(char *msg, int len, int *seqNumPtr, CWACI
 	ACInfoPtr->IPv4AddressesCount = 0;
 	ACInfoPtr->IPv6AddressesCount = 0;
 
-	ACInfoPtr->ACIPv4ListInfo.ACIPv4ListCount = 0;
-	ACInfoPtr->ACIPv4ListInfo.ACIPv4List = NULL;
-	ACInfoPtr->ACIPv6ListInfo.ACIPv6ListCount = 0;
-	ACInfoPtr->ACIPv6ListInfo.ACIPv6List = NULL;
-
 	/* parse message elements */
 	while ((completeMsg.offset - offsetTillMessages) < controlVal.msgElemsLen) {
 		unsigned short int type = 0;	/* = CWProtocolRetrieve32(&completeMsg); */
@@ -593,16 +757,49 @@ CWBool CWParseDiscoveryResponseMessage(char *msg, int len, int *seqNumPtr, CWACI
 			ACInfoPtr->IPv6AddressesCount++;
 			completeMsg.offset += len;
 			break;
-		case CW_MSG_ELEMENT_AC_IPV4_LIST_CW_TYPE:
-			if (!(CWParseACIPv4List(&completeMsg, len, &(ACInfoPtr->ACIPv4ListInfo))))
-				return CW_FALSE;
+                case CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_BW_CW_TYPE: {
+                        unsigned int vendorId = CWProtocolRetrieve32(&completeMsg);
+                        len -= 4;
+
+                        CWDebugLog("Parsing Vendor Message Element, Vendor: %u", vendorId);
+                        switch (vendorId) {
+                        case CW_IANA_ENTERPRISE_NUMBER_VENDOR_TRAVELPING: {
+                                unsigned short int vendorElemType = CWProtocolRetrieve16(&completeMsg);
+                                len -= 2;
+
+                                CWDebugLog("Parsing TP Vendor Message Element: %u", vendorElemType);
+                                switch (vendorElemType) {
+                                case CW_MSG_ELEMENT_TRAVELPING_AC_ADDRESS_LIST_WITH_PRIORITY:
+					if (!(CWParseACAddressListWithPrio(&completeMsg, len)))
+						return CW_FALSE;
+					break;
+
+                                default:
+                                        CWLog("unknown TP Vendor Message Element: %u", vendorElemType);
+
+                                        /* ignore unknown vendor extensions */
+                                        completeMsg.offset += len;
+                                        break;
+                                }
+                                break;
+			}
+
+                        default:
+                                CWLog("unknown Vendor Message Element, Vendor: %u", vendorId);
+
+                                /* ignore unknown vendor extensions */
+                                completeMsg.offset += len;
+                                break;
+                        }
 			break;
-		case CW_MSG_ELEMENT_AC_IPV6_LIST_CW_TYPE:
-			if (!(CWParseACIPv6List(&completeMsg, len, &(ACInfoPtr->ACIPv6ListInfo))))
-				return CW_FALSE;
-			break;
+		}
+
 		default:
-			return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Unrecognized Message Element");
+			CWLog("unknown Message Element, Element; %u", type);
+
+			/* ignore unknown IE */
+			completeMsg.offset += len;
+			break;
 		}
 
 		/* CWDebugLog("bytes: %d/%d",
@@ -651,6 +848,7 @@ CWBool CWParseDiscoveryResponseMessage(char *msg, int len, int *seqNumPtr, CWACI
 				return CW_FALSE;
 			j++;
 			break;
+
 		default:
 			completeMsg.offset += len;
 			break;

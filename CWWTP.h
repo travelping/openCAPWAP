@@ -201,6 +201,13 @@ int set_wme_aifsn(int acclass, int value);
 /* in WTPDiscoveryState.c */
 CWStateTransition CWWTPEnterDiscovery();
 void CWWTPPickACInterface();
+CWBool CWWTPPickAC();
+
+void CWResetDiscoveredACAddresses();
+CWBool CWAddDiscoveredACAddress(unsigned char priority,
+				int family,
+				struct sockaddr *addr, socklen_t addrlen);
+CWBool CWParseACAddressListWithPrio(CWProtocolMessage * msgPtr, int len);
 
 CWStateTransition CWWTPEnterSulking();
 CWStateTransition CWWTPEnterJoin();

@@ -299,6 +299,8 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveDataPacket(void *arg)
 				msgPtr.offset = 0;
 				CWParseFormatMsgElem(&msgPtr, &elemType, &elemLen);
 				valPtr = CWParseSessionID(&msgPtr, elemLen);
+
+				CW_FREE_OBJECT(valPtr);
 				break;
 			}
 
@@ -645,7 +647,7 @@ CWBool CWWTPManageGenericRunMessage(CWProtocolMessage * msgPtr)
 			 * we have to send a corresponding response
 			 * containing a failure result code
 			 */
-			CWLog("--> Not valid Request in Run State... we send a failure Response");
+			CWLog("--> invalid Request %d (0x%04x) in Run State... we send a failure Response", controlVal.messageTypeValue, controlVal.messageTypeValue);
 
 			if (!(CWAssembleUnrecognizedMessageResponse(&messages,
 								    &fragmentsNum,
@@ -811,6 +813,7 @@ void CWWTPKeepAliveDataTimerExpiredHandler(void *arg)
 		CW_FREE_PROTOCOL_MESSAGE(messages[k]);
 	}
 	CW_FREE_OBJECT(messages);
+	CW_FREE_PROTOCOL_MESSAGE(sessionIDmsgElem);
 }
 
 void CWWTPNeighborDeadTimerExpired(void *arg)
@@ -1389,6 +1392,7 @@ CWBool CWParseConfigurationUpdateRequest(char *msg,
 
 	CWBool bindingMsgElemFound = CW_FALSE;
 	CWBool vendorMsgElemFound = CW_FALSE;
+	CWBool acAddressWithPrioFound = CW_FALSE;
 	CWProtocolMessage completeMsg;
 	unsigned short int GlobalElementType = 0;
 
@@ -1456,6 +1460,15 @@ CWBool CWParseConfigurationUpdateRequest(char *msg,
 
 				case CW_MSG_ELEMENT_TRAVELPING_AC_JOIN_TIMEOUT:
 					CWParseTPACJoinTimeout(&completeMsg, elemLen, &valuesPtr->vendorTP_ACJoinTimeout);
+					break;
+
+                                case CW_MSG_ELEMENT_TRAVELPING_AC_ADDRESS_LIST_WITH_PRIORITY:
+					if (acAddressWithPrioFound != CW_TRUE) {
+						CWResetDiscoveredACAddresses();
+						acAddressWithPrioFound = CW_TRUE;
+					}
+					if (!(CWParseACAddressListWithPrio(&completeMsg, len)))
+						return CW_FALSE;
 					break;
 
 				default:

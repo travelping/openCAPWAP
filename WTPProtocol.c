@@ -1224,8 +1224,6 @@ CWBool CWParseDeleteWLAN(CWProtocolMessage * msgPtr, int len)
 
 CWBool CWParseAddWLAN(CWProtocolMessage * msgPtr, int len)
 {
-	int Length = 0;
-	unsigned char *ssid;
 	unsigned char tmp_buf[len + 1];
 
 	//CWParseMessageElementStart();  sostituire al posto delle righe successive quando passerò valPtr alla funzione CWarseAddStation
@@ -1248,11 +1246,9 @@ CWBool CWParseAddWLAN(CWProtocolMessage * msgPtr, int len)
 	tmp_buf[7] = keyLength >> 8;
 	tmp_buf[8] = keyLength & 0xff;
 
-	if (keyLength) {
-		unsigned char *key;
-		key = (unsigned char *)CWProtocolRetrieveRawBytes(msgPtr, keyLength);
-		memcpy(tmp_buf + 9, key, keyLength);
-	}
+	if (keyLength)
+		/* PSK */
+		CWProtocolCopyRawBytes(tmp_buf + 9, msgPtr, keyLength);
 
 	tmp_buf[9 + keyLength] = CWProtocolRetrieve8(msgPtr);
 	tmp_buf[10 + keyLength] = CWProtocolRetrieve8(msgPtr);
@@ -1268,9 +1264,8 @@ CWBool CWParseAddWLAN(CWProtocolMessage * msgPtr, int len)
 	tmp_buf[18 + keyLength] = gWTPTunnelMode = CWProtocolRetrieve8(msgPtr);	/* Tunnel Mode */
 	tmp_buf[19 + keyLength] = CWProtocolRetrieve8(msgPtr);			/* Suppress SSID */
 
-	ssid = (unsigned char *)CWProtocolRetrieveRawBytes(msgPtr, len - (19 + keyLength));
-
-	memcpy(tmp_buf + 20 + keyLength, ssid, len - 19 - keyLength);
+	/* SSID */
+	CWProtocolCopyRawBytes(tmp_buf + 20 + keyLength, msgPtr, len - (19 + keyLength));
 
 	CWWTPsend_command_to_hostapd_ADD_WLAN(tmp_buf, len + 1);
 

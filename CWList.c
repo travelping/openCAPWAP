@@ -124,7 +124,7 @@ void *CWListGetNext(CWList list, CWListIterateMode mode)
 
 // search baseElement in list using compareFunc
 // NULL if there was an error, the element otherwise
-void *CWSearchInList(CWList list, void *baseElement, CWBool(*compareFunc) (void *, void *))
+void *CWSearchInList(CWList list, void *baseElement, CWBool(*compareFunc) (const void *, const void *))
 {
 	CWListElement *el = NULL;
 
@@ -142,7 +142,7 @@ void *CWSearchInList(CWList list, void *baseElement, CWBool(*compareFunc) (void 
 
 // search baseElement in list using compareFunc, removes the element from the list and returns it
 // NULL if there was an error, the element otherwise
-void *CWDeleteInList(CWList * list, void *baseElement, CWBool(*compareFunc) (void *, void *))
+void *CWDeleteInList(CWList * list, void *baseElement, CWBool(*compareFunc) (const void *, const void *))
 {
 	CWListElement *el = NULL, *oldEl = NULL;
 
