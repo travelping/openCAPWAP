@@ -210,20 +210,13 @@ void CWDestroyDiscoveryRequestValues(CWDiscoveryRequestValues * valPtr)
 
 	if (valPtr == NULL)
 		return;
-	for (i = 0; i < (valPtr->WTPDescriptor.vendorInfos).vendorInfosCount; i++) {
 
-		CW_FREE_OBJECT(((valPtr->WTPDescriptor.vendorInfos).vendorInfos)[i].valuePtr);
-	}
-	CW_FREE_OBJECT((valPtr->WTPDescriptor.vendorInfos).vendorInfos);
+	for (i = 0; i < valPtr->WTPDescriptor.vendorInfos.vendorInfosCount; i++)
+		CW_FREE_OBJECT(valPtr->WTPDescriptor.vendorInfos.vendorInfos[i].valuePtr);
+	CW_FREE_OBJECT(valPtr->WTPDescriptor.vendorInfos.vendorInfos);
 
-	/*
-	 * BUG ML11
-	 *
-	 * 10/10/2009 - Donato Capitella
-	 */
-	for (i = 0; i < valPtr->WTPBoardData.vendorInfosCount; i++) {
+	for (i = 0; i < valPtr->WTPBoardData.vendorInfosCount; i++)
 		CW_FREE_OBJECT(valPtr->WTPBoardData.vendorInfos[i].valuePtr);
-	}
 	CW_FREE_OBJECT(valPtr->WTPBoardData.vendorInfos);
 
 	/*CW_FREE_OBJECT((valPtr->radios).radios); */

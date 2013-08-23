@@ -391,7 +391,7 @@ typedef struct {
 		TP_WTP_VERSION = 0,
 	} type;
 	int length;
-	char *valuePtr;
+	char * valuePtr;
 } CWWTPVendorInfoValues;
 
 typedef struct {

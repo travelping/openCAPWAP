@@ -100,19 +100,13 @@ CWBool CWWTPGetBoardData(CWWTPVendorInfos * valPtr)
 	valPtr->vendorInfos[0].vendorIdentifier = CW_IANA_ENTERPRISE_NUMBER_VENDOR_TRAVELPING;
 	valPtr->vendorInfos[0].type = CW_WTP_MODEL_NUMBER;
 	valPtr->vendorInfos[0].length = strlen(gWtpModelNumber);
-	CW_CREATE_OBJECT_SIZE_ERR(valPtr->vendorInfos[0].valuePtr, valPtr->vendorInfos[0].length,
-				  return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
-	memcpy(valPtr->vendorInfos[0].valuePtr, gWtpSerialNumber, strlen(gWtpSerialNumber));		// MODEL NUMBER
+	valPtr->vendorInfos[0].valuePtr = CW_CREATE_STRING_FROM_STRING_ERR2(gWtpModelNumber, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
 
 	// my vendor identifier (IANA assigned "SMI Network Management Private Enterprise Code")
 	valPtr->vendorInfos[1].vendorIdentifier = CW_IANA_ENTERPRISE_NUMBER_VENDOR_TRAVELPING;
 	valPtr->vendorInfos[1].type = CW_WTP_SERIAL_NUMBER;
 	valPtr->vendorInfos[1].length = strlen(gWtpSerialNumber);
-	CW_CREATE_OBJECT_SIZE_ERR(valPtr->vendorInfos[1].valuePtr, valPtr->vendorInfos[1].length,
-				  return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
-	memcpy(valPtr->vendorInfos[1].valuePtr, gWtpSerialNumber, strlen(gWtpSerialNumber));		// SERIAL NUMBER
+	valPtr->vendorInfos[1].valuePtr = CW_CREATE_STRING_FROM_STRING_ERR2(gWtpSerialNumber, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
 
 	return CW_TRUE;
 }
@@ -131,26 +125,37 @@ CWBool CWWTPGetVendorInfos(CWWTPVendorInfos * valPtr)
 		.vendorIdentifier = 0,
 		.type             = CW_WTP_HARDWARE_VERSION,
 		.length           = strlen(gWtpHardwareVersion),
-		.valuePtr         = gWtpHardwareVersion
+		.valuePtr         = strdup(gWtpHardwareVersion)
 	};
 	valPtr->vendorInfos[1] = (CWWTPVendorInfoValues){
 		.vendorIdentifier = 0,
 		.type             = CW_WTP_SOFTWARE_VERSION,
 		.length           = strlen(gWtpActiveSoftwareVersion),
-		.valuePtr         = gWtpActiveSoftwareVersion
+		.valuePtr         = strdup(gWtpActiveSoftwareVersion)
 	};
 	valPtr->vendorInfos[2] = (CWWTPVendorInfoValues){
 		.vendorIdentifier = 0,
 		.type             = CW_BOOT_VERSION,
 		.length           = strlen(gWtpBootVersion),
-		.valuePtr         = gWtpBootVersion
+		.valuePtr         = strdup(gWtpBootVersion)
 	};
 	valPtr->vendorInfos[3] = (CWWTPVendorInfoValues){
 		.vendorIdentifier = CW_IANA_ENTERPRISE_NUMBER_VENDOR_TRAVELPING,
 		.type             = TP_WTP_VERSION,
 		.length           = strlen(gWtpVersion),
-		.valuePtr         = gWtpVersion
+		.valuePtr         = strdup(gWtpVersion)
 	};
+
+	if (!valPtr->vendorInfos[0].valuePtr ||
+	    !valPtr->vendorInfos[1].valuePtr ||
+	    !valPtr->vendorInfos[2].valuePtr ||
+	    !valPtr->vendorInfos[3].valuePtr) {
+		free(valPtr->vendorInfos[0].valuePtr);
+		free(valPtr->vendorInfos[1].valuePtr);
+		free(valPtr->vendorInfos[2].valuePtr);
+		free(valPtr->vendorInfos[3].valuePtr);
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	}
 
 	return CW_TRUE;
 }

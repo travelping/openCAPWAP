@@ -726,23 +726,20 @@ CWBool CWParseWTPDescriptor(CWProtocolMessage * msgPtr, int len, CWWTPDescriptor
 	    );
 
 	for (i = 0; i < valPtr->vendorInfos.vendorInfosCount; i++) {
-		(valPtr->vendorInfos.vendorInfos)[i].vendorIdentifier = CWProtocolRetrieve32(msgPtr);
-		(valPtr->vendorInfos.vendorInfos)[i].type = CWProtocolRetrieve16(msgPtr);
-		(valPtr->vendorInfos.vendorInfos)[i].length = CWProtocolRetrieve16(msgPtr);
-		(valPtr->vendorInfos.vendorInfos)[i].valuePtr =
-		    (CWProtocolRetrieveRawBytes(msgPtr, (valPtr->vendorInfos.vendorInfos)[i].length));
-
-		if ((valPtr->vendorInfos.vendorInfos)[i].valuePtr == NULL)
+		valPtr->vendorInfos.vendorInfos[i].vendorIdentifier = CWProtocolRetrieve32(msgPtr);
+		valPtr->vendorInfos.vendorInfos[i].type             = CWProtocolRetrieve16(msgPtr);
+		valPtr->vendorInfos.vendorInfos[i].length           = CWProtocolRetrieve16(msgPtr);
+		valPtr->vendorInfos.vendorInfos[i].valuePtr =
+			CWProtocolRetrieveStr(msgPtr, valPtr->vendorInfos.vendorInfos[i].length);
+		if (valPtr->vendorInfos.vendorInfos[i].valuePtr == NULL)
 			return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
-		if ((valPtr->vendorInfos.vendorInfos)[i].length == 4) {
-			*((valPtr->vendorInfos.vendorInfos)[i].valuePtr) =
-			    ntohl(*((valPtr->vendorInfos.vendorInfos)[i].valuePtr));
-		}
-//      CWDebugLog("WTP Descriptor Vendor ID: %d", (valPtr->vendorInfos.vendorInfos)[i].vendorIdentifier);
-//      CWDebugLog("WTP Descriptor Type: %d", (valPtr->vendorInfos.vendorInfos)[i].type);
-//      CWDebugLog("WTP Descriptor Length: %d", (valPtr->vendorInfos.vendorInfos)[i].length);
-//      CWDebugLog("WTP Descriptor Value: %d", *((valPtr->vendorInfos.vendorInfos)[i].valuePtr));
+#if 0
+		CWDebugLog("WTP Descriptor Vendor ID: %d", valPtr->vendorInfos.vendorInfos[i].vendorIdentifier);
+		CWDebugLog("WTP Descriptor Type: %d",      valPtr->vendorInfos.vendorInfos[i].type);
+		CWDebugLog("WTP Descriptor Length: %d",    valPtr->vendorInfos.vendorInfos[i].length);
+		CWDebugLog("WTP Descriptor Value: %s",     valPtr->vendorInfos.vendorInfos[i].valuePtr);
+#endif
 	}
 
 	CWParseMessageElementEnd();

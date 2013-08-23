@@ -224,19 +224,14 @@ CWBool CWAssembleMsgElemWTPBoardData(CWProtocolMessage * msgPtr)
 	CW_CREATE_PROTOCOL_MESSAGE(*msgPtr, size, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
-	CWProtocolStore32(msgPtr, ((infos.vendorInfos)[0].vendorIdentifier));
+	CWProtocolStore32(msgPtr, infos.vendorInfos[0].vendorIdentifier);
 	for (i = 0; i < infos.vendorInfosCount; i++) {
-		CWProtocolStore16(msgPtr, ((infos.vendorInfos)[i].type));
-		CWProtocolStore16(msgPtr, ((infos.vendorInfos)[i].length));
+		CWProtocolStore16(msgPtr, infos.vendorInfos[i].type);
+		CWProtocolStore16(msgPtr, infos.vendorInfos[i].length);
+		CWProtocolStoreRawBytes(msgPtr, (char *)infos.vendorInfos[i].valuePtr,
+			infos.vendorInfos[i].length);
 
-		if ((infos.vendorInfos)[i].length == 4) {
-			*((infos.vendorInfos)[i].valuePtr) = htonl(*((infos.vendorInfos)[i].valuePtr));
-		}
-
-		CWProtocolStoreRawBytes(msgPtr, (char *)((infos.vendorInfos)[i].valuePtr),
-					(infos.vendorInfos)[i].length);
-
-//      CWDebugLog("Board Data: %d - %d - %d - %d", (infos.vendorInfos)[i].vendorIdentifier, (infos.vendorInfos)[i].type, (infos.vendorInfos)[i].length, *((infos.vendorInfos)[i].valuePtr));
+//      CWDebugLog("Board Data: %d - %d - %d - %s", infos.vendorInfos[i].vendorIdentifier, infos.vendorInfos[i].type, infos.vendorInfos[i].length, infos.vendorInfos[i].valuePtr);
 	}
 
 	CWWTPDestroyVendorInfos(&infos);
@@ -321,23 +316,20 @@ CWBool CWAssembleMsgElemWTPDescriptor(CWProtocolMessage * msgPtr)
 	}
 
 	for (i = 0; i < infos.vendorInfosCount; i++) {
-		CWProtocolStore32(msgPtr, ((infos.vendorInfos)[i].vendorIdentifier));
-		CWProtocolStore16(msgPtr, ((infos.vendorInfos)[i].type));
-		CWProtocolStore16(msgPtr, ((infos.vendorInfos)[i].length));
+		CWProtocolStore32(msgPtr, infos.vendorInfos[i].vendorIdentifier);
+		CWProtocolStore16(msgPtr, infos.vendorInfos[i].type);
+		CWProtocolStore16(msgPtr, infos.vendorInfos[i].length);
+		CWProtocolStoreRawBytes(msgPtr, (char *)infos.vendorInfos[i].valuePtr,
+					infos.vendorInfos[i].length);
 
-		if ((infos.vendorInfos)[i].length == 4) {
-			*((infos.vendorInfos)[i].valuePtr) = htonl(*((infos.vendorInfos)[i].valuePtr));
-		}
+#if 0
+		CWDebugLog("WTP Descriptor Vendor ID: %d", infos.vendorInfos[i].vendorIdentifier);
+		CWDebugLog("WTP Descriptor Type: %d",      infos.vendorInfos[i].type);
+		CWDebugLog("WTP Descriptor Length: %d",    infos.vendorInfos[i].length);
+		CWDebugLog("WTP Descriptor Value: %s",     infos.vendorInfos[i].valuePtr);
 
-		CWProtocolStoreRawBytes(msgPtr, (char *)((infos.vendorInfos)[i].valuePtr),
-					(infos.vendorInfos)[i].length);
-
-//      CWDebugLog("WTP Descriptor Vendor ID: %d", (infos.vendorInfos)[i].vendorIdentifier);
-//      CWDebugLog("WTP Descriptor Type: %d", (infos.vendorInfos)[i].type);
-//      CWDebugLog("WTP Descriptor Length: %d", (infos.vendorInfos)[i].length);
-//      CWDebugLog("WTP Descriptor Value: %d", *((infos.vendorInfos)[i].valuePtr));
-
-		//CWDebugLog("Vendor Info \"%d\" = %d - %d - %d", i, (infos.vendorInfos)[i].vendorIdentifier, (infos.vendorInfos)[i].type, (infos.vendorInfos)[i].length);
+		CWDebugLog("Vendor Info \"%d\" = %d - %d - %d", i, infos.vendorInfos[i].vendorIdentifier, infos.vendorInfos[i].type, infos.vendorInfos[i].length);
+#endif
 	}
 
 	CWWTPDestroyVendorInfos(&infos);
