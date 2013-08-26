@@ -718,10 +718,8 @@ void _CWCloseThread(int i)
 	CWDebugLog("Close Thread: %08x", (unsigned int)CWThreadSelf());
 
 #ifndef CW_NO_DTLS
-	if (gWTPs[i].subState != CW_DTLS_HANDSHAKE_IN_PROGRESS) {
-
-		CWSecurityDestroySession(gWTPs[i].session);
-	}
+	if (gWTPs[i].subState != CW_DTLS_HANDSHAKE_IN_PROGRESS)
+		CWSecurityDestroySession(&gWTPs[i].session);
 #endif
 
 	/* this will do nothing if the timer isn't active */
