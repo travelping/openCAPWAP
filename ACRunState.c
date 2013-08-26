@@ -361,7 +361,7 @@ CWBool ACEnterRun(int WTPIndex, CWProtocolMessage * msgPtr, CWBool dataFlag)
 						return CW_FALSE;
 					}
 
-					memset(&(UnixSocksArray[WTPIndex].clntaddr), (int)NULL,
+					memset(&(UnixSocksArray[WTPIndex].clntaddr), 0,
 					       sizeof(UnixSocksArray[WTPIndex].clntaddr));
 					UnixSocksArray[WTPIndex].clntaddr.sun_family = AF_UNIX;
 
@@ -374,7 +374,7 @@ CWBool ACEnterRun(int WTPIndex, CWProtocolMessage * msgPtr, CWBool dataFlag)
 
 					unlink(socketctl_path_name);
 
-					memset(&(UnixSocksArray[WTPIndex].servaddr), (int)NULL,
+					memset(&(UnixSocksArray[WTPIndex].servaddr), 0,
 					       sizeof(UnixSocksArray[WTPIndex].servaddr));
 					UnixSocksArray[WTPIndex].servaddr.sun_family = AF_UNIX;
 
