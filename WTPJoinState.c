@@ -111,13 +111,13 @@ CWStateTransition CWWTPEnterJoin()
 	CWUnlockSafeList(gPacketReceiveList);
 
 	CWThread thread_receiveFrame;
-	if (!CWErr(CWCreateThread(&thread_receiveFrame, CWWTPReceiveDtlsPacket, (void *)gWTPSocket))) {
+	if (!CWErr(CWCreateThread(&thread_receiveFrame, CWWTPReceiveDtlsPacket, (void *)(intptr_t)gWTPSocket))) {
 		CWLog("Error starting Thread that receive DTLS packet");
 		goto cw_join_err;
 	}
 
 	CWThread thread_receiveDataFrame;
-	if (!CWErr(CWCreateThread(&thread_receiveDataFrame, CWWTPReceiveDataPacket, (void *)gWTPDataSocket))) {
+	if (!CWErr(CWCreateThread(&thread_receiveDataFrame, CWWTPReceiveDataPacket, (void *)(intptr_t)gWTPDataSocket))) {
 		CWLog("Error starting Thread that receive data packet");
 		goto cw_join_err;
 	}

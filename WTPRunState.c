@@ -131,7 +131,7 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveDtlsPacket(void *arg)
 
 	int readBytes;
 	char buf[CW_BUFFER_SIZE];
-	CWSocket sockDTLS = (long) arg;
+	CWSocket sockDTLS = (intptr_t)arg;
 	CWNetworkLev4Address addr;
 	char *pData;
 
