@@ -964,10 +964,13 @@ CWBool CWParseACDescriptor(CWProtocolMessage * msgPtr, int len, CWACInfoValues *
 
 	// see how many vendor ID we have in the message
 	while ((msgPtr->offset - oldOffset) < len) {
+		int tmp;
+
 		CWProtocolRetrieve32(msgPtr);				/* Id */
 		CWProtocolRetrieve16(msgPtr);				/* Type */
+		tmp = CWProtocolRetrieve16(msgPtr);			/* Length, BEWARE of the side effects, tmp is needed */
+		msgPtr->offset += tmp;
 
-		msgPtr->offset += CWProtocolRetrieve16(msgPtr);		/* Length */
 		valPtr->vendorInfos.vendorInfosCount++;
 	}
 
@@ -984,25 +987,22 @@ CWBool CWParseACDescriptor(CWProtocolMessage * msgPtr, int len, CWACInfoValues *
 #endif
 
 	for (i = 0; i < valPtr->vendorInfos.vendorInfosCount; i++) {
-		(valPtr->vendorInfos.vendorInfos)[i].vendorIdentifier = CWProtocolRetrieve32(msgPtr);
-		(valPtr->vendorInfos.vendorInfos)[i].type = CWProtocolRetrieve16(msgPtr);
-		(valPtr->vendorInfos.vendorInfos)[i].length = CWProtocolRetrieve16(msgPtr);
-		(valPtr->vendorInfos.vendorInfos)[i].valuePtr =
-		    (int *)(CWProtocolRetrieveRawBytes(msgPtr, (valPtr->vendorInfos.vendorInfos)[i].length));
+		valPtr->vendorInfos.vendorInfos[i].vendorIdentifier = CWProtocolRetrieve32(msgPtr);
+		valPtr->vendorInfos.vendorInfos[i].type = CWProtocolRetrieve16(msgPtr);
+		valPtr->vendorInfos.vendorInfos[i].length = CWProtocolRetrieve16(msgPtr);
+		valPtr->vendorInfos.vendorInfos[i].valuePtr =
+		  CWProtocolRetrieveRawBytes(msgPtr, valPtr->vendorInfos.vendorInfos[i].length);
 
-		if ((valPtr->vendorInfos.vendorInfos)[i].valuePtr == NULL)
+		if (valPtr->vendorInfos.vendorInfos[i].valuePtr == NULL)
 			return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-
-		if ((valPtr->vendorInfos.vendorInfos)[i].length == 4) {
-			*((valPtr->vendorInfos.vendorInfos)[i].valuePtr) =
-			    ntohl(*((valPtr->vendorInfos.vendorInfos)[i].valuePtr));
-		}
 
 #if 0
 		CWDebugLog("vendorInfosCount %d vs %d", i, valPtr->vendorInfos.vendorInfosCount);
-		CWDebugLog("AC Descriptor Vendor ID: %d", (valPtr->vendorInfos.vendorInfos)[i].vendorIdentifier);
-		CWDebugLog("AC Descriptor Type: %d", (valPtr->vendorInfos.vendorInfos)[i].type);
-		CWDebugLog("AC Descriptor Value: %d", *((valPtr->vendorInfos.vendorInfos)[i].valuePtr));
+		CWDebugLog("AC Descriptor Vendor ID: %d", valPtr->vendorInfos.vendorInfos[i].vendorIdentifier);
+		CWDebugLog("AC Descriptor Type: %d", valPtr->vendorInfos.vendorInfos[i].type);
+		CWDebugLog("AC Descriptor Length: %d", valPtr->vendorInfos.vendorInfos[i].length);
+		CWDebugLog("AC Descriptor Value: %.*s", valPtr->vendorInfos.vendorInfos[i].length,
+			   valPtr->vendorInfos.vendorInfos[i].valuePtr);
 #endif
 	}
 

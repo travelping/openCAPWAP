@@ -477,7 +477,7 @@ typedef struct {
 		CW_AC_SOFTWARE_VERSION = 5
 	} type;
 	int length;
-	int *valuePtr;
+	unsigned char *valuePtr;
 } CWACVendorInfoValues;
 
 typedef struct {
