@@ -92,6 +92,10 @@ CWConfigValue gConfigValues[] = {
       .code = "</DATA_CHANNEL_KEEP_ALIVE_INTERVAL>",
       .value.int_value = CW_DATA_CHANNEL_KEEP_ALIVE_INTERVAL_DEFAULT
     },
+    { .type = CW_INTEGER,
+      .code = "</AGGRESSIVE_DATA_CHANNEL_KEEP_ALIVE_INTERVAL>",
+      .value.int_value = CW_AGGRESSIVE_DATA_CHANNEL_KEEP_ALIVE_INTERVAL_DEFAULT
+    },
 };
 
 int gConfigValuesCount = sizeof(gConfigValues) / sizeof(CWConfigValue);
@@ -161,7 +165,8 @@ CWBool CWConfigFileDestroyLib()
 	gCWNeighborDeadInterval = gConfigValues[9].value.int_value;
 	gCWNeighborDeadRestartDelta = gConfigValues[10].value.int_value;
 	gEchoInterval = gConfigValues[11].value.int_value;
-	gDataChannelKeepAliveInterval = gConfigValues[12].value.int_value;
+	gConfigDataChannelKeepAliveInterval = gConfigValues[12].value.int_value;
+	gAggressiveDataChannelKeepAliveInterval = gConfigValues[13].value.int_value;
 
 	return CW_TRUE;
 }

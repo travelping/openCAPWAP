@@ -95,6 +95,8 @@ extern int gCWMaxRetransmit;
 extern int gMaxLogFileSize;
 extern int gEnabledLog;
 extern int gDataChannelKeepAliveInterval;
+extern int gConfigDataChannelKeepAliveInterval;
+extern int gAggressiveDataChannelKeepAliveInterval;
 extern int gEchoInterval;
 
 #define CW_ON_ERROR(cond, on_err)					\

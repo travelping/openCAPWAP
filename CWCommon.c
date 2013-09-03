@@ -38,6 +38,8 @@ int gCWNeighborDeadRestartDelta = CW_NEIGHBORDEAD_RESTART_DELTA_DEFAULT;
 int gCWMaxRetransmit = CW_MAX_RETRANSMIT_DEFAULT;      //Default value for MaxRetransmit
 int gEchoInterval = CW_ECHO_INTERVAL_DEFAULT;
 int gDataChannelKeepAliveInterval = CW_DATA_CHANNEL_KEEP_ALIVE_INTERVAL_DEFAULT;
+int gConfigDataChannelKeepAliveInterval = CW_DATA_CHANNEL_KEEP_ALIVE_INTERVAL_DEFAULT;
+int gAggressiveDataChannelKeepAliveInterval = CW_AGGRESSIVE_DATA_CHANNEL_KEEP_ALIVE_INTERVAL_DEFAULT;
 
 int CWTimevalSubtract(struct timeval *res, const struct timeval *x, const struct timeval *y)
 {

@@ -386,6 +386,7 @@ CWStateTransition CWWTPEnterRun()
 
 	lRunChannelState = CS_OK;
 
+	gDataChannelKeepAliveInterval = gAggressiveDataChannelKeepAliveInterval;
 	CWWTPKeepAliveDataTimerExpiredHandler(NULL);
 
 	for (k = 0; k < MAX_PENDING_REQUEST_MSGS; k++)
@@ -541,6 +542,9 @@ CWBool CWWTPManageGenericRunMessage(CWProtocolMessage * msgPtr)
 
 				CWLog("Configuration Update Request received");
 
+				/* assume AC has gone to Run state, reset Data Channel Keep Alive */
+				gDataChannelKeepAliveInterval = gConfigDataChannelKeepAliveInterval;
+
 			/************************************************************************************************
 			 * Update 2009:                                                                                 *
 			 *              These two function need an additional parameter (Pointer to updateRequestType)  *
@@ -602,6 +606,9 @@ CWBool CWWTPManageGenericRunMessage(CWProtocolMessage * msgPtr)
 				CWProtocolResultCode resultCode = CW_PROTOCOL_SUCCESS;
 
 				CWLog("WLAN Configuration Request received");
+
+				/* assume AC has gone to Run state, reset Data Channel Keep Alive */
+				gDataChannelKeepAliveInterval = gConfigDataChannelKeepAliveInterval;
 
 				if (!CWParseWLANConfigurationRequest((msgPtr->msg) + (msgPtr->offset), len))
 					return CW_FALSE;
