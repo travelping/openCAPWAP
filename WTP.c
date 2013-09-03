@@ -60,7 +60,7 @@ int gIPv6StatusDuplicate = 0;
 
 char *gWTPLocation = NULL;
 char *gWTPName = NULL;
-char gWTPSessionID[16];
+unsigned char gWTPSessionID[16];
 
 /* if not NULL, jump Discovery and use this address for Joining */
 char *gWTPForceACAddress = NULL;
@@ -114,7 +114,7 @@ CWBool CWReceiveMessage(CWProtocolMessage * msgPtr)
 {
 	CWList fragments = NULL;
 	int readBytes;
-	char buf[CW_BUFFER_SIZE];
+	unsigned char buf[CW_BUFFER_SIZE];
 	CWBool dataFlag = CW_FALSE;
 
 	CW_REPEAT_FOREVER {
@@ -217,7 +217,7 @@ CWBool CWReceiveMessage(CWProtocolMessage * msgPtr)
 CWBool CWWTPSendAcknowledgedPacket(int seqNum,
 				   CWList msgElemlist,
 				   CWBool(assembleFunc) (CWProtocolMessage **, int *, int, int, CWList),
-				   CWBool(parseFunc) (char *, int, int, void *),
+				   CWBool(parseFunc) (unsigned char *, int, int, void *),
 				   CWBool(saveFunc) (void *), void *valuesPtr)
 {
 

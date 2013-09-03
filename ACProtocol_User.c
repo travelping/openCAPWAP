@@ -115,13 +115,13 @@ int CWACGetInterfaceIPv4AddressAtIndex(int i)
 	return ntohl(addrPtr->sin_addr.s_addr);
 }
 
-char *CWACGetInterfaceIPv6AddressAtIndex(int i)
+unsigned char *CWACGetInterfaceIPv6AddressAtIndex(int i)
 {
 	struct sockaddr_in6 *addrPtr;
 
 	addrPtr = (struct sockaddr_in6 *)&(gInterfaces[i].addr);
 
-	return (char *)addrPtr->sin6_addr.s6_addr;
+	return (unsigned char *)addrPtr->sin6_addr.s6_addr;
 }
 
 int CWACGetInterfaceWTPCountAtIndex(int i)

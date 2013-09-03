@@ -459,12 +459,12 @@ int getInterfaceMacAddr(char *interface, unsigned char *macAddr)
 	return 0;
 }
 
-int initWTPSessionID(char *sessionID)
+int initWTPSessionID(unsigned char *sessionID)
 {
 	unsigned char macAddr0[MAC_ADDR_LEN];
 	unsigned char macAddr1[MAC_ADDR_LEN];
 	int i, randomInteger;
-	char *buffer = sessionID;
+	unsigned char *buffer = sessionID;
 
 	getInterfaceMacAddr(gEthInterfaceName, macAddr0);
 	getInterfaceMacAddr(gRadioInterfaceName_0, macAddr1);

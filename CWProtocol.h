@@ -331,7 +331,7 @@ typedef enum {
 } CWProtocolResultCode;
 
 typedef struct {
-	char *msg;
+	unsigned char *msg;
 	int offset;
 	int data_msgType;
 } CWProtocolMessage;
@@ -371,7 +371,7 @@ typedef struct {
 } CWControlHeaderValues;
 
 typedef struct {
-	char *data;
+	unsigned char *data;
 	int dataLen;
 	CWProtocolTransportHeaderValues transportVal;
 } CWProtocolFragment;
@@ -689,9 +689,9 @@ static inline void CWProtocolStore32(CWProtocolMessage * msgPtr, unsigned int va
 
 void CWProtocolStoreStr(CWProtocolMessage * msgPtr, char *str);
 void CWProtocolStoreMessage(CWProtocolMessage * msgPtr, CWProtocolMessage * msgToStorePtr);
-void CWProtocolStoreRawBytes(CWProtocolMessage * msgPtr, char *bytes, int len);
+void CWProtocolStoreRawBytes(CWProtocolMessage * msgPtr, unsigned char *bytes, int len);
 
-static inline char *CWProtocolRetrievePtr(CWProtocolMessage * msgPtr)
+static inline unsigned char *CWProtocolRetrievePtr(CWProtocolMessage * msgPtr)
 {
 	return msgPtr->msg + msgPtr->offset;
 }
@@ -724,15 +724,16 @@ static inline unsigned int CWProtocolRetrieve32(CWProtocolMessage * msgPtr)
 }
 
 char *CWProtocolRetrieveStr(CWProtocolMessage * msgPtr, int len);
-char *CWProtocolRetrieveRawBytes(CWProtocolMessage * msgPtr, int len);
+unsigned char *CWProtocolRetrieveRawBytes(CWProtocolMessage * msgPtr, int len);
 void CWProtocolCopyRawBytes(void * dest, CWProtocolMessage * msgPtr, int len);
 
-CWBool CWProtocolParseFragment(char *buf, int readBytes, CWList * fragmentsListPtr, CWProtocolMessage * reassembledMsg,
-			       CWBool * dataFlag, char *RadioMAC);
+CWBool CWProtocolParseFragment(unsigned char *buf, int readBytes,
+			       CWList * fragmentsListPtr, CWProtocolMessage * reassembledMsg,
+			       CWBool * dataFlag, unsigned char *RadioMAC);
 void CWProtocolDestroyFragment(void *f);
 
 CWBool CWParseTransportHeader(CWProtocolMessage * msgPtr, CWProtocolTransportHeaderValues * valuesPtr,
-			      CWBool * dataFlag, char *RadioMAC);
+			      CWBool * dataFlag, unsigned char *RadioMAC);
 CWBool CWParseControlHeader(CWProtocolMessage * msgPtr, CWControlHeaderValues * valPtr);
 CWBool CWParseFormatMsgElem(CWProtocolMessage * completeMsg, unsigned short int *type, unsigned short int *len);
 
@@ -751,12 +752,12 @@ CWBool CWAssembleMsgElemRadioAdminState(CWProtocolMessage * msgPtr);	//29
 CWBool CWAssembleMsgElemRadioOperationalState(int radioID, CWProtocolMessage * msgPtr);	//30
 CWBool CWAssembleMsgElemResultCode(CWProtocolMessage * msgPtr, CWProtocolResultCode code);	//31
 CWBool CWAssembleVendorMsgElemResultCodeWithPayload(CWProtocolMessage * msgPtr, CWProtocolResultCode code, CWProtocolVendorSpecificValues * payload);	//49
-CWBool CWAssembleMsgElemSessionID(CWProtocolMessage * msgPtr, char *sessionID);	//32
+CWBool CWAssembleMsgElemSessionID(CWProtocolMessage * msgPtr, unsigned char *sessionID);	//32
 
 CWBool CWParseACName(CWProtocolMessage * msgPtr, int len, char **valPtr);
 CWBool CWParseWTPRadioOperationalState(CWProtocolMessage * msgPtr, int len, CWRadioOperationalInfoValues * valPtr);	//30
 CWBool CWParseResultCode(CWProtocolMessage * msgPtr, int len, CWProtocolResultCode * valPtr);	//31
-char *CWParseSessionID(CWProtocolMessage * msgPtr, int len);
+unsigned char *CWParseSessionID(CWProtocolMessage * msgPtr, int len);
 
 CWBool CWParseTPIEEE80211WLanHoldTime(CWProtocolMessage * msgPtr, int len, unsigned short int * valPtr);
 CWBool CWParseTPDataChannelDeadInterval(CWProtocolMessage * msgPtr, int len, unsigned short int * valPtr);

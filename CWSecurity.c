@@ -255,7 +255,7 @@ void CWSecurityCloseSession(CWSecuritySession * sPtr)
 	CWSecurityDestroySession(sPtr);
 }
 
-CWBool CWSecurityReceive(CWSecuritySession session, char *buf, int len, int *readBytesPtr)
+CWBool CWSecurityReceive(CWSecuritySession session, void *buf, int len, int *readBytesPtr)
 {
 
 	CWSecurityManageSSLError((*readBytesPtr = SSL_read(session, buf, len)), session,;
@@ -276,7 +276,7 @@ CWBool CWSecurityReceive(CWSecuritySession session, char *buf, int len, int *rea
 	return CW_TRUE;
 }
 
-CWBool CWSecuritySend(CWSecuritySession session, const char *buf, int len)
+CWBool CWSecuritySend(CWSecuritySession session, const void *buf, int len)
 {
 
 	if (buf == NULL)

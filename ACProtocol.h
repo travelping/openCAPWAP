@@ -33,7 +33,7 @@
 typedef struct {
 	char *locationData;
 	char *name;
-	char *sessionID;
+	unsigned char *sessionID;
 	CWWTPDescriptor descriptor;
 	struct sockaddr_in ipv4Address;
 
@@ -54,7 +54,7 @@ typedef struct {
 	char *location;
 	char *name;
 	CWWTPVendorInfos WTPBoardData;
-	char *sessionID;
+	unsigned char *sessionID;
 	CWWTPDescriptor WTPDescriptor;
 	struct sockaddr_in addr;
 	CWframeTunnelMode frameTunnelMode;
@@ -123,7 +123,7 @@ typedef struct {
 
 /*__________________________________________________________*/
 /*  *******************___PROTOTYPES___*******************  */
-CWBool CWParseChangeStateEventRequestMessage(char *msg, int len, int *seqNumPtr,
+CWBool CWParseChangeStateEventRequestMessage(unsigned char *msg, int len, int *seqNumPtr,
 					     CWProtocolChangeStateEventRequestValues * valuesPtr);
 CWBool CWAssembleChangeStateEventResponse(CWProtocolMessage ** messagesPtr, int *fragmentsNumPtr, int PMTU, int seqNum);
 
@@ -168,7 +168,7 @@ CWBool CWParseMsgElemDecryptErrorReport(CWProtocolMessage * msgPtr, int len, CWD
 CWBool CWParseMsgElemDuplicateIPv6Address(CWProtocolMessage * msgPtr, int len, WTPDuplicateIPv6 * valPtr);
 CWBool CWParseWTPRadioInformation(CWProtocolMessage * msgPtr, int len, unsigned char *valPtr);	//1048
 CWBool CWParseWTPSupportedRates(CWProtocolMessage * msgPtr, int len, unsigned char *valPtr);	//1040
-CWBool CWParseWTPMultiDomainCapability(CWProtocolMessage * msgPtr, int len, char *valPtr);	//1032
+CWBool CWParseWTPMultiDomainCapability(CWProtocolMessage * msgPtr, int len, unsigned char *valPtr);	//1032
 //CWBool CWParseWTPRadioInfo(CWProtocolMessage *msgPtr, int len, CWRadiosInformation *valPtr, int radioIndex);
 
 //---------------------------------------------------------/
@@ -184,7 +184,7 @@ int CWACGetMaxWTPs(void);
 int CWACGetSecurity(void);
 int CWACGetInterfacesCount(void);
 int CWACGetInterfaceIPv4AddressAtIndex(int i);
-char *CWACGetInterfaceIPv6AddressAtIndex(int i);
+unsigned char *CWACGetInterfaceIPv6AddressAtIndex(int i);
 int CWACGetInterfaceWTPCountAtIndex(int i);
 CWBool CWACGetDiscoveryTimer(int *timer);
 CWBool CWACGetEchoRequestTimer(int *timer);

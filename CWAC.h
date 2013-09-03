@@ -105,7 +105,7 @@ typedef struct {
 	CWStateTransition currentState;
 	int interfaceIndex;
 	CWSocket socket;
-	char buf[CW_BUFFER_SIZE];
+	unsigned char buf[CW_BUFFER_SIZE];
 	enum {
 		CW_DTLS_HANDSHAKE_IN_PROGRESS,
 		CW_WAITING_REQUEST,
@@ -168,7 +168,7 @@ typedef struct {
 	char RadioInformationABGN;
 	char SuppRates[8];
 	char MultiDomCapa[6];
-	char RadioMAC[6];
+	unsigned char RadioMAC[6];
 
 } CWWTPManager;
 
@@ -253,7 +253,8 @@ CWBool CWAssembleClearConfigurationRequest(CWProtocolMessage ** messagesPtr,
 
 /* in ACDiscoveryState.c */
 CWBool CWAssembleDiscoveryResponse(CWProtocolMessage ** messagesPtr, int seqNum);
-CWBool CWParseDiscoveryRequestMessage(char *msg, int len, int *seqNumPtr, CWDiscoveryRequestValues * valuesPtr);
+CWBool CWParseDiscoveryRequestMessage(unsigned char *msg, int len,
+				      int *seqNumPtr, CWDiscoveryRequestValues * valuesPtr);
 
 /* in ACRetransmission.c */
 CWBool CWACSendFragments(int WTPIndex);
@@ -270,8 +271,8 @@ void CWACDestroyVendorInfos(CWACVendorInfos * valPtr);
 
 /* in ACMainLoop.c */
 void CWACManageIncomingPacket(CWSocket sock,
-			      char *buf,
-			      int len, int incomingInterfaceIndex, CWNetworkLev4Address * addrPtr, CWBool dataFlag);
+			      unsigned char *buf, int radBytes,
+			      int incomingInterfaceIndex, CWNetworkLev4Address * addrPtr, CWBool dataFlag);
 
 void *CWManageWTP(void *arg);
 void CWCloseThread();

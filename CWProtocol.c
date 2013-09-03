@@ -37,7 +37,7 @@ pthread_mutex_t gRADIO_MAC_mutex;
 static const int gCWIANATimes256 = CW_IANA_ENTERPRISE_NUMBER * 256;
 static const int gMaxDTLSHeaderSize = 25;	// see http://crypto.stanford.edu/~nagendra/papers/dtls.pdf
 static const int gMaxCAPWAPHeaderSize = 8;	// note: this include optional Wireless field
-char gRADIO_MAC[6];		// note: this include optional Wireless field
+unsigned char gRADIO_MAC[6];			// note: this include optional Wireless field
 
 // stores a string in the message, increments the current offset in bytes. Doesn't store
 // the '\0' final character.
@@ -56,7 +56,7 @@ void CWProtocolStoreMessage(CWProtocolMessage * msgPtr, CWProtocolMessage * msgT
 }
 
 // stores len bytes in the message, increments the current offset in bytes.
-void CWProtocolStoreRawBytes(CWProtocolMessage * msgPtr, char *bytes, int len)
+void CWProtocolStoreRawBytes(CWProtocolMessage * msgPtr, unsigned char *bytes, int len)
 {
 	CW_COPY_MEMORY(&((msgPtr->msg)[(msgPtr->offset)]), bytes, len);
 	(msgPtr->offset) += len;
@@ -79,9 +79,9 @@ char *CWProtocolRetrieveStr(CWProtocolMessage * msgPtr, int len)
 }
 
 // retrieves len bytes from the message, increments the current offset in bytes.
-char *CWProtocolRetrieveRawBytes(CWProtocolMessage * msgPtr, int len)
+unsigned char *CWProtocolRetrieveRawBytes(CWProtocolMessage * msgPtr, int len)
 {
-	char *bytes;
+	unsigned char *bytes;
 
 	CW_CREATE_OBJECT_SIZE_ERR(bytes, len, return NULL;
 	    );
@@ -602,8 +602,9 @@ CWBool CWCompareFragment(const void *newFrag, const void *oldFrag)
 // parse a sigle fragment. If it is the last fragment we need or the only fragment, return the reassembled message in
 // *reassembleMsg. If we need at lest one more fragment, save this fragment in the list. You then call this function again
 // with a new fragment and the same list untill we got all the fragments.
-CWBool CWProtocolParseFragment(char *buf, int readBytes, CWList * fragmentsListPtr, CWProtocolMessage * reassembledMsg,
-			       CWBool * dataFlagPtr, char *RadioMAC)
+CWBool CWProtocolParseFragment(unsigned char *buf, int readBytes,
+			       CWList * fragmentsListPtr, CWProtocolMessage * reassembledMsg,
+			       CWBool * dataFlagPtr, unsigned char *RadioMAC)
 {
 
 	CWProtocolTransportHeaderValues values;
@@ -762,7 +763,7 @@ CWBool CWProtocolParseFragment(char *buf, int readBytes, CWList * fragmentsListP
 
 // Parse Transport Header
 CWBool CWParseTransportHeader(CWProtocolMessage * msgPtr, CWProtocolTransportHeaderValues * valuesPtr,
-			      CWBool * dataFlagPtr, char *RadioMAC)
+			      CWBool * dataFlagPtr, unsigned char *RadioMAC)
 {
 
 	int transport4BytesLen;
@@ -949,7 +950,7 @@ CWBool CWAssembleUnrecognizedMessageResponse(CWProtocolMessage ** messagesPtr, i
 	return CW_TRUE;
 }
 
-CWBool CWAssembleMsgElemSessionID(CWProtocolMessage * msgPtr, char *sessionID)
+CWBool CWAssembleMsgElemSessionID(CWProtocolMessage * msgPtr, unsigned char *sessionID)
 {
 	if (msgPtr == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
@@ -1041,7 +1042,7 @@ void CWFreeMessageFragments(CWProtocolMessage * messages, int fragmentsNum)
 	}
 }
 
-char *CWParseSessionID(CWProtocolMessage * msgPtr, int len)
+unsigned char *CWParseSessionID(CWProtocolMessage * msgPtr, int len)
 {
 	return CWProtocolRetrieveRawBytes(msgPtr, 16);
 }

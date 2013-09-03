@@ -44,9 +44,6 @@ CW_THREAD_RETURN_TYPE CWManageTimers(void *arg);
 void CWCriticalTimerExpiredHandler(int arg);
 void CWSoftTimerExpiredHandler(int arg);
 
-void CWACManageIncomingPacket(CWSocket sock,
-			      char *buf,
-			      int len, int incomingInterfaceIndex, CWNetworkLev4Address * addrPtr, CWBool dataFlag);
 void _CWCloseThread(int i);
 void CWResetWTPProtocolManager(CWWTPProtocolManager * WTPProtocolManager);
 CWWTPManager *CWWTPByName(const char *addr);
@@ -126,8 +123,7 @@ typedef struct {
  *                  incomingInterfaceIndex is -1.
  */
 void CWACManageIncomingPacket(CWSocket sock,
-			      char *buf,
-			      int readBytes,
+			      unsigned char *buf, int readBytes,
 			      int incomingInterfaceIndex, CWNetworkLev4Address * addrPtr, CWBool dataFlag)
 {
 

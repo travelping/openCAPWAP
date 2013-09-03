@@ -40,7 +40,7 @@ void CWWTPWaitJoinExpired(CWTimerArg arg);
 CWBool CWAssembleJoinRequest(CWProtocolMessage ** messagesPtr,
 			     int *fragmentsNumPtr, int PMTU, int seqNum, CWList msgElemList);
 
-CWBool CWParseJoinResponseMessage(char *msg, int len, int seqNum, CWProtocolJoinResponseValues * valuesPtr);
+CWBool CWParseJoinResponseMessage(unsigned char *msg, int len, int seqNum, CWProtocolJoinResponseValues * valuesPtr);
 
 CWBool CWSaveJoinResponseMessage(CWProtocolJoinResponseValues * joinResponse);
 
@@ -231,7 +231,7 @@ CWBool CWAssembleJoinRequest(CWProtocolMessage ** messagesPtr,
 /*
  * Parse Join Response and return informations in *valuesPtr.
  */
-CWBool CWParseJoinResponseMessage(char *msg, int len, int seqNum, CWProtocolJoinResponseValues * valuesPtr)
+CWBool CWParseJoinResponseMessage(unsigned char *msg, int len, int seqNum, CWProtocolJoinResponseValues * valuesPtr)
 {
 
 	CWControlHeaderValues controlVal;

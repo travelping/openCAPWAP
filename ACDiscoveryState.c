@@ -80,12 +80,13 @@ CWBool CWAssembleDiscoveryResponse(CWProtocolMessage ** messagesPtr, int seqNum)
 				 msgElems, msgElemCount, msgElemsBinding, msgElemBindingCount);
 }
 
-CWBool CWParseDiscoveryRequestMessage(char *msg, int len, int *seqNumPtr, CWDiscoveryRequestValues * valuesPtr)
+CWBool CWParseDiscoveryRequestMessage(unsigned char *msg, int len,
+				      int *seqNumPtr, CWDiscoveryRequestValues * valuesPtr)
 {
 
 	CWControlHeaderValues controlVal;
 	CWProtocolTransportHeaderValues transportVal;
-	char RadioInfoABGN;
+	unsigned char RadioInfoABGN;
 	int offsetTillMessages;
 
 	CWProtocolMessage completeMsg;

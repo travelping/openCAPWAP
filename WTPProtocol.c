@@ -228,7 +228,7 @@ CWBool CWAssembleMsgElemWTPBoardData(CWProtocolMessage * msgPtr)
 	for (i = 0; i < infos.vendorInfosCount; i++) {
 		CWProtocolStore16(msgPtr, infos.vendorInfos[i].type);
 		CWProtocolStore16(msgPtr, infos.vendorInfos[i].length);
-		CWProtocolStoreRawBytes(msgPtr, (char *)infos.vendorInfos[i].valuePtr,
+		CWProtocolStoreRawBytes(msgPtr, (unsigned char *)infos.vendorInfos[i].valuePtr,
 			infos.vendorInfos[i].length);
 
 //      CWDebugLog("Board Data: %d - %d - %d - %s", infos.vendorInfos[i].vendorIdentifier, infos.vendorInfos[i].type, infos.vendorInfos[i].length, infos.vendorInfos[i].valuePtr);
@@ -319,7 +319,7 @@ CWBool CWAssembleMsgElemWTPDescriptor(CWProtocolMessage * msgPtr)
 		CWProtocolStore32(msgPtr, infos.vendorInfos[i].vendorIdentifier);
 		CWProtocolStore16(msgPtr, infos.vendorInfos[i].type);
 		CWProtocolStore16(msgPtr, infos.vendorInfos[i].length);
-		CWProtocolStoreRawBytes(msgPtr, (char *)infos.vendorInfos[i].valuePtr,
+		CWProtocolStoreRawBytes(msgPtr, (unsigned char *)infos.vendorInfos[i].valuePtr,
 					infos.vendorInfos[i].length);
 
 #if 0
@@ -575,7 +575,7 @@ CWBool CWAssembleMsgElemWTPRebootStatistics(CWProtocolMessage * msgPtr)
 CWBool CWAssembleMsgElemDuplicateIPv4Address(CWProtocolMessage * msgPtr)
 {
 	const int duplicate_ipv4_length = 11;
-	char *macAddress;
+	unsigned char *macAddress;
 
 	if (msgPtr == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
@@ -593,7 +593,7 @@ CWBool CWAssembleMsgElemDuplicateIPv4Address(CWProtocolMessage * msgPtr)
 
 	CWProtocolStore8(msgPtr, 6);
 
-	CW_CREATE_ARRAY_ERR(macAddress, 6, char, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	CW_CREATE_ARRAY_ERR(macAddress, 6, unsigned char, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 	macAddress[0] = 103;
 	macAddress[1] = 204;
@@ -614,7 +614,7 @@ CWBool CWAssembleMsgElemDuplicateIPv4Address(CWProtocolMessage * msgPtr)
 CWBool CWAssembleMsgElemDuplicateIPv6Address(CWProtocolMessage * msgPtr)
 {
 	const int duplicate_ipv6_length = 23;
-	char *macAddress;
+	unsigned char *macAddress;
 
 	if (msgPtr == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
@@ -628,13 +628,13 @@ CWBool CWAssembleMsgElemDuplicateIPv6Address(CWProtocolMessage * msgPtr)
 
 	struct sockaddr_in6 myAddr;
 	CWWTPGetIPv6Address(&myAddr);
-	CWProtocolStoreRawBytes(msgPtr, (char *)myAddr.sin6_addr.s6_addr, 16);
+	CWProtocolStoreRawBytes(msgPtr, (unsigned char *)myAddr.sin6_addr.s6_addr, 16);
 
 	CWProtocolStore8(msgPtr, CWWTPGetIPv6StatusDuplicate());
 
 	CWProtocolStore8(msgPtr, 6);
 
-	CW_CREATE_ARRAY_ERR(macAddress, 6, char, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	CW_CREATE_ARRAY_ERR(macAddress, 6, unsigned char, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 	macAddress[0] = 103;
 	macAddress[1] = 204;
@@ -792,7 +792,7 @@ CWBool CWAssembleMsgElemDecryptErrorReport(CWProtocolMessage * msgPtr, int radio
 
 		CWProtocolStore8(&(msgs[i]), (unsigned char)sizeof(CWMACAddress) * (infos.radios[i].numEntries));
 
-		CWProtocolStoreRawBytes(&(msgs[i]), (char *)*(infos.radios[i].decryptErrorMACAddressList),
+		CWProtocolStoreRawBytes(&(msgs[i]), (unsigned char *)*(infos.radios[i].decryptErrorMACAddressList),
 					sizeof(CWMACAddress) * (infos.radios[i].numEntries));
 
 		/*

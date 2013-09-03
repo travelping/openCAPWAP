@@ -47,16 +47,15 @@ CWBool CWWTPManageGenericRunMessage(CWProtocolMessage * msgPtr);
 CWBool CWWTPCheckForBindingFrame();
 
 CWBool CWWTPCheckForWTPEventRequest();
-CWBool CWParseWTPEventResponseMessage(char *msg, int len, int seqNum, void *values);
+CWBool CWParseWTPEventResponseMessage(unsigned char *msg, int len, int seqNum, void *values);
 
 CWBool CWSaveWTPEventResponseMessage(void *WTPEventResp);
 
 CWBool CWAssembleEchoRequest(CWProtocolMessage ** messagesPtr,
 			     int *fragmentsNumPtr, int PMTU, int seqNum, CWList msgElemList);
-CWBool CWParseEchoResponse(char *msg, int len);
+CWBool CWParseEchoResponse(unsigned char *msg, int len);
 
-CWBool CWParseConfigurationUpdateRequest(char *msg,
-					 int len,
+CWBool CWParseConfigurationUpdateRequest(unsigned char *msg, int len,
 					 CWProtocolConfigurationUpdateRequestValues * valuesPtr,
 					 int *updateRequestType);
 
@@ -82,8 +81,8 @@ CWBool CWAssembleStationConfigurationResponse(CWProtocolMessage ** messagesPtr,
 CWBool CWAssembleWLANConfigurationResponse(CWProtocolMessage ** messagesPtr,
 					   int *fragmentsNumPtr, int PMTU, int seqNum, CWProtocolResultCode resultCode);
 
-CWBool CWParseStationConfigurationRequest(char *msg, int len);
-CWBool CWParseWLANConfigurationRequest(char *msg, int len);
+CWBool CWParseStationConfigurationRequest(unsigned char *msg, int len);
+CWBool CWParseWLANConfigurationRequest(unsigned char *msg, int len);
 
 void CWConfirmRunStateToACWithEchoRequest();
 
@@ -186,7 +185,7 @@ int isEAPOL_Frame(unsigned char *buf, unsigned int len)
 CW_THREAD_RETURN_TYPE CWWTPReceiveDataPacket(void *arg)
 {
 	int readBytes;
-	char buf[CW_BUFFER_SIZE];
+	unsigned char buf[CW_BUFFER_SIZE];
 	struct sockaddr_ll rawSockaddr;
 	CWNetworkLev4Address addr;
 	CWList fragments = NULL;
@@ -285,7 +284,7 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveDataPacket(void *arg)
 			switch (msgPtr.data_msgType) {
 			case CW_DATA_MSG_KEEP_ALIVE_TYPE:
 			{
-				char *valPtr = NULL;
+				unsigned char *valPtr = NULL;
 
 				unsigned short int elemType = 0;
 				unsigned short int elemLen = 0;
@@ -1269,7 +1268,7 @@ CWBool CWAssembleWLANConfigurationResponse(CWProtocolMessage ** messagesPtr, int
 /*Update 2009:
     Function that parses vendor payload,
     filling in valuesPtr*/
-CWBool CWParseVendorMessage(char *msg, int len, void **valuesPtr)
+CWBool CWParseVendorMessage(unsigned char *msg, int len, void **valuesPtr)
 {
 	CWProtocolMessage completeMsg;
 	unsigned short int GlobalElemType = 0;	// = CWProtocolRetrieve32(&completeMsg);
@@ -1352,8 +1351,7 @@ CWBool CWParseVendorMessage(char *msg, int len, void **valuesPtr)
 	return CW_TRUE;
 }
 
-CWBool CWParseConfigurationUpdateRequest(char *msg,
-					 int len,
+CWBool CWParseConfigurationUpdateRequest(unsigned char *msg, int len,
 					 CWProtocolConfigurationUpdateRequestValues * valuesPtr, int *updateRequestType)
 {
 
@@ -1497,7 +1495,7 @@ CWBool CWParseConfigurationUpdateRequest(char *msg,
 	return CW_TRUE;
 }
 
-CWBool CWParseWLANConfigurationRequest(char *msg, int len)
+CWBool CWParseWLANConfigurationRequest(unsigned char *msg, int len)
 {
 
 	CWProtocolMessage completeMsg;
@@ -1544,7 +1542,7 @@ CWBool CWParseWLANConfigurationRequest(char *msg, int len)
 	return CW_TRUE;
 }
 
-CWBool CWParseStationConfigurationRequest(char *msg, int len)
+CWBool CWParseStationConfigurationRequest(unsigned char *msg, int len)
 {
 	//CWBool bindingMsgElemFound=CW_FALSE;
 	CWProtocolMessage completeMsg;
@@ -1608,7 +1606,7 @@ CWBool CWParseStationConfigurationRequest(char *msg, int len)
 	return CW_TRUE;
 }
 
-CWBool CWParseWTPEventResponseMessage(char *msg, int len, int seqNum, void *values)
+CWBool CWParseWTPEventResponseMessage(unsigned char *msg, int len, int seqNum, void *values)
 {
 
 	CWControlHeaderValues controlVal;
@@ -1645,7 +1643,7 @@ CWBool CWParseWTPEventResponseMessage(char *msg, int len, int seqNum, void *valu
 }
 
 
-CWBool CWParseEchoResponse(char *msg, int len)
+CWBool CWParseEchoResponse(unsigned char *msg, int len)
 {
 	CWProtocolMessage completeMsg;
 

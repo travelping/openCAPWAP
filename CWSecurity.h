@@ -43,8 +43,8 @@ CWBool CWSecurityInitSessionClient(CWSocket sock,
 				   CWSafeList packetReceiveList,
 				   CWSecurityContext ctx, CWSecuritySession * sessionPtr, int *PMTUPtr);
 
-CWBool CWSecuritySend(CWSecuritySession session, const char *buf, int len);
-CWBool CWSecurityReceive(CWSecuritySession session, char *buf, int len, int *readBytesPtr);
+CWBool CWSecuritySend(CWSecuritySession session, const void *buf, int len);
+CWBool CWSecurityReceive(CWSecuritySession session, void *buf, int len, int *readBytesPtr);
 
 CWBool CWSecurityInitContext(CWSecurityContext * ctxPtr,
 			     const char *caList,

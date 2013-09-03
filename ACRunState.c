@@ -165,7 +165,7 @@ CWBool ACEnterRun(int WTPIndex, CWProtocolMessage * msgPtr, CWBool dataFlag)
 			CWDebugLog("Send a Station Configuration Request");
 		} else if (msgPtr->data_msgType == CW_DATA_MSG_KEEP_ALIVE_TYPE) {
 
-			char *valPtr = NULL;
+			unsigned char *valPtr = NULL;
 			CWProtocolMessage *messages = NULL;
 			CWProtocolMessage sessionIDmsgElem;
 			int fragmentsNum = 0;

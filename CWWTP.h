@@ -60,12 +60,12 @@ extern int gCWACCount;
 
 extern int gHostapd_port;
 extern char *gHostapd_unix_path;
-extern char gRADIO_MAC[6];
+extern unsigned char gRADIO_MAC[6];
 extern pthread_mutex_t gRADIO_MAC_mutex;
 
 extern char *gWTPLocation;
 extern char *gWTPName;
-extern char gWTPSessionID[16];
+extern unsigned char gWTPSessionID[16];
 extern int gIPv4StatusDuplicate;
 extern int gIPv6StatusDuplicate;
 extern char *gWTPForceACAddress;
@@ -119,7 +119,7 @@ CWBool CWReceiveMessage(CWProtocolMessage * msgPtr);
 CWBool CWWTPSendAcknowledgedPacket(int seqNum,
 				   CWList msgElemlist,
 				   CWBool(assembleFunc) (CWProtocolMessage **, int *, int, int, CWList),
-				   CWBool(parseFunc) (char *, int, int, void *),
+				   CWBool(parseFunc) (unsigned char *, int, int, void *),
 				   CWBool(saveFunc) (void *), void *valuesPtr);
 void CWWTPDestroy();
 
@@ -137,7 +137,7 @@ CWBool CWWTPCheckForBindingFrame();
 /* in WTPProtocol_User.c */
 CWBool CWWTPGetACNameWithIndex(CWACNamesWithIndex * ACsInfo);
 int getInterfaceMacAddr(char *interface, unsigned char *macAddr);
-int initWTPSessionID(char *sessionID);
+int initWTPSessionID(unsigned char *sessionID);
 int CWWTPGetStatisticsTimer();
 void CWWTPGetIPv6Address(struct sockaddr_in6 *myAddr);
 CWBool CWGetWTPRadiosAdminState(CWRadiosAdminInfo * valPtr);

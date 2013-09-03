@@ -42,7 +42,8 @@ CWNetworkLev3Service gNetworkPreferredFamily = CW_IPv4;
 /*
  * Send buf on an unconnected UDP socket. Unsafe means that we don't use DTLS.
  */
-CWBool CWNetworkSendUnsafeUnconnected(CWSocket sock, CWNetworkLev4Address * addrPtr, const char *buf, int len)
+CWBool CWNetworkSendUnsafeUnconnected(CWSocket sock, CWNetworkLev4Address * addrPtr,
+				      const void *buf, int len)
 {
 
 	if (buf == NULL || addrPtr == NULL)
@@ -62,7 +63,7 @@ CWBool CWNetworkSendUnsafeUnconnected(CWSocket sock, CWNetworkLev4Address * addr
 /*
  * Send buf on a "connected" UDP socket. Unsafe means that we don't use DTLS.
  */
-CWBool CWNetworkSendUnsafeConnected(CWSocket sock, const char *buf, int len)
+CWBool CWNetworkSendUnsafeConnected(CWSocket sock, const void *buf, int len)
 {
 
 	if (buf == NULL)
@@ -81,7 +82,7 @@ CWBool CWNetworkSendUnsafeConnected(CWSocket sock, const char *buf, int len)
  * Receive a datagram on an connected UDP socket (blocking).
  * Unsafe means that we don't use DTLS.
  */
-CWBool CWNetworkReceiveUnsafeConnected(CWSocket sock, char *buf, int len, int *readBytesPtr)
+CWBool CWNetworkReceiveUnsafeConnected(CWSocket sock, void *buf, int len, int *readBytesPtr)
 {
 
 	if (buf == NULL)
@@ -103,7 +104,7 @@ CWBool CWNetworkReceiveUnsafeConnected(CWSocket sock, char *buf, int len, int *r
  * Unsafe means that we don't use DTLS.
  */
 CWBool CWNetworkReceiveUnsafe(CWSocket sock,
-			      char *buf, int len, int flags, CWNetworkLev4Address * addrPtr, int *readBytesPtr)
+			      void *buf, int len, int flags, CWNetworkLev4Address * addrPtr, int *readBytesPtr)
 {
 
 	socklen_t addrLen = sizeof(CWNetworkLev4Address);

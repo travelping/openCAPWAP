@@ -31,16 +31,17 @@
 #include "../dmalloc-5.5.0/dmalloc.h"
 #endif
 
-CWBool CWAssembleJoinResponse(CWProtocolMessage ** messagesPtr,
+static CWBool CWAssembleJoinResponse(CWProtocolMessage ** messagesPtr,
 			      int *fragmentsNumPtr, int PMTU, int seqNum, CWList msgElemList);
 
-CWBool CWParseJoinRequestMessage(char *msg, int len, int *seqNumPtr, CWProtocolJoinRequestValues * valuesPtr);
+static CWBool CWParseJoinRequestMessage(unsigned char *msg, int len,
+				 int *seqNumPtr, CWProtocolJoinRequestValues * valuesPtr);
 
-CWBool CWSaveJoinRequestMessage(CWProtocolJoinRequestValues * joinRequest, CWWTPProtocolManager * WTPProtocolManager);
+static CWBool CWSaveJoinRequestMessage(CWProtocolJoinRequestValues * joinRequest, CWWTPProtocolManager * WTPProtocolManager);
 
 CWBool ACEnterJoin(int WTPIndex, CWProtocolMessage * msgPtr)
 {
-	int seqNum;
+	int seqNum = 0;
 	CWProtocolJoinRequestValues joinRequest;
 	CWList msgElemList = NULL;
 
@@ -233,13 +234,14 @@ CWBool CWAssembleJoinResponse(CWProtocolMessage ** messagesPtr,
 /*
  * Parses Join Request.
  */
-CWBool CWParseJoinRequestMessage(char *msg, int len, int *seqNumPtr, CWProtocolJoinRequestValues * valuesPtr)
+CWBool CWParseJoinRequestMessage(unsigned char *msg, int len,
+				 int *seqNumPtr, CWProtocolJoinRequestValues * valuesPtr)
 {
 
 	CWControlHeaderValues controlVal;
 	int offsetTillMessages;
 	CWProtocolMessage completeMsg;
-	char RadioInfoABGN;
+	unsigned char RadioInfoABGN;
 
 	if (msg == NULL || seqNumPtr == NULL || valuesPtr == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
