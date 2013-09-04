@@ -605,11 +605,8 @@ CWBool CWWTPSaveUCIValues(CWVendorUciValues * uciPayload, CWProtocolResultCode *
 				}
 
 				/* Copy the buffer in the uci payload structure */
-				uciPayload->response = CW_CREATE_STRING_ERR(responseSize,
-									    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
-				memcpy(uciPayload->response, bufferMessage, responseSize);
-				uciPayload->response[responseSize] = '\0';
-
+				if (!(uciPayload->response = ralloc_strndup(NULL, bufferMessage, responseSize)))
+					return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 			} else {
 				CWLog("[CWSaveUCIValues]: Error on malloc function.");
 				close(sendSock);

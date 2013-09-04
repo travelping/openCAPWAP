@@ -339,15 +339,12 @@ CW_THREAD_RETURN_TYPE CWManageApplication(void *arg)
 								goto quit_manage;
 							}
 
-							uciValues->commandArgs = CW_CREATE_STRING_ERR(commandLength, {
-									     CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-									     return 0;
-									     }
-							);
-							memcpy(uciValues->commandArgs,
-							       commandBuffer + sizeof(unsigned char) + sizeof(int),
-							       sizeof(char) * commandLength);
-							uciValues->commandArgs[commandLength] = '\0';
+							if (!(uciValues->commandArgs =
+								ralloc_strndup(NULL, commandBuffer + sizeof(unsigned char) + sizeof(int),
+									       commandLength))) {
+								CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+								return 0;
+							}
 						} else
 							uciValues->commandArgs = NULL;
 

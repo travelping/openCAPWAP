@@ -216,11 +216,8 @@ CWBool CWParseSettingsFile()
 
 			CWExtractValue(endTag, &startValue, &endValue, &offset);
 
-			gHostapd_unix_path = CW_CREATE_STRING_ERR(offset,
-					     return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-			    );
-			strncpy(gHostapd_unix_path, startValue, offset);
-			gHostapd_unix_path[offset] = '\0';
+			if (!((gHostapd_unix_path = ralloc_strndup(NULL, startValue, offset))))
+				return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 			CWDebugLog("Hostapd Unix Domain Path: %s", gHostapd_unix_path);
 			CW_FREE_OBJECT(line);
