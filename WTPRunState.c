@@ -141,12 +141,10 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveDtlsPacket(void *arg)
 			break;
 		}
 		/* Clone data packet */
-		pData = CW_CREATE_OBJECT_SIZE_ERR(readBytes, {
-					  CWLog("Out Of Memory");
-					  return NULL;
-					  }
-		);
-		memcpy(pData, buf, readBytes);
+		if (!(pData = ralloc_memdup(NULL, buf, readBytes))) {
+			CWLog("Out Of Memory");
+			return NULL;
+		}
 
 		CWLockSafeList(gPacketReceiveList);
 		CWAddElementToSafeListTailwitDataFlag(gPacketReceiveList, pData, readBytes, CW_FALSE);

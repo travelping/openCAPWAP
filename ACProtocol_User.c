@@ -131,27 +131,25 @@ CWBool CWACGetVendorInfos(CWACVendorInfos * valPtr)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
 	valPtr->vendorInfosCount = 2;
-	(valPtr->vendorInfos) = CW_CREATE_ARRAY_ERR(valPtr->vendorInfosCount, CWACVendorInfoValues,
+	valPtr->vendorInfos = CW_CREATE_ARRAY_ERR(valPtr->vendorInfosCount, CWACVendorInfoValues,
 			    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
 	// my vendor identifier (IANA assigned "SMI Network Management Private Enterprise Code")
-	(valPtr->vendorInfos)[0].vendorIdentifier = 65432;
-	(valPtr->vendorInfos)[0].type = CW_AC_HARDWARE_VERSION;
-	(valPtr->vendorInfos)[0].length = 4;	// just one int
-	(((valPtr->vendorInfos)[0]).valuePtr) = CW_CREATE_OBJECT_SIZE_ERR(4,
-				  return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
-	*(((valPtr->vendorInfos)[0]).valuePtr) = CWACGetHWVersion();	// HW version
+	valPtr->vendorInfos[0].vendorIdentifier = 65432;
+	valPtr->vendorInfos[0].type = CW_AC_HARDWARE_VERSION;
+	valPtr->vendorInfos[0].length = 4;	// just one int
+	if (!(valPtr->vendorInfos[0].valuePtr = ralloc_size(NULL, 4)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	*valPtr->vendorInfos[0].valuePtr = CWACGetHWVersion();	// HW version - TODO: wrong, should be string
 
 	// my vendor identifier (IANA assigned "SMI Network Management Private Enterprise Code")
-	((valPtr->vendorInfos)[1]).vendorIdentifier = 65432;
-	((valPtr->vendorInfos)[1]).type = CW_AC_SOFTWARE_VERSION;
-	((valPtr->vendorInfos)[1]).length = 4;	// just one int
-	(((valPtr->vendorInfos)[1]).valuePtr) = CW_CREATE_OBJECT_SIZE_ERR(4,
-				  return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
-	*(((valPtr->vendorInfos)[1]).valuePtr) = CWACGetSWVersion();	// SW version
+	valPtr->vendorInfos[1].vendorIdentifier = 65432;
+	valPtr->vendorInfos[1].type = CW_AC_SOFTWARE_VERSION;
+	valPtr->vendorInfos[1].length = 4;	// just one int
+	if (!(valPtr->vendorInfos[1].valuePtr = ralloc_size(NULL, 4)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	*valPtr->vendorInfos[1].valuePtr = CWACGetSWVersion();	// SW version - TODO: wrong, should be string
 
 	return CW_TRUE;
 }

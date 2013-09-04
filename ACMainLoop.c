@@ -132,12 +132,10 @@ void CWACManageIncomingPacket(CWSocket sock,
 	if (wtpPtr != NULL) {
 		/* known WTP */
 		/* Clone data packet */
-		pData = CW_CREATE_OBJECT_SIZE_ERR(readBytes, {
-					  CWLog("Out Of Memory");
-					  return;
-					  }
-		);
-		memcpy(pData, buf, readBytes);
+		if (!(pData = ralloc_memdup(NULL, buf, readBytes))) {
+			CWLog("Out Of Memory");
+			return;
+		}
 
 		CWLockSafeList(wtpPtr->packetReceiveList);
 		CWAddElementToSafeListTailwitDataFlag(wtpPtr->packetReceiveList, pData, readBytes, dataFlag);
@@ -268,12 +266,10 @@ void CWACManageIncomingPacket(CWSocket sock,
 			}
 
 			/* Clone data packet */
-			pData = CW_CREATE_OBJECT_SIZE_ERR(readBytes, {
-						  CWLog("Out Of Memory");
-						  return;
-						  }
-			);
-			memcpy(pData, buf, readBytes);
+			if (!(pData = ralloc_memdup(NULL, buf, readBytes))) {
+				CWLog("Out Of Memory");
+				return;
+			}
 
 			CWLockSafeList(gWTPs[i].packetReceiveList);
 			CWAddElementToSafeListTailwitDataFlag(gWTPs[i].packetReceiveList, pData, readBytes, dataFlag);

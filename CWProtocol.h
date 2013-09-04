@@ -48,8 +48,9 @@
 #define CW_CREATE_PROTOCOL_MESSAGE(mess, size, err)			\
 	do {								\
 		CW_ZERO_MEMORY(&(mess), sizeof((mess)));		\
-		((mess).msg) = CW_CREATE_OBJECT_SIZE_ERR((size), err);	\
-		CW_ZERO_MEMORY(((mess).msg), (size));			\
+		if (!(((mess).msg) = rzalloc_size(NULL, (size)))) {	\
+			err;						\
+		}							\
 		(mess).offset = 0;					\
 	} while (0)
 

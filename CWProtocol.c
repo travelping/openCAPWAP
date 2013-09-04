@@ -64,13 +64,10 @@ char *CWProtocolRetrieveStr(CWProtocolMessage * msgPtr, int len)
 {
 	char *str;
 
-	str = CW_CREATE_OBJECT_SIZE_ERR((len + 1), return NULL;
-	    );
+	if (!(str = ralloc_strndup(NULL, (char *)msgPtr->msg + msgPtr->offset, len)))
+		return NULL;
 
-	CW_COPY_MEMORY(str, &((msgPtr->msg)[(msgPtr->offset)]), len);
-	str[len] = '\0';
-	(msgPtr->offset) += len;
-
+	msgPtr->offset += len;
 	return str;
 }
 
@@ -79,12 +76,10 @@ unsigned char *CWProtocolRetrieveRawBytes(CWProtocolMessage * msgPtr, int len)
 {
 	unsigned char *bytes;
 
-	bytes = CW_CREATE_OBJECT_SIZE_ERR(len, return NULL;
-	    );
+	if (!(bytes = ralloc_memdup(NULL, msgPtr->msg + msgPtr->offset, len)))
+		return NULL;
 
-	CW_COPY_MEMORY(bytes, &((msgPtr->msg)[(msgPtr->offset)]), len);
-	(msgPtr->offset) += len;
-
+	msgPtr->offset += len;
 	return bytes;
 }
 
@@ -646,8 +641,8 @@ CWBool CWProtocolParseFragment(unsigned char *buf, int readBytes,
 		if (*fragmentsListPtr == NULL ||	// empty list
 		    (((CWProtocolFragment *) ((*fragmentsListPtr)->data))->transportVal.fragmentID) == fragPtr->transportVal.fragmentID)	// this fragment is in the set of fragments we are receiving
 			/*      {
-			   fragPtr->data = CW_CREATE_OBJECT_SIZE_ERR(fragPtr->dataLen, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL););
-			   CW_COPY_MEMORY(fragPtr->data, &(buf[msg.offset]), fragPtr->dataLen);
+			   if (!(fragPtr->data = ralloc_memdup(NULL, buf + msg.offset, fragPtr->dataLen)))
+				   return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 			   if(!CWAddElementToList(fragmentsListPtr, fragPtr)) {
 			   CWDeleteList(fragmentsListPtr, CWProtocolDestroyFragment);
@@ -659,10 +654,8 @@ CWBool CWProtocolParseFragment(unsigned char *buf, int readBytes,
 			CWListElement *aux = NULL;
 			aux = CWSearchInList(*fragmentsListPtr, fragPtr, CWCompareFragment);
 			if (aux == NULL) {
-				fragPtr->data = CW_CREATE_OBJECT_SIZE_ERR(fragPtr->dataLen,
-							  return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-				    );
-				CW_COPY_MEMORY(fragPtr->data, &(buf[msg.offset]), fragPtr->dataLen);
+				if (!(fragPtr->data = ralloc_memdup(NULL, buf + msg.offset, fragPtr->dataLen)))
+					return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 				if (!CWAddElementToList(fragmentsListPtr, fragPtr)) {
 					CWDeleteList(fragmentsListPtr, CWProtocolDestroyFragment);
@@ -679,10 +672,9 @@ CWBool CWProtocolParseFragment(unsigned char *buf, int readBytes,
 				   fragPtr->transportVal.fragmentID,
 				   (((CWProtocolFragment *) ((*fragmentsListPtr)->data))->transportVal).fragmentID);
 			CWDeleteList(fragmentsListPtr, CWProtocolDestroyFragment);
-			fragPtr->data = CW_CREATE_OBJECT_SIZE_ERR(fragPtr->dataLen,
-						  return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-			    );
-			CW_COPY_MEMORY(fragPtr->data, &(buf[msg.offset]), fragPtr->dataLen);
+			if (!(fragPtr->data = ralloc_memdup(NULL, buf + msg.offset, fragPtr->dataLen)))
+				return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+
 			if (!CWAddElementToList(fragmentsListPtr, fragPtr)) {
 				CWDeleteList(fragmentsListPtr, CWProtocolDestroyFragment);
 				CW_FREE_OBJECT(fragPtr);

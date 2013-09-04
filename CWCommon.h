@@ -129,14 +129,16 @@ extern int gEchoInterval;
 			printf("[%d]: **%s**\n", i, (array)[i]);	\
 	} while (0)
 
-// custom error
-#define CW_CREATE_OBJECT_SIZE_ERR(size, on_err)				\
-	({								\
-		void * __p = malloc((size));				\
-		CW_ON_ERROR(__p, on_err);				\
-		__p;							\
-	})
+static inline void *ralloc_memdup(const void *ctx, void *src, size_t size)
+{
+	void *dest;
 
+	if (!(dest = ralloc_size(ctx, size)))
+		return NULL;
+	return memcpy(dest, src, size);
+}
+
+// custom error
 #define CW_CREATE_ARRAY_ERR(size, type, on_err)				\
 	({								\
 		type * __p = (type *)calloc(sizeof(type), (size));	\
