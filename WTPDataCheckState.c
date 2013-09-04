@@ -27,10 +27,6 @@
 
 #include "CWWTP.h"
 
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
-
 CWBool CWAssembleChangeStateEventRequest(CWProtocolMessage ** messagesPtr,
 					 int *fragmentsNumPtr, int PMTU, int seqNum, CWList msgElemList);
 

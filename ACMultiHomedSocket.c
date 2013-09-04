@@ -35,10 +35,6 @@
 #define ETH_ALEN 6
 #define ETH_HLEN 14
 
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
-
 void CWNetworkDeleteMHInterface(void *intPtr)
 {
 

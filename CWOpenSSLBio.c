@@ -33,10 +33,6 @@
 #include <sys/time.h>
 #include <netinet/in.h>
 
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
-
 static int memory_write(BIO * h, const char *buf, int num);
 static int memory_read(BIO * h, char *buf, int size);
 static int memory_puts(BIO * h, const char *str);

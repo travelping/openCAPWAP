@@ -38,9 +38,6 @@
 #include "WTPmacFrameReceive.h"
 #include "common.h"
 #include "ieee802_11_defs.h"
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
 
 CWBool CWWTPManageGenericRunMessage(CWProtocolMessage * msgPtr);
 
@@ -801,12 +798,6 @@ void CWWTPNeighborDeadTimerExpired(void *arg)
 {
 	CWLog("WTP NeighborDead Timer Expired... we consider Peer Dead.");
 	setRunChannelState(CS_TIMEOUT);
-
-#ifdef DMALLOC
-	dmalloc_shutdown();
-#endif
-
-	return;
 }
 
 CWBool CWStartHeartbeatTimer()

@@ -35,10 +35,6 @@
 
 #define CW_USE_THREAD_TIMERS
 
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
-
 CW_THREAD_RETURN_TYPE CWThreadManageTimers(void *arg);
 
 // Creates a thread that will execute a given function with a given parameter

@@ -32,10 +32,6 @@
 #include "CWWTP.h"
 #include "CWConfigFile.h"
 
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
-
 char *gCWConfigFileName   = SYSCONFDIR "/config.wtp";
 CWConfigValue gConfigValues[] = {
 	{ .type = CW_STRING_ARRAY,

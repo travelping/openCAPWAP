@@ -28,10 +28,6 @@
 #include "CWWTP.h"
 #include "WTPipcHostapd.h"
 
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
-
 struct ntp_time_t {
 	uint32_t   second;
 	uint32_t   fraction;

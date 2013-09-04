@@ -39,10 +39,6 @@
 #include <unistd.h>
 #include <signal.h>
 
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
-
 int CWTranslateQueueIndex(int j)
 {
 	if (j == VOICE_QUEUE_INDEX)

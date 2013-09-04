@@ -34,10 +34,6 @@
 #include <unistd.h>
 #include <signal.h>
 
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
-
 CWBool CWAssembleWTPVendorPayloadUCI(CWProtocolMessage * msgPtr)
 {
 	int *iPtr;

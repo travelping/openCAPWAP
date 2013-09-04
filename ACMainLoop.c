@@ -30,10 +30,6 @@
 #include "CWAC.h"
 #include "CWStevens.h"
 
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
-
 /* index of the current thread in the global array */
 CWThreadSpecific gIndexSpecific;
 

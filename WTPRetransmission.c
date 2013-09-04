@@ -27,10 +27,6 @@
 
 #include "CWWTP.h"
 
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
-
 void CWResetPendingMsgBox(CWPendingRequestMessage * pendingRequestMsgs)
 {
 	pendingRequestMsgs->msgType = UNUSED_MSG_TYPE;

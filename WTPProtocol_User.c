@@ -37,10 +37,6 @@
 
 #define MAC_ADDR_LEN        6
 
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
-
 __inline__ int CWWTPGetDiscoveryType()
 {
 	return CW_MSG_ELEMENT_DISCOVERY_TYPE_CONFIGURED;

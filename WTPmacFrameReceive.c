@@ -34,10 +34,6 @@
 #define ETH_HLEN 14
 #define FRAME_80211_LEN 24
 
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
-
 #define EXIT_FRAME_THREAD(sock) CWLog("ERROR Handling Frames: application will be closed!");        \
                 close(sock);                                \
                 exit(1);

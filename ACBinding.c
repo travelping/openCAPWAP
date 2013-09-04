@@ -29,10 +29,6 @@
 
 #include "CWAC.h"
 
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
-
 CWBool CWACInitBinding(int i)
 {
 	int j;

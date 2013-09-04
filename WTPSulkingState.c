@@ -27,10 +27,6 @@
 
 #include "CWWTP.h"
 
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
-
 #ifdef CW_DEBUGGING
 int gCWSilentInterval = 5;
 #else

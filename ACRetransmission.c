@@ -27,10 +27,6 @@
 
 #include "CWAC.h"
 
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
-
 /*
  * CW_FREE_WTP_MSG_ARRAY - free the array of the messages
  * to be sent relative to the WTP with the specified index.

@@ -30,10 +30,6 @@
 #include "WUM.h"
 pthread_mutex_t gRADIO_MAC_mutex;
 
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
-
 static const int gCWIANATimes256 = CW_IANA_ENTERPRISE_NUMBER * 256;
 static const int gMaxDTLSHeaderSize = 25;	// see http://crypto.stanford.edu/~nagendra/papers/dtls.pdf
 static const int gMaxCAPWAPHeaderSize = 8;	// note: this include optional Wireless field

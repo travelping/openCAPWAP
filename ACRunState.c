@@ -34,10 +34,6 @@
 #include "common.h"
 #include "ieee802_11_defs.h"
 
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
-
 CWBool CWACParseGenericRunMessage(int WTPIndex, CWProtocolMessage * msg, CWControlHeaderValues * controlVal);
 
 CWBool CWParseConfigurationUpdateResponseMessage(CWProtocolMessage * msgPtr,

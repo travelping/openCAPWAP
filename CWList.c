@@ -27,10 +27,6 @@
 
 #include "CWCommon.h"
 
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
-
 // adds an element at the head of the list
 // CW_TRUE if the operation is successful, CW_FALSE otherwise
 CWBool CWAddElementToList(CWList * list, void *element)

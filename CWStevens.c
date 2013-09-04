@@ -31,10 +31,6 @@
 #include    <net/if_dl.h>
 #endif
 
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
-
 // an extension to Unix Network Programming's library: a thread-safe version of sock_ntop and a couple of
 // functions to manage port number in IPv4/6
 

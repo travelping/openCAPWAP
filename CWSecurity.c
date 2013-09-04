@@ -30,10 +30,6 @@
 #include <openssl/pkcs12.h>
 #include <openssl/x509v3.h>
 
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
-
 #define CW_DTLS_CERT_VERIFY_DEPTH   1
 
 #if (OPENSSL_VERSION_NUMBER < 0x000908000)

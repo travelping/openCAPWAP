@@ -10,10 +10,6 @@
 
 #include <linux/if_tun.h>
 
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
-
 int tun_alloc(char *dev, int flags)
 {
 

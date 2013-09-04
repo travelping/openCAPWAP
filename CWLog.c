@@ -28,10 +28,6 @@
 #include "CWCommon.h"
 //#define WRITE_STD_OUTPUT 1
 
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
-
 static FILE *gLogFile = NULL;
 
 #ifndef CW_SINGLE_THREAD

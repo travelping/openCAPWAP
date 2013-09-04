@@ -31,10 +31,6 @@
 
 #include "CWCommon.h"
 
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
-
 char *gCWSettingsFileName = SYSCONFDIR "/settings.ac.txt";
 
 #define CWMIN_DEFAULT   3

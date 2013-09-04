@@ -27,10 +27,6 @@
 
 #include "CWWTP.h"
 
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
-
 static CWBool gSuccessfulHandshake = CW_TRUE;
 int gCWWaitJoin = CW_JOIN_INTERVAL_DEFAULT;
 

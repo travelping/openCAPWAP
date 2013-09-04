@@ -27,10 +27,6 @@
 
 #include "WTPBcmFrameReceive.h"
 
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
-
 int extractFrame(CWProtocolMessage ** frame, unsigned char *buffer, int len)	//len: frame length
 {
 	*frame = CW_CREATE_OBJECT_ERR(CWProtocolMessage, return 0;

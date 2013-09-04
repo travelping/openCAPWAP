@@ -49,10 +49,6 @@
 #include <signal.h>
 #include <sys/time.h>
 
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
-
 #ifndef TRUE
 #define TRUE    1
 #define FALSE   0

@@ -32,10 +32,6 @@
 #include "CWAC.h"
 #include "CWConfigFile.h"
 
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
-
 char *gCWConfigFileName = SYSCONFDIR "/config.ac";
 CWConfigValue gConfigValues[] = {
 	{ .type = CW_INTEGER,

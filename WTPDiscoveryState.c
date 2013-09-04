@@ -31,10 +31,6 @@
 
 #include "CWWTP.h"
 
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
-
 /*________________________________________________________________*/
 /*  *******************___CAPWAP VARIABLES___*******************  */
 int gCWMaxDiscoveries = 10;

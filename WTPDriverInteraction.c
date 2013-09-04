@@ -27,10 +27,6 @@
 
 #include "CWWTP.h"
 
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
-
 #define SIOCIWFIRSTPRIV         0x8BE0
 #define IEEE80211_IOCTL_SETWMMPARAMS    (SIOCIWFIRSTPRIV+4)
 #define IEEE80211_IOCTL_GETWMMPARAMS    (SIOCIWFIRSTPRIV+5)

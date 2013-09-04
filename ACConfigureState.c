@@ -27,10 +27,6 @@
 
 #include "CWAC.h"
 
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
-
 int gCWChangeStatePendingTimer = CW_CHANGE_STATE_INTERVAL_DEFAULT;
 
 static CWBool CWAssembleConfigureResponse(CWProtocolMessage ** messagesPtr, int *fragmentsNumPtr, int PMTU, int seqNum);

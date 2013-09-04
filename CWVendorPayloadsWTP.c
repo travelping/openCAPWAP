@@ -35,10 +35,6 @@
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
-
 #include "CWWTP.h"
 #include "CWVendorPayloads.h"
 #include "WUM.h"

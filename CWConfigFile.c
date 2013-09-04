@@ -27,10 +27,6 @@
 
 #include "CWCommon.h"
 
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
-
 FILE *gCWConfigFile = NULL;
 
 /*

@@ -27,10 +27,6 @@
 
 #include "CWAC.h"
 
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
-
 CWBool CWACSupportIPv6()
 {
 	return (gNetworkPreferredFamily == CW_IPv6);

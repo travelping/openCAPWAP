@@ -28,9 +28,6 @@
 #include "CWAC.h"
 #include "CWVendorPayloads.h"
 
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
 unsigned char WTPRadioInformationType;
 
 /*____________________________________________________________________________*/

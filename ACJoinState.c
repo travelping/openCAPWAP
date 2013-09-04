@@ -27,10 +27,6 @@
 
 #include "CWAC.h"
 
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
-
 static CWBool CWAssembleJoinResponse(CWProtocolMessage ** messagesPtr,
 			      int *fragmentsNumPtr, int PMTU, int seqNum, CWList msgElemList);
 

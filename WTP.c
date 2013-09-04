@@ -32,10 +32,6 @@
 
 #include "CWWTP.h"
 
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
-
 #ifdef SOFTMAC
 CW_THREAD_RETURN_TYPE CWWTPThread_read_data_from_hostapd(void *arg);
 #endif

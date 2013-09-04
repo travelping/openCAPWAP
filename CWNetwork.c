@@ -33,10 +33,6 @@
 #include <netinet/ip.h>
 */
 
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
-
 CWNetworkLev3Service gNetworkPreferredFamily = CW_IPv4;
 
 /*
