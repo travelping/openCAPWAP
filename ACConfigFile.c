@@ -105,8 +105,8 @@ CWBool CWConfigFileDestroyLib()
 #endif
 
 	if (gConfigValues[5].value.str_value != NULL) {
-		gACName = CW_CREATE_STRING_FROM_STRING_ERR(gConfigValues[5].value.str_value,
-							   return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
+		if (!(gACName = ralloc_strdup(NULL, gConfigValues[5].value.str_value)))
+			return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 		//CW_FREE_OBJECT(gACName);
 	}
 
@@ -117,8 +117,8 @@ CWBool CWConfigFileDestroyLib()
 				    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
 
 		for (i = 0; i < gConfigValues[6].count; i++)
-			gMulticastGroups[i] = CW_CREATE_STRING_FROM_STRING_ERR(gConfigValues[6].value.str_array_value[i],
-									       return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
+			if (!(gMulticastGroups[i] = ralloc_strdup(NULL, gConfigValues[6].value.str_array_value[i])))
+				return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	}
 
 	gMulticastGroupsCount = gConfigValues[6].count;

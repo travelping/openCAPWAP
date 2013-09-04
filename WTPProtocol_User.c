@@ -96,13 +96,15 @@ CWBool CWWTPGetBoardData(CWWTPVendorInfos * valPtr)
 	valPtr->vendorInfos[0].vendorIdentifier = CW_IANA_ENTERPRISE_NUMBER_VENDOR_TRAVELPING;
 	valPtr->vendorInfos[0].type = CW_WTP_MODEL_NUMBER;
 	valPtr->vendorInfos[0].length = strlen(gWtpModelNumber);
-	valPtr->vendorInfos[0].valuePtr = CW_CREATE_STRING_FROM_STRING_ERR(gWtpModelNumber, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
+	if (!(valPtr->vendorInfos[0].valuePtr = ralloc_strdup(NULL, gWtpModelNumber)))
+		 return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	// my vendor identifier (IANA assigned "SMI Network Management Private Enterprise Code")
 	valPtr->vendorInfos[1].vendorIdentifier = CW_IANA_ENTERPRISE_NUMBER_VENDOR_TRAVELPING;
 	valPtr->vendorInfos[1].type = CW_WTP_SERIAL_NUMBER;
 	valPtr->vendorInfos[1].length = strlen(gWtpSerialNumber);
-	valPtr->vendorInfos[1].valuePtr = CW_CREATE_STRING_FROM_STRING_ERR(gWtpSerialNumber, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
+	if (!(valPtr->vendorInfos[1].valuePtr = ralloc_strdup(NULL, gWtpSerialNumber)))
+		 return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	return CW_TRUE;
 }
@@ -418,12 +420,12 @@ CWBool CWWTPGetACNameWithIndex(CWACNamesWithIndex * ACsInfo)
 			    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
 
 	ACsInfo->ACNameIndex[0].index = 0;	// first radio
-	ACsInfo->ACNameIndex[0].ACName = CW_CREATE_STRING_FROM_STRING_ERR("ACPrimary",
-					 return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
+	if (!(ACsInfo->ACNameIndex[0].ACName = ralloc_strdup(NULL, "ACPrimary")))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	ACsInfo->ACNameIndex[1].index = 1;	// first radio
-	ACsInfo->ACNameIndex[1].ACName = CW_CREATE_STRING_FROM_STRING_ERR("ACSecondary",
-					 return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
+	if (!(ACsInfo->ACNameIndex[1].ACName = ralloc_strdup(NULL, "ACSecondary")))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	return CW_TRUE;
 }

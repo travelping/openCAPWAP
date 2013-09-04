@@ -587,8 +587,8 @@ CWBool CWWTPLoadConfiguration()
 	for (i = 0; i < gCWACCount; i++) {
 
 		CWDebugLog("Init Configuration for AC at %s", gCWACAddresses[i]);
-		gCWACList[i].address = CW_CREATE_STRING_FROM_STRING_ERR( gCWACAddresses[i],
-						 return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
+		if (!(gCWACList[i].address = ralloc_strdup(NULL,  gCWACAddresses[i])))
+						 return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	}
 
 	CW_FREE_OBJECTS_ARRAY(gCWACAddresses, gCWACCount);

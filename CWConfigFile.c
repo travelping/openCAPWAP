@@ -151,8 +151,8 @@ CWBool CWParseTheFile(CWBool isCount)
 					if (isCount)
 						break;
 
-					gConfigValues[i].value.str_value =
-						CW_CREATE_STRING_FROM_STRING_ERR(myLine, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
+					if (!(gConfigValues[i].value.str_value = ralloc_strdup(NULL, myLine)))
+						return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 					break;
 
 				case CW_STRING_ARRAY:
@@ -169,8 +169,8 @@ CWBool CWParseTheFile(CWBool isCount)
 						if (isCount)
 							gConfigValues[i].count++;
 						else {
-							gConfigValues[i].value.str_array_value[j] =
-								CW_CREATE_STRING_FROM_STRING_ERR(line, return CWErrorRaise (CW_ERROR_OUT_OF_MEMORY, NULL););
+							if (!(gConfigValues[i].value.str_array_value[j] = ralloc_strdup(NULL, line)))
+								return CWErrorRaise (CW_ERROR_OUT_OF_MEMORY, NULL);
 							j++;
 						}
 					}

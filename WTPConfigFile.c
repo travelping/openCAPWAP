@@ -106,10 +106,9 @@ CWBool CWConfigFileDestroyLib()
 			    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
-	for (i = 0; i < gConfigValues[0].count; i++) {
-		gCWACAddresses[i] = CW_CREATE_STRING_FROM_STRING_ERR(gConfigValues[0].value.str_array_value[i],
-								     return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
-	}
+	for (i = 0; i < gConfigValues[0].count; i++)
+		if (!(gCWACAddresses[i] = ralloc_strdup(NULL, gConfigValues[0].value.str_array_value[i])))
+			return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	gCWACCount = gConfigValues[0].count;
 
@@ -125,18 +124,17 @@ CWBool CWConfigFileDestroyLib()
 		gNetworkPreferredFamily = CW_IPv4;
 	}
 
-	if (gConfigValues[3].value.str_value != NULL) {
-		gWTPName = CW_CREATE_STRING_FROM_STRING_ERR(gConfigValues[3].value.str_value,
-							    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
-	}
-	if (gConfigValues[4].value.str_value != NULL) {
-		gWTPLocation = CW_CREATE_STRING_FROM_STRING_ERR(gConfigValues[4].value.str_value,
-								return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
-	}
-	if (gConfigValues[5].value.str_value != NULL) {
-		gWTPForceACAddress = CW_CREATE_STRING_FROM_STRING_ERR(gConfigValues[5].value.str_value,
-								      return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
-	}
+	if (gConfigValues[3].value.str_value != NULL)
+		if (!(gWTPName = ralloc_strdup(NULL, gConfigValues[3].value.str_value)))
+			return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+
+	if (gConfigValues[4].value.str_value != NULL)
+		if (!(gWTPLocation = ralloc_strdup(NULL, gConfigValues[4].value.str_value)))
+			return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+
+	if (gConfigValues[5].value.str_value != NULL)
+		if (!(gWTPForceACAddress = ralloc_strdup(NULL, gConfigValues[5].value.str_value)))
+			return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	if (gConfigValues[6].value.str_value != NULL && !strcmp(gConfigValues[6].value.str_value, "PRESHARED")) {
 		gWTPForceSecurity = CW_PRESHARED;
