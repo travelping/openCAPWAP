@@ -52,6 +52,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include "wireless_copy.h"
+#include "ralloc.h"
 
 // make sure the types really have the right sizes
 #define CW_COMPILE_TIME_ASSERT(name, x)               typedef int CWDummy_ ## name[(x) * 2 - 1]
@@ -129,13 +130,6 @@ extern int gEchoInterval;
 	} while (0)
 
 // custom error
-#define CW_CREATE_OBJECT_ERR(type, on_err)				\
-	({								\
-		type * __p = (type *)malloc(sizeof(type));		\
-		CW_ON_ERROR(__p, on_err);				\
-		__p;							\
-	})
-
 #define CW_CREATE_OBJECT_SIZE_ERR(size, on_err)				\
 	({								\
 		void * __p = malloc((size));				\

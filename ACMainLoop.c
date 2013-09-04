@@ -225,11 +225,10 @@ void CWACManageIncomingPacket(CWSocket sock,
 			CWSetMutexSafeList(gWTPs[i].packetReceiveList, &gWTPs[i].interfaceMutex);
 			CWSetConditionSafeList(gWTPs[i].packetReceiveList, &gWTPs[i].interfaceWait);
 
-			argPtr = CW_CREATE_OBJECT_ERR(CWACThreadArg, {
-					     CWLog("Out Of Memory");
-					     return;
-					     }
-			);
+			if (!(argPtr = ralloc(NULL, CWACThreadArg))) {
+				CWLog("Out Of Memory");
+				return;
+			}
 
 			argPtr->index = i;
 			argPtr->sock = sock;

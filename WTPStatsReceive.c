@@ -26,9 +26,9 @@
 
 int create_data_Frame(CWProtocolMessage ** frame, char *buffer, int len)
 {
+	if (!(*frame = ralloc(NULL, CWProtocolMessage)))
+		return 0;
 
-	*frame = CW_CREATE_OBJECT_ERR(CWProtocolMessage, return 0;
-	    );
 	CWProtocolMessage *auxPtr = *frame;
 	CW_CREATE_PROTOCOL_MESSAGE(*auxPtr, len, return 0;
 	    );
@@ -86,8 +86,9 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveStats(void *arg)
 				CWDebugLog("Error extracting a data stats frame");
 				CWExitThread();
 			};
+			if (!(bindingValuesPtr = ralloc(NULL, CWBindingTransportHeaderValues)))
+				EXIT_THREAD
 
-			bindingValuesPtr = CW_CREATE_OBJECT_ERR(CWBindingTransportHeaderValues, EXIT_THREAD);
 			bindingValuesPtr->dataRate = -1;	//to distinguish between wireless frame e data message (Daniele) see CWBindig.c line 224
 
 			if (CWAssembleDataMessage(&completeMsgPtr, &fragmentsNum, gWTPPathMTU, data, bindingValuesPtr,

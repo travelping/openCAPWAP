@@ -43,8 +43,8 @@ CWBool ACEnterDataCheck(int WTPIndex, CWProtocolMessage * msgPtr)
 		CWCloseThread();
 	}
 
-	changeStateEvent =
-		CW_CREATE_OBJECT_ERR(CWProtocolChangeStateEventRequestValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
+	if (!(changeStateEvent = ralloc(NULL, CWProtocolChangeStateEventRequestValues)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	if (!(CWParseChangeStateEventRequestMessage(msgPtr->msg, msgPtr->offset, &seqNum, changeStateEvent))) {
 		/* note: we can kill our thread in case of out-of-memory

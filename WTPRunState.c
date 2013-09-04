@@ -1102,9 +1102,8 @@ CWBool CWAssembleConfigurationUpdateResponse(CWProtocolMessage ** messagesPtr,
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
 	CWLog("Assembling Configuration Update Response...");
-
-	msgElems = CW_CREATE_OBJECT_ERR(CWProtocolMessage, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(msgElems = ralloc(NULL, CWProtocolMessage)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	if (protoValues) {
 		switch (protoValues->vendorPayloadType) {
@@ -1158,8 +1157,8 @@ CWBool CWAssembleClearConfigurationResponse(CWProtocolMessage ** messagesPtr, in
 
 	CWLog("Assembling Clear Configuration Response...");
 
-	msgElems = CW_CREATE_OBJECT_ERR(CWProtocolMessage, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(msgElems = ralloc(NULL, CWProtocolMessage)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	if (!(CWAssembleMsgElemResultCode(msgElems, resultCode))) {
 		CW_FREE_OBJECT(msgElems);
@@ -1192,9 +1191,8 @@ CWBool CWAssembleStationConfigurationResponse(CWProtocolMessage ** messagesPtr, 
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
 	CWLog("Assembling Sattion Configuration Response...");
-
-	msgElems = CW_CREATE_OBJECT_ERR(CWProtocolMessage, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(msgElems = ralloc(NULL, CWProtocolMessage)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	if (!(CWAssembleMsgElemResultCode(msgElems, resultCode))) {
 		CW_FREE_OBJECT(msgElems);
@@ -1228,9 +1226,11 @@ CWBool CWAssembleWLANConfigurationResponse(CWProtocolMessage ** messagesPtr, int
 
 	CWLog("Assembling WLAN Configuration Response...");
 
-	//msgElems = CW_CREATE_OBJECT_ERR(CWProtocolMessage, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL););
-	CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(msgElems, msgElemCount, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	/*
+	if (!(msgElems = ralloc(NULL, CWProtocolMessage)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	*/
+	CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(msgElems, msgElemCount, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
 
 	if (!(CWAssembleMsgElemResultCode((&(msgElems[++k])), resultCode))) {
 		CW_FREE_OBJECT(msgElems);
@@ -1305,9 +1305,9 @@ CWBool CWParseVendorMessage(unsigned char *msg, int len, void **valuesPtr)
 
 	switch (GlobalElemType) {
 	case CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_CW_TYPE:
-		vendPtr = CW_CREATE_OBJECT_ERR(CWProtocolVendorSpecificValues,
-				     return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-		    );
+		if (!(vendPtr = ralloc(NULL, CWProtocolVendorSpecificValues)))
+			return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+
 		/*Allocate various other vendor specific fields */
 		break;
 	}

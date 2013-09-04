@@ -719,9 +719,8 @@ CWBool CWParseConfigurationUpdateResponseMessage(CWProtocolMessage * msgPtr,
 			   Added case to implement conf update response with payload */
 		case CW_MSG_ELEMENT_RESULT_CODE_CW_TYPE_WITH_PAYLOAD:{
 				int payloadSize = 0;
-				*vendValues = CW_CREATE_OBJECT_ERR(CWProtocolVendorSpecificValues,
-						     return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-				    );
+				if (!(*vendValues = ralloc(NULL, CWProtocolVendorSpecificValues)))
+					return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 				*resultCode = CWProtocolRetrieve32(msgPtr);
 
@@ -1053,7 +1052,8 @@ CWBool CWParseWTPEventRequestMessage(CWProtocolMessage * msgPtr, int len, CWProt
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
 	/*
-	   valuesPtr = CW_CREATE_OBJECT_ERR(CWProtocolWTPEventRequestValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL););
+	if (!(valuesPtr = ralloc(NULL, CWProtocolWTPEventRequestValues)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	 */
 	offsetTillMessages = msgPtr->offset;
 
@@ -1081,17 +1081,15 @@ CWBool CWParseWTPEventRequestMessage(CWProtocolMessage * msgPtr, int len, CWProt
 
 		switch (elemType) {
 		case CW_MSG_ELEMENT_CW_DECRYPT_ER_REPORT_CW_TYPE:
-			valuesPtr->errorReport =
-				CW_CREATE_OBJECT_ERR(CWDecryptErrorReportValues,
-						     return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
+			if (!(valuesPtr->errorReport = ralloc(NULL, CWDecryptErrorReportValues)))
+				return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 			if (!(CWParseMsgElemDecryptErrorReport(msgPtr, elemLen, valuesPtr->errorReport)))
 				return CW_FALSE;
 			break;
 		case CW_MSG_ELEMENT_DUPLICATE_IPV4_ADDRESS_CW_TYPE:
-			valuesPtr->duplicateIPv4 =
-				CW_CREATE_OBJECT_ERR(WTPDuplicateIPv4,
-						     return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
+			if (!(valuesPtr->duplicateIPv4 = ralloc(NULL, WTPDuplicateIPv4)))
+				return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 			(valuesPtr->duplicateIPv4)->MACoffendingDevice_forIpv4 =
 				CW_CREATE_ARRAY_ERR(6, unsigned char, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
@@ -1100,9 +1098,8 @@ CWBool CWParseWTPEventRequestMessage(CWProtocolMessage * msgPtr, int len, CWProt
 				return CW_FALSE;
 			break;
 		case CW_MSG_ELEMENT_DUPLICATE_IPV6_ADDRESS_CW_TYPE:
-			valuesPtr->duplicateIPv6 =
-				CW_CREATE_OBJECT_ERR(WTPDuplicateIPv6,
-						     return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
+			if (!(valuesPtr->duplicateIPv6 =	ralloc(NULL, WTPDuplicateIPv6)))
+				return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 			(valuesPtr->duplicateIPv6)->MACoffendingDevice_forIpv6 =
 				CW_CREATE_ARRAY_ERR(6, unsigned char, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
@@ -1119,8 +1116,8 @@ CWBool CWParseWTPEventRequestMessage(CWProtocolMessage * msgPtr, int len, CWProt
 			msgPtr->offset += elemLen;
 			break;
 		case CW_MSG_ELEMENT_WTP_REBOOT_STATISTICS_CW_TYPE:
-			valuesPtr->WTPRebootStatistics =
-				CW_CREATE_OBJECT_ERR(WTPRebootStatisticsInfo, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
+			if (!(valuesPtr->WTPRebootStatistics = ralloc(NULL, WTPRebootStatisticsInfo)))
+				return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 			if (!(CWParseWTPRebootStatistics(msgPtr, elemLen, valuesPtr->WTPRebootStatistics)))
 				return CW_FALSE;
@@ -1326,8 +1323,8 @@ CWBool CWParseChangeStateEventRequestMessage2(CWProtocolMessage * msgPtr,
 	if ((msgPtr->msg) == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
-	*valuesPtr = CW_CREATE_OBJECT_ERR(CWProtocolChangeStateEventRequestValues,
-					  return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
+	if (!(*valuesPtr = ralloc(NULL, CWProtocolChangeStateEventRequestValues)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	offsetTillMessages = msgPtr->offset;
 

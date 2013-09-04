@@ -100,13 +100,15 @@ CWBool CWWTPCheckForWTPEventRequest()
 
 	seqNum = CWGetSeqNum();
 
-	pendingReqIndex = CW_CREATE_OBJECT_ERR(int, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(pendingReqIndex = ralloc(NULL, int)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
-	msgElemList = CW_CREATE_OBJECT_ERR(CWListElement, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
-	msgElemList->data = CW_CREATE_OBJECT_ERR(CWMsgElemData, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(msgElemList = ralloc(NULL, CWListElement)) ||
+	    !(msgElemList->data = ralloc(NULL, CWMsgElemData))) {
+		ralloc_free(pendingReqIndex);
+		ralloc_free(msgElemList);
+	    	return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	}
 	msgElemList->next = NULL;
 	//Change type and value to change the msg elem to send
 	((CWMsgElemData *) (msgElemList->data))->type = CW_MSG_ELEMENT_CW_DECRYPT_ER_REPORT_CW_TYPE;

@@ -470,8 +470,9 @@ CW_THREAD_RETURN_TYPE CWACipc_with_ac_hostapd(void *arg)
 
 					len = len - sig_byte;
 
-					frame = CW_CREATE_OBJECT_ERR(CWProtocolMessage, return 0;
-					    );
+					if (!(frame = ralloc(NULL, CWProtocolMessage)))
+						return 0;
+
 					CW_CREATE_PROTOCOL_MESSAGE(*frame, len, return 0;
 					    );
 

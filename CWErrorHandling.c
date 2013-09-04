@@ -27,10 +27,6 @@
 
 #include "CWCommon.h"
 
-#ifdef DMALLOC
-#include "../dmalloc-5.5.0/dmalloc.h"
-#endif
-
 #ifndef CW_SINGLE_THREAD
 CWThreadSpecific gLastError;
 //CWThreadOnce gInitLastErrorOnce = CW_THREAD_ONCE_INIT;
@@ -48,8 +44,9 @@ void CWErrorHandlingInitLib()
 		exit(1);
 	}
 #else
-	infoPtr = CW_CREATE_OBJECT_ERR(CWErrorHandlingInfo, return;
-	    );
+	if (!(infoPtr = ralloc(NULL, CWErrorHandlingInfo)))
+		return;
+
 	infoPtr->code = CW_ERROR_NONE;
 	gLastErrorDataPtr = infoPtr;
 #endif
@@ -62,8 +59,9 @@ CWBool _CWErrorRaise(CWErrorCode code, const char *msg, const char *fileName, in
 #ifndef CW_SINGLE_THREAD
 	infoPtr = CWThreadGetSpecific(&gLastError);
 	if (infoPtr == NULL) {
-		infoPtr = CW_CREATE_OBJECT_ERR(CWErrorHandlingInfo, exit(1);
-		    );
+		if (!(infoPtr = ralloc(NULL, CWErrorHandlingInfo)))
+			exit(1);
+
 		infoPtr->code = CW_ERROR_NONE;
 		if (!CWThreadSetSpecific(&gLastError, infoPtr)) {
 			CWLog("Critical Error, closing the process...");

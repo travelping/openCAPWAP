@@ -58,8 +58,8 @@ CWBool CWWTPInitBinding(int radioIndex)
 	bindingValues *aux;
 	int i;
 
-	aux = CW_CREATE_OBJECT_ERR(bindingValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(aux = ralloc(NULL, bindingValues)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	gRadiosInfo.radiosInfo[radioIndex].bindingValuesPtr = (void *)aux;
 
@@ -102,8 +102,8 @@ CWBool CWWTPInitBinding(int radioIndex)
 
 	CWLog("wrq.ifr_name %s ", wrq.ifr_name);
 
-	aux = CW_CREATE_OBJECT_ERR(bindingValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(aux = ralloc(NULL, bindingValues)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	gRadiosInfo.radiosInfo[radioIndex].bindingValuesPtr = (void *)aux;
 
@@ -143,8 +143,8 @@ CWBool CWWTPInitBinding(int radioIndex)
 	bindingValues *aux;
 	int i;
 
-	aux = CW_CREATE_OBJECT_ERR(bindingValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(aux = ralloc(NULL, bindingValues)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	gRadiosInfo.radiosInfo[radioIndex].bindingValuesPtr = (void *)aux;
 
@@ -568,9 +568,9 @@ CWBool CWBindingParseConfigurationUpdateRequest(unsigned char *msg, int len, voi
 
 	switch (GlobalElemType) {
 	case BINDING_MSG_ELEMENT_TYPE_WTP_QOS:{
-			auxBindingPtr = CW_CREATE_OBJECT_ERR(CWBindingConfigurationUpdateRequestValues,
-					     return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-			    );
+			if (!(auxBindingPtr = ralloc(NULL, CWBindingConfigurationUpdateRequestValues)))
+				return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+
 			*valuesPtr = (void *)auxBindingPtr;
 
 			auxBindingPtr->qosCount = qosCount;
@@ -582,15 +582,12 @@ CWBool CWBindingParseConfigurationUpdateRequest(unsigned char *msg, int len, voi
 			break;
 		}
 	case BINDING_MSG_ELEMENT_TYPE_OFDM_CONTROL:
-		ofdmBindingPtr = CW_CREATE_OBJECT_ERR(CWBindingConfigurationUpdateRequestValuesOFDM,
-				     return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-		    );
+		if (!(ofdmBindingPtr = ralloc(NULL, CWBindingConfigurationUpdateRequestValuesOFDM)) ||
+		    !(ofdmBindingPtr->radioOFDMValues = ralloc(ofdmBindingPtr, OFDMControlValues)))
+			ralloc_free(ofdmBindingPtr);
+			return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 		*valuesPtr = (void *)ofdmBindingPtr;
-
-		ofdmBindingPtr->radioOFDMValues = CW_CREATE_OBJECT_ERR(OFDMControlValues,
-				     return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-		    );
 		break;
 	}
 
@@ -672,9 +669,9 @@ CWBool CWBindingParseConfigureResponse(unsigned char *msg, int len, void **value
 	completeMsg.offset = 0;
 
 	CWBindingConfigurationRequestValues *auxBindingPtr;
-	auxBindingPtr = CW_CREATE_OBJECT_ERR(CWBindingConfigurationRequestValues,
-			     return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(auxBindingPtr = ralloc(NULL, CWBindingConfigurationRequestValues)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+
 	*valuesPtr = (void *)auxBindingPtr;
 
 	auxBindingPtr->qosCount = 0;

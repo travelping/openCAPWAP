@@ -262,11 +262,11 @@ CW_THREAD_RETURN_TYPE CWManageApplication(void *arg)
 				switch (msg_elem) {
 				case MSG_ELEMENT_TYPE_OFDM:{
 						/* Antonio Case */
-						ofdmValues = CW_CREATE_OBJECT_ERR(OFDMControlValues, {
-								     CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-								     return 0;
-								     }
-						);
+						if (!(ofdmValues = ralloc(NULL, OFDMControlValues))) {
+							CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+							return 0;
+						}
+
 						if ((n = Readn(sock, ofdmValues, sizeof(OFDMControlValues))) < 0) {
 							CWLog("Error while reading from socket");
 							goto quit_manage;
@@ -305,16 +305,16 @@ CW_THREAD_RETURN_TYPE CWManageApplication(void *arg)
 						/* Matteo Case */
 						/*Do stuff to parse uci payload */
 						int commandLength = 0;
-						vendorValues = CW_CREATE_OBJECT_ERR(CWProtocolVendorSpecificValues, {
-								     CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-								     return 0;
-								     }
-						);
-						uciValues = CW_CREATE_OBJECT_ERR(CWVendorUciValues, {
-								     CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-								     return 0;
-								     }
-						);
+						if (!(vendorValues = ralloc(NULL, CWProtocolVendorSpecificValues))) {
+							CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+							return 0;
+						}
+
+						if (!(uciValues = ralloc(NULL, CWVendorUciValues))) {
+							CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+							return 0;
+						}
+
 						vendorValues->vendorPayloadType =
 						    CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_UCI;
 						uciValues->response = NULL;
@@ -387,16 +387,16 @@ CW_THREAD_RETURN_TYPE CWManageApplication(void *arg)
 				case MSG_ELEMENT_TYPE_VENDOR_WUM:{
 						/* Donato's Case */
 
-						vendorValues = CW_CREATE_OBJECT_ERR(CWProtocolVendorSpecificValues, {
-								     CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-								     return 0;
-								     }
-						);
-						wumValues = CW_CREATE_OBJECT_ERR(CWVendorWumValues, {
-								     CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-								     return 0;
-								     }
-						);
+						if (!(vendorValues = ralloc(NULL, CWProtocolVendorSpecificValues))) {
+							CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+							return 0;
+						}
+
+						if (!(wumValues = ralloc(NULL, CWVendorWumValues))) {
+							CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+							return 0;
+						}
+
 						vendorValues->vendorPayloadType =
 						    CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_WUM;
 
@@ -611,11 +611,10 @@ CW_THREAD_RETURN_TYPE CWInterface(void *arg)
 
 			if (appsManager.numSocketFree > 0) {
 
-				argPtr = CW_CREATE_OBJECT_ERR(CWInterfaceThreadArg, {
-						     CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-						     return 0;
-						     }
-				);
+				if (!(argPtr = ralloc(NULL, CWInterfaceThreadArg))) {
+					CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+					return 0;
+				}
 
 				/************************************
 				 *  Search socket for application   *

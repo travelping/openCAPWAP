@@ -44,8 +44,9 @@ CWBool CWParseUCIPayload(CWProtocolMessage * msgPtr, CWVendorUciValues ** payloa
 	int argsLen;
 	CWVendorUciValues *uciPayload = NULL;
 
-	uciPayload = CW_CREATE_OBJECT_ERR(CWVendorUciValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(uciPayload = ralloc(NULL, CWVendorUciValues)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+
 	uciPayload->command = (unsigned char)CWProtocolRetrieve8(msgPtr);
 	uciPayload->response = NULL;
 	argsLen = (unsigned int)CWProtocolRetrieve32(msgPtr);
@@ -64,8 +65,9 @@ CWBool CWParseWUMPayload(CWProtocolMessage * msgPtr, CWVendorWumValues ** payloa
 {
 	CWVendorWumValues *wumPayload = NULL;
 
-	wumPayload = CW_CREATE_OBJECT_ERR(CWVendorWumValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(wumPayload = ralloc(NULL, CWVendorWumValues)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+
 	wumPayload->type = (unsigned char)CWProtocolRetrieve8(msgPtr);
 
 	/*

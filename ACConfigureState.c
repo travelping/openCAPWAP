@@ -178,8 +178,9 @@ CWBool CWParseConfigureRequestMessage(unsigned char *msg, int len,
 				return CW_FALSE;
 			break;
 		case CW_MSG_ELEMENT_WTP_REBOOT_STATISTICS_CW_TYPE:
-			valuesPtr->WTPRebootStatistics =
-				CW_CREATE_OBJECT_ERR(WTPRebootStatisticsInfo, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
+			if (!(valuesPtr->WTPRebootStatistics = ralloc(NULL, WTPRebootStatisticsInfo)))
+				return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+
 			if (!(CWParseWTPRebootStatistics(&completeMsg, elemLen, valuesPtr->WTPRebootStatistics)))
 				/* will be handled by the caller */
 				return CW_FALSE;

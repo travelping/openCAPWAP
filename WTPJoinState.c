@@ -74,8 +74,9 @@ CWStateTransition CWWTPEnterJoin()
 		return CW_ENTER_DISCOVERY;
 
 	if (gWTPForceACAddress != NULL) {
-		gACInfoPtr = CW_CREATE_OBJECT_ERR(CWACInfoValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-		    );
+		if (!(gACInfoPtr = ralloc(NULL, CWACInfoValues)))
+			return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+
 		CWNetworkGetAddressForHost(gWTPForceACAddress, &(gACInfoPtr->preferredAddress));
 		gACInfoPtr->security = gWTPForceSecurity;
 	}

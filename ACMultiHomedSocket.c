@@ -177,8 +177,9 @@ CWBool CWNetworkInitSocketServerMultiHomed(CWMultiHomedSocket * sockPtr,
 		    );
 
 		/* store socket inside multihomed socket */
-		p = CW_CREATE_OBJECT_ERR(CWMultiHomedInterface, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-		    );
+		if (!(p = ralloc(NULL, CWMultiHomedInterface)))
+			return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+
 		p->sock = sock;
 		if (CWNetworkGetInterfaceAlreadyStored(interfaceList, ifi->ifi_index) == NULL &&
 		    strncmp(ifi->ifi_name, "lo", 2)) {
@@ -281,9 +282,9 @@ CWBool CWNetworkInitSocketServerMultiHomed(CWMultiHomedSocket * sockPtr,
 
 			/* store socket inside multihomed socket */
 
-			p = CW_CREATE_OBJECT_ERR(CWMultiHomedInterface,
-					     return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-			    );
+			if (!(p = ralloc(NULL, CWMultiHomedInterface)))
+				return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+
 			p->sock = sock;
 			p->kind = CW_BROADCAST_OR_ALIAS;
 			p->systemIndex = ifi->ifi_index;
@@ -400,9 +401,9 @@ CWBool CWNetworkInitSocketServerMultiHomed(CWMultiHomedSocket * sockPtr,
 	}
 
 	CWUseSockNtop(&wildaddr, CWLog("bound %s", str););
+	if (!(p = ralloc(NULL, CWMultiHomedInterface)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
-	p = CW_CREATE_OBJECT_ERR(CWMultiHomedInterface, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
 	p->sock = sock;
 	p->kind = CW_BROADCAST_OR_ALIAS;
 	p->systemIndex = -1;	/* make sure this can't be
@@ -464,8 +465,9 @@ CWBool CWNetworkInitSocketServerMultiHomed(CWMultiHomedSocket * sockPtr,
 
 		CWUseSockNtop((res->ai_addr), CWLog("Joined Multicast Group: %s", str););
 
-		p = CW_CREATE_OBJECT_ERR(CWMultiHomedInterface, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-		    );
+		if (!(p = ralloc(NULL, CWMultiHomedInterface)))
+			return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+
 		p->sock = sock;
 		p->kind = CW_BROADCAST_OR_ALIAS;
 		p->systemIndex = -1;
@@ -617,8 +619,9 @@ CWBool CWNetworkUnsafeMultiHomed(CWMultiHomedSocket * sockPtr,
 				get_mac_addr(macAddrTap, gWTPs[i].tap_name);
 				unsigned char buf80211[CW_BUFFER_SIZE + 24];
 				int readByest80211 = from_8023_to_80211(buf, readBytes, buf80211, macAddrTap);
-				frame = CW_CREATE_OBJECT_ERR(CWProtocolMessage, return 0;
-				    );
+				if (!(frame = ralloc(NULL, CWProtocolMessage)))
+					return 0;
+
 				CW_CREATE_PROTOCOL_MESSAGE(*frame, readByest80211, return 0;
 				    );
 				memcpy(frame->msg, buf80211, readByest80211);

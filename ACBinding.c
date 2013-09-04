@@ -34,8 +34,8 @@ CWBool CWACInitBinding(int i)
 	int j;
 	bindingValues *aux;
 
-	aux = CW_CREATE_OBJECT_ERR(bindingValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(aux = ralloc(NULL, bindingValues)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	(gWTPs[i].WTPProtocolManager).bindingValuesPtr = (void *)aux;
 

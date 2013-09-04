@@ -793,11 +793,11 @@ CWBool CWTimerRequest(int sec, CWThread * threadPtr, CWTimerID * idPtr, int sign
 	if (sec < 0 || threadPtr == NULL || idPtr == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
-	arg = CW_CREATE_OBJECT_ERR(CWThreadTimerArg, return CW_FALSE;
-	    );
-	arg->requestedThreadPtr = CW_CREATE_OBJECT_ERR(CWThread, CW_FREE_OBJECT(arg);
-			     return CW_FALSE;
-	    );
+	if (!(arg = ralloc(NULL, CWThreadTimerArg)) ||
+	    !(arg->requestedThreadPtr = ralloc(arg, CWThread))) {
+		ralloc_free(arg);
+		return CW_FALSE;
+	}
 	CW_COPY_MEMORY(arg->requestedThreadPtr, threadPtr, sizeof(CWThread));
 	arg->signalToRaise = signalToRaise;
 

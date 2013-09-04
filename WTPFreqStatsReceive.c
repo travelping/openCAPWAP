@@ -70,8 +70,9 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveFreqStats(void *arg)
 		if ((rlen = recvfrom(recSock, buffer, PACKET_SIZE, 0, (struct sockaddr *)&client_addr, &slen)) > 0) {
 			/* Creation of stats/ack message for AC */
 
-			data = CW_CREATE_OBJECT_ERR(CWProtocolMessage, return 0;
-			    );
+			if (!(data = ralloc(NULL, CWProtocolMessage)))
+				return 0;
+
 			CW_CREATE_PROTOCOL_MESSAGE(*data, rlen, return 0;
 			    );
 
@@ -92,7 +93,9 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveFreqStats(void *arg)
 			 **************************************************************/
 
 			/* In this function is tied the name of the socket: recSock */
-			bindingValuesPtr = CW_CREATE_OBJECT_ERR(CWBindingTransportHeaderValues, EXIT_THREAD);
+			if (!(bindingValuesPtr = ralloc(NULL, CWBindingTransportHeaderValues)))
+				EXIT_THREAD
+
 			bindingValuesPtr->dataRate = -1;
 			bindingValuesPtr->SNR = 1;
 

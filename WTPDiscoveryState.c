@@ -99,9 +99,9 @@ static CWBool CWAddDiscoverACAddress(CWList *ACList, CWNetworkLev4Address *addre
        if (!CWSearchInList(*ACList, (void *)address, CWNetworkCompareAddress)) {
                CWDiscoverAC *AC;
 
-               AC = CW_CREATE_OBJECT_ERR(CWDiscoverAC, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-                       );
-               CW_ZERO_MEMORY(AC, sizeof(CWDiscoverAC));
+	       if ((AC = rzalloc(NULL, CWDiscoverAC)) == NULL)
+		       return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+
                CW_COPY_NET_ADDR_PTR(&AC->address, address);
                AC->received = 0;
 
@@ -375,8 +375,9 @@ CWBool CWReceiveDiscoveryResponse()
 	if (!AC)
 		return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "got discovery response from invalid address");
 
-	ACInfoPtr = CW_CREATE_OBJECT_ERR(CWACInfoValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(ACInfoPtr = ralloc(NULL, CWACInfoValues)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+
 	CW_COPY_NET_ADDR_PTR(&(ACInfoPtr->incomingAddress), &(addr));
 
 	/* check if it is a valid Discovery Response */
