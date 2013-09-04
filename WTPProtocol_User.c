@@ -110,46 +110,43 @@ CWBool CWWTPGetBoardData(CWWTPVendorInfos * valPtr)
 
 CWBool CWWTPGetVendorInfos(CWWTPVendorInfos * valPtr)
 {
+	CWWTPVendorInfoValues *Infos;
 	if (valPtr == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
 	valPtr->vendorInfosCount = 4;	// we fill 3 information (just the required ones)
-	if (!(valPtr->vendorInfos = ralloc_array(NULL, CWWTPVendorInfoValues, valPtr->vendorInfosCount)))
+	if (!(valPtr->vendorInfos = Infos =
+	      ralloc_array(NULL, CWWTPVendorInfoValues, valPtr->vendorInfosCount)))
 		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
-	valPtr->vendorInfos[0] = (CWWTPVendorInfoValues){
+	Infos[0] = (CWWTPVendorInfoValues){
 		.vendorIdentifier = 0,
 		.type             = CW_WTP_HARDWARE_VERSION,
 		.length           = strlen(gWtpHardwareVersion),
-		.valuePtr         = strdup(gWtpHardwareVersion)
+		.valuePtr         = ralloc_strdup(Infos, gWtpHardwareVersion)
 	};
-	valPtr->vendorInfos[1] = (CWWTPVendorInfoValues){
+	Infos[1] = (CWWTPVendorInfoValues){
 		.vendorIdentifier = 0,
 		.type             = CW_WTP_SOFTWARE_VERSION,
 		.length           = strlen(gWtpActiveSoftwareVersion),
-		.valuePtr         = strdup(gWtpActiveSoftwareVersion)
+		.valuePtr         = ralloc_strdup(Infos, gWtpActiveSoftwareVersion)
 	};
-	valPtr->vendorInfos[2] = (CWWTPVendorInfoValues){
+	Infos[2] = (CWWTPVendorInfoValues){
 		.vendorIdentifier = 0,
 		.type             = CW_BOOT_VERSION,
 		.length           = strlen(gWtpBootVersion),
-		.valuePtr         = strdup(gWtpBootVersion)
+		.valuePtr         = ralloc_strdup(Infos, gWtpBootVersion)
 	};
-	valPtr->vendorInfos[3] = (CWWTPVendorInfoValues){
+	Infos[3] = (CWWTPVendorInfoValues){
 		.vendorIdentifier = CW_IANA_ENTERPRISE_NUMBER_VENDOR_TRAVELPING,
 		.type             = TP_WTP_VERSION,
 		.length           = strlen(gWtpVersion),
-		.valuePtr         = strdup(gWtpVersion)
+		.valuePtr         = ralloc_strdup(Infos, gWtpVersion)
 	};
 
-	if (!valPtr->vendorInfos[0].valuePtr ||
-	    !valPtr->vendorInfos[1].valuePtr ||
-	    !valPtr->vendorInfos[2].valuePtr ||
-	    !valPtr->vendorInfos[3].valuePtr) {
-		free(valPtr->vendorInfos[0].valuePtr);
-		free(valPtr->vendorInfos[1].valuePtr);
-		free(valPtr->vendorInfos[2].valuePtr);
-		free(valPtr->vendorInfos[3].valuePtr);
+	if (!Infos[0].valuePtr || !Infos[1].valuePtr ||
+	    !Infos[2].valuePtr || !Infos[3].valuePtr) {
+		ralloc_free(Infos);
 		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	}
 

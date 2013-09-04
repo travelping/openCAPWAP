@@ -109,7 +109,7 @@ extern int gEchoInterval;
 
 #define CW_FREE_OBJECT(ptr)						\
 	do {								\
-		free((ptr));						\
+		ralloc_free((ptr));					\
 		(ptr) = NULL;						\
 	} while (0)
 
@@ -117,8 +117,8 @@ extern int gEchoInterval;
 	do {								\
 		int _i = 0;						\
 		for(_i = ((size)-1); _i >= 0; _i--)			\
-			free((array)[_i]);				\
-		free((array));						\
+			ralloc_free((array)[_i]);			\
+		ralloc_free((array));					\
 		(array) = NULL;						\
 	} while (0)
 

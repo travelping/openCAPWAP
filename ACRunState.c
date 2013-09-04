@@ -976,7 +976,7 @@ CWBool CWSaveConfigurationUpdateResponseMessage(CWProtocolResultCode resultCode,
 			CWThreadMutexUnlock(&appsManager.socketMutex[socketIndex]);
 
 		}
-		CW_FREE_OBJECT(responseBuffer);
+		free(responseBuffer);
 		CW_FREE_OBJECT(vendValues->payload);
 		CW_FREE_OBJECT(vendValues);
 

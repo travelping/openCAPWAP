@@ -416,7 +416,6 @@ CWBool CWWTPSaveWUMValues(CWVendorWumValues * wumPayload, CWProtocolResultCode *
 
 CWBool CWWTPSaveUCIValues(CWVendorUciValues * uciPayload, CWProtocolResultCode * resultCode)
 {
-
 	if (uciPayload == NULL) {
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 	}
@@ -426,7 +425,17 @@ CWBool CWWTPSaveUCIValues(CWVendorUciValues * uciPayload, CWProtocolResultCode *
 	struct sockaddr_in serv_addr;
 	int sendSock, slen = sizeof(serv_addr), responseSize, responseCode;
 	unsigned int ArgsSize, response = 0, ArgsSizeNet;
-	char *bufferMessage;
+	char bufferMessage[CW_BUFFER_SIZE];
+
+	if (uciPayload->commandArgs == NULL)
+		ArgsSize = 0;
+	else
+		ArgsSize = strlen(uciPayload->commandArgs);
+
+	if (ArgsSize + sizeof(unsigned char) + sizeof(unsigned int) > sizeof(bufferMessage)) {
+		CWLog("[CWSaveUCIValues]: payload too large (%zd).", ArgsSize + sizeof(unsigned char) + sizeof(unsigned int));
+		return CWErrorRaise(CW_ERROR_GENERAL, NULL);
+	}
 
 	if ((sendSock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
 		CWLog("[CWSaveUCIValues]: Error on creation of socket.");
@@ -443,46 +452,58 @@ CWBool CWWTPSaveUCIValues(CWVendorUciValues * uciPayload, CWProtocolResultCode *
 		return CWErrorRaise(CW_ERROR_GENERAL, NULL);
 	}
 
-	if (uciPayload->commandArgs == NULL)
-		ArgsSize = 0;
-	else
-		ArgsSize = strlen(uciPayload->commandArgs);
+	memcpy(bufferMessage, &(uciPayload->command), sizeof(unsigned char));	/* First Field */
+	ArgsSizeNet = htonl(ArgsSize);
+	memcpy(bufferMessage + sizeof(unsigned char), &ArgsSizeNet, sizeof(unsigned int));	/* Second Field */
+	if (uciPayload->commandArgs != NULL)
+		memcpy(bufferMessage + (sizeof(unsigned char) + sizeof(unsigned int)), uciPayload->commandArgs, ArgsSize);	/* Third Field */
 
-	if ((bufferMessage = malloc(ArgsSize + sizeof(unsigned char) + sizeof(unsigned int))) != NULL) {
-		memcpy(bufferMessage, &(uciPayload->command), sizeof(unsigned char));	/* First Field */
-		ArgsSizeNet = htonl(ArgsSize);
-		memcpy(bufferMessage + sizeof(unsigned char), &ArgsSizeNet, sizeof(unsigned int));	/* Second Field */
-		if (uciPayload->commandArgs != NULL)
-			memcpy(bufferMessage + (sizeof(unsigned char) + sizeof(unsigned int)), uciPayload->commandArgs, ArgsSize);	/* Third Field */
+	/*Send conf request to uci daemon */
+	if (sendto(sendSock, bufferMessage, sizeof(unsigned char), 0, (struct sockaddr *)&serv_addr, slen) < 0) {
+		CWLog("[CWSaveUCIValues]: Error on sendto function.");
+		close(sendSock);
+		return CWErrorRaise(CW_ERROR_GENERAL, NULL);
+	}
+	if (recvfrom
+	    (sendSock, &response, sizeof(unsigned int), 0, (struct sockaddr *)&serv_addr,
+	     (socklen_t *) & slen) < 0) {
+		CWLog("[CWSaveUCIValues]: Error on recvfrom function.");
+		close(sendSock);
+		return CWErrorRaise(CW_ERROR_GENERAL, NULL);
+	}
 
-		/*Send conf request to uci daemon */
-		if (sendto(sendSock, bufferMessage, sizeof(unsigned char), 0, (struct sockaddr *)&serv_addr, slen) < 0) {
-			CWLog("[CWSaveUCIValues]: Error on sendto function.");
-			close(sendSock);
-			CW_FREE_OBJECT(bufferMessage);
-			return CWErrorRaise(CW_ERROR_GENERAL, NULL);
-		}
-		if (recvfrom
-		    (sendSock, &response, sizeof(unsigned int), 0, (struct sockaddr *)&serv_addr,
-		     (socklen_t *) & slen) < 0) {
-			CWLog("[CWSaveUCIValues]: Error on recvfrom function.");
-			close(sendSock);
-			CW_FREE_OBJECT(bufferMessage);
-			return CWErrorRaise(CW_ERROR_GENERAL, NULL);
-		}
+	if (!ntohl(response)) {
+		CWLog("[CWSaveUCIValues]: Error on recvfrom function.");
+		close(sendSock);
+		return CWErrorRaise(CW_ERROR_GENERAL, NULL);
+	}
+	if (sendto
+	    (sendSock, bufferMessage + sizeof(unsigned char), sizeof(unsigned int), 0,
+	     (struct sockaddr *)&serv_addr, slen) < 0) {
+		CWLog("[CWSaveUCIValues]: Error on sendto function.");
+		close(sendSock);
+		return CWErrorRaise(CW_ERROR_GENERAL, NULL);
+	}
 
-		if (!ntohl(response)) {
-			CWLog("[CWSaveUCIValues]: Error on recvfrom function.");
-			close(sendSock);
-			CW_FREE_OBJECT(bufferMessage);
-			return CWErrorRaise(CW_ERROR_GENERAL, NULL);
-		}
+	if (recvfrom
+	    (sendSock, &response, sizeof(unsigned int), 0, (struct sockaddr *)&serv_addr,
+	     (socklen_t *) & slen) < 0) {
+		CWLog("[CWSaveUCIValues]: Error on recvfrom function.");
+		close(sendSock);
+		return CWErrorRaise(CW_ERROR_GENERAL, NULL);
+	}
+
+	if (!ntohl(response)) {
+		CWLog("[CWSaveUCIValues]: Error on recvfrom function.");
+		close(sendSock);
+		return CWErrorRaise(CW_ERROR_GENERAL, NULL);
+	}
+	if (ArgsSize > 0) {
 		if (sendto
-		    (sendSock, bufferMessage + sizeof(unsigned char), sizeof(unsigned int), 0,
+		    (sendSock, bufferMessage + sizeof(unsigned char) + sizeof(unsigned int), ArgsSize, 0,
 		     (struct sockaddr *)&serv_addr, slen) < 0) {
 			CWLog("[CWSaveUCIValues]: Error on sendto function.");
 			close(sendSock);
-			CW_FREE_OBJECT(bufferMessage);
 			return CWErrorRaise(CW_ERROR_GENERAL, NULL);
 		}
 
@@ -491,47 +512,14 @@ CWBool CWWTPSaveUCIValues(CWVendorUciValues * uciPayload, CWProtocolResultCode *
 		     (socklen_t *) & slen) < 0) {
 			CWLog("[CWSaveUCIValues]: Error on recvfrom function.");
 			close(sendSock);
-			CW_FREE_OBJECT(bufferMessage);
 			return CWErrorRaise(CW_ERROR_GENERAL, NULL);
 		}
 
 		if (!ntohl(response)) {
 			CWLog("[CWSaveUCIValues]: Error on recvfrom function.");
 			close(sendSock);
-			CW_FREE_OBJECT(bufferMessage);
 			return CWErrorRaise(CW_ERROR_GENERAL, NULL);
 		}
-		if (ArgsSize > 0) {
-			if (sendto
-			    (sendSock, bufferMessage + sizeof(unsigned char) + sizeof(unsigned int), ArgsSize, 0,
-			     (struct sockaddr *)&serv_addr, slen) < 0) {
-				CWLog("[CWSaveUCIValues]: Error on sendto function.");
-				close(sendSock);
-				CW_FREE_OBJECT(bufferMessage);
-				return CWErrorRaise(CW_ERROR_GENERAL, NULL);
-			}
-
-			if (recvfrom
-			    (sendSock, &response, sizeof(unsigned int), 0, (struct sockaddr *)&serv_addr,
-			     (socklen_t *) & slen) < 0) {
-				CWLog("[CWSaveUCIValues]: Error on recvfrom function.");
-				close(sendSock);
-				CW_FREE_OBJECT(bufferMessage);
-				return CWErrorRaise(CW_ERROR_GENERAL, NULL);
-			}
-
-			if (!ntohl(response)) {
-				CWLog("[CWSaveUCIValues]: Error on recvfrom function.");
-				close(sendSock);
-				CW_FREE_OBJECT(bufferMessage);
-				return CWErrorRaise(CW_ERROR_GENERAL, NULL);
-			}
-		}
-	} else {
-		CWLog("[CWSaveUCIValues]: Error on malloc function.");
-		close(sendSock);
-		CW_FREE_OBJECT(bufferMessage);
-		return CWErrorRaise(CW_ERROR_GENERAL, NULL);
 	}
 
 	/*Receive result code from uci daemon */
@@ -540,7 +528,6 @@ CWBool CWWTPSaveUCIValues(CWVendorUciValues * uciPayload, CWProtocolResultCode *
 	     (socklen_t *) & slen) < 0) {
 		CWLog("[CWSaveUCIValues]: Error on recvfrom function.");
 		close(sendSock);
-		CW_FREE_OBJECT(bufferMessage);
 		return CWErrorRaise(CW_ERROR_GENERAL, NULL);
 	}
 
@@ -549,7 +536,6 @@ CWBool CWWTPSaveUCIValues(CWVendorUciValues * uciPayload, CWProtocolResultCode *
 	if (sendto(sendSock, &response, sizeof(unsigned int), 0, (struct sockaddr *)&serv_addr, slen) < 0) {
 		CWLog("[CWSaveUCIValues]: Error on sendto function.");
 		close(sendSock);
-		CW_FREE_OBJECT(bufferMessage);
 		return CWErrorRaise(CW_ERROR_GENERAL, NULL);
 	}
 
@@ -566,14 +552,12 @@ CWBool CWWTPSaveUCIValues(CWVendorUciValues * uciPayload, CWProtocolResultCode *
 		     (socklen_t *) & slen) < 0) {
 			CWLog("[CWSaveUCIValues]: Error on recvfrom function.");
 			close(sendSock);
-			CW_FREE_OBJECT(bufferMessage);
 			return CWErrorRaise(CW_ERROR_GENERAL, NULL);
 		}
 
 		if (sendto(sendSock, &response, sizeof(unsigned int), 0, (struct sockaddr *)&serv_addr, slen) < 0) {
 			CWLog("[CWSaveUCIValues]: Error on sendto function.");
 			close(sendSock);
-			CW_FREE_OBJECT(bufferMessage);
 			return CWErrorRaise(CW_ERROR_GENERAL, NULL);
 		}
 
@@ -581,37 +565,34 @@ CWBool CWWTPSaveUCIValues(CWVendorUciValues * uciPayload, CWProtocolResultCode *
 
 		if (responseSize > 0) {
 
-			CW_FREE_OBJECT(bufferMessage);
-
-			/*Fill buffer for response */
-			if ((bufferMessage = malloc(responseSize * sizeof(unsigned char))) != NULL) {
-
-				/*Receive from uci daemon the response string */
-				if (recvfrom
-				    (sendSock, bufferMessage, sizeof(unsigned char) * responseSize, 0,
-				     (struct sockaddr *)&serv_addr, (socklen_t *) & slen) < 0) {
-					CWLog("[CWSaveUCIValues]: Error on recvfrom function.");
-					close(sendSock);
-					CW_FREE_OBJECT(bufferMessage);
-					return CWErrorRaise(CW_ERROR_GENERAL, NULL);
-				}
-				if (sendto
-				    (sendSock, &response, sizeof(unsigned int), 0, (struct sockaddr *)&serv_addr,
-				     slen) < 0) {
-					CWLog("[CWSaveUCIValues]: Error on sendto function.");
-					close(sendSock);
-					CW_FREE_OBJECT(bufferMessage);
-					return CWErrorRaise(CW_ERROR_GENERAL, NULL);
-				}
-
-				/* Copy the buffer in the uci payload structure */
-				if (!(uciPayload->response = ralloc_strndup(NULL, bufferMessage, responseSize)))
-					return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-			} else {
-				CWLog("[CWSaveUCIValues]: Error on malloc function.");
+			if (responseSize > sizeof(bufferMessage)) {
+				CWLog("[CWSaveUCIValues]: response size too large (%d).",responseSize );
 				close(sendSock);
 				return CWErrorRaise(CW_ERROR_GENERAL, NULL);
 			}
+
+			/*Fill buffer for response */
+
+			/*Receive from uci daemon the response string */
+			if (recvfrom
+			    (sendSock, bufferMessage, sizeof(unsigned char) * responseSize, 0,
+			     (struct sockaddr *)&serv_addr, (socklen_t *) & slen) < 0) {
+				CWLog("[CWSaveUCIValues]: Error on recvfrom function.");
+				close(sendSock);
+				return CWErrorRaise(CW_ERROR_GENERAL, NULL);
+			}
+			if (sendto
+			    (sendSock, &response, sizeof(unsigned int), 0, (struct sockaddr *)&serv_addr,
+			     slen) < 0) {
+				CWLog("[CWSaveUCIValues]: Error on sendto function.");
+				close(sendSock);
+				return CWErrorRaise(CW_ERROR_GENERAL, NULL);
+			}
+
+			/* Copy the buffer in the uci payload structure */
+			if (!(uciPayload->response = ralloc_strndup(NULL, bufferMessage, responseSize)))
+				return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+
 		} else {
 			/*If response is empty, set it to NULL (needed after, when the response is built) */
 			uciPayload->response = NULL;
@@ -620,6 +601,5 @@ CWBool CWWTPSaveUCIValues(CWVendorUciValues * uciPayload, CWProtocolResultCode *
 
 	CWLog("Saved UCI Vendor Payload...");
 	close(sendSock);
-	CW_FREE_OBJECT(bufferMessage);
 	return CW_TRUE;
 }

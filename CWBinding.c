@@ -218,7 +218,7 @@ CWBool CWParseTransportHeaderMACAddress(CWProtocolMessage * msgPtr, unsigned cha
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
 	unsigned char *vval;
-	vval = malloc(7);
+	vval = ralloc_size(NULL, 7);
 
 	//CWDebugLog("Parse Transport Header");
 	int Mac_len = CWProtocolRetrieve8(msgPtr);
