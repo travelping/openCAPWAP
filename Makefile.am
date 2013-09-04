@@ -25,7 +25,8 @@ libcapwap_la_SOURCES = \
 	CWBinding.c \
 	CWVendorPayloadsAC.c \
 	CWVendorPayloadsWTP.c \
-	timerlib.c
+	timerlib.c \
+	ralloc.c
 
 if USE_SSL
 libcapwap_la_SOURCES += \
