@@ -49,7 +49,7 @@ CWBool CWAssembleDiscoveryResponse(CWProtocolMessage ** messagesPtr, int seqNum)
 	}
 
 	CWLog("Send Discovery Response");
-	CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(msgElems, msgElemCount, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	msgElems = CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(msgElemCount, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
 	/* Assemble Message Elements */
@@ -175,7 +175,7 @@ CWBool CWParseDiscoveryRequestMessage(unsigned char *msg, int len,
 
 	/*
 	   // actually read each radio info
-	   (*valuesPtr).radios.radios = CW_CREATE_ARRAY_ERR((*valuesPtr).radios.radiosCount, CWRadioInformationValues,
+	   if (!((*valuesPtr).radios.radios = ralloc_array(NULL, CWRadioInformationValues, (*valuesPtr).radios.radiosCount)))
 	   return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL););
 	   i = 0;
 

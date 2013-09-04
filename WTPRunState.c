@@ -897,7 +897,7 @@ CWBool CWAssembleEchoRequest(CWProtocolMessage ** messagesPtr,
 
 	CWLog("Assembling Echo Request...");
 
-        CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(msgElems, msgElemCount, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+        msgElems = CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(msgElemCount, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
             );
 
 	if (!CWAssembleMsgElemVendorTPWTPTimestamp(&(msgElems[0]), &tv) ||
@@ -931,7 +931,7 @@ CWBool CWAssembleWTPDataTransferRequest(CWProtocolMessage ** messagesPtr, int *f
 	msgElemCount = CWCountElementInList(msgElemList);
 
 	if (msgElemCount > 0) {
-		CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(msgElems, msgElemCount,
+		msgElems = CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(msgElemCount,
 						 return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 		    );
 	} else
@@ -1002,7 +1002,7 @@ CWBool CWAssembleWTPEventRequest(CWProtocolMessage ** messagesPtr,
 
 	if (msgElemCount > 0) {
 
-		CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(msgElems,
+		msgElems = CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(
 						 msgElemCount, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 		    );
 	} else
@@ -1228,7 +1228,7 @@ CWBool CWAssembleWLANConfigurationResponse(CWProtocolMessage ** messagesPtr, int
 	if (!(msgElems = ralloc(NULL, CWProtocolMessage)))
 		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	*/
-	CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(msgElems, msgElemCount, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
+	msgElems = CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(msgElemCount, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
 
 	if (!(CWAssembleMsgElemResultCode((&(msgElems[++k])), resultCode))) {
 		CW_FREE_OBJECT(msgElems);

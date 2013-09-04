@@ -131,9 +131,8 @@ CWBool CWACGetVendorInfos(CWACVendorInfos * valPtr)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
 	valPtr->vendorInfosCount = 2;
-	valPtr->vendorInfos = CW_CREATE_ARRAY_ERR(valPtr->vendorInfosCount, CWACVendorInfoValues,
-			    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(valPtr->vendorInfos = ralloc_array(NULL, CWACVendorInfoValues, valPtr->vendorInfosCount)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	// my vendor identifier (IANA assigned "SMI Network Management Private Enterprise Code")
 	valPtr->vendorInfos[0].vendorIdentifier = 65432;
@@ -179,8 +178,8 @@ CWBool CWACGetACIPv4List(int **listPtr, int *countPtr)
 
 	*countPtr = 2;
 
-	(*listPtr) = CW_CREATE_ARRAY_ERR((*countPtr), int, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!((*listPtr) = ralloc_array(NULL, int, (*countPtr))))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	inet_pton(AF_INET, "192.168.1.2", &addr);	// TO-DO take the addresses from config file?
 	(*listPtr)[0] = addr.s_addr;
@@ -199,8 +198,8 @@ CWBool CWACGetACIPv6List(struct in6_addr ** listPtr, int *countPtr)
 
 	*countPtr = 2;
 
-	*listPtr = CW_CREATE_ARRAY_ERR((*countPtr), struct in6_addr, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(*listPtr = ralloc_array(NULL, struct in6_addr, (*countPtr))))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	inet_pton(AF_INET6, "5f1b:df00:ce3e:e200:0020:0800:2078:e3e3", &((*listPtr)[0]));	// TO-DO take the addresses from config file?
 	inet_pton(AF_INET6, "5f1b:df00:ce3e:e200:0020:0800:2078:e3e4", &((*listPtr)[1]));
@@ -240,9 +239,8 @@ CWBool CWGetWTPRadiosAdminState(CWRadiosAdminInfo * valPtr)
 
 	valPtr->radiosCount = gWTPs[*WTPIndexPtr].WTPProtocolManager.radiosInfo.radioCount;
 
-	valPtr->radios = CW_CREATE_ARRAY_ERR(valPtr->radiosCount, CWRadioAdminInfoValues,
-			    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(valPtr->radios = ralloc_array(NULL, CWRadioAdminInfoValues, valPtr->radiosCount)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	int i;
 	for (i = 0; i < valPtr->radiosCount; i++) {
@@ -270,9 +268,8 @@ CWBool CWGetWTPRadiosOperationalState(int radioID, CWRadiosOperationalInfo * val
 	if (radioID < 0) {
 		valPtr->radiosCount = gWTPs[*WTPIndexPtr].WTPProtocolManager.radiosInfo.radioCount;
 
-		valPtr->radios = CW_CREATE_ARRAY_ERR(valPtr->radiosCount, CWRadioOperationalInfoValues,
-				    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-		    );
+		if (!(valPtr->radios = ralloc_array(NULL, CWRadioOperationalInfoValues, valPtr->radiosCount)))
+			return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 		for (i = 0; i < valPtr->radiosCount; i++) {
 			(valPtr->radios)[i].ID =
@@ -288,9 +285,9 @@ CWBool CWGetWTPRadiosOperationalState(int radioID, CWRadiosOperationalInfo * val
 			if (gWTPs[*WTPIndexPtr].WTPProtocolManager.radiosInfo.radiosInfo[i].radioID == radioID) {
 				found = CW_TRUE;
 				valPtr->radiosCount = 1;
-				valPtr->radios = CW_CREATE_ARRAY_ERR(valPtr->radiosCount, CWRadioOperationalInfoValues,
-						    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-				    );
+				if (!(valPtr->radios = ralloc_array(NULL, CWRadioOperationalInfoValues, valPtr->radiosCount)))
+					return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+
 				(valPtr->radios)[i].ID =
 				    gWTPs[*WTPIndexPtr].WTPProtocolManager.radiosInfo.radiosInfo[i].radioID;
 				(valPtr->radios)[i].state =

@@ -99,9 +99,9 @@ CWBool CWParseTheFile(CWBool isCount)
 
 				/* avoid to allocate 0 bytes */
 				if (gConfigValues[i].count) {
-					gConfigValues[i].value.str_array_value =
-						CW_CREATE_ARRAY_ERR(gConfigValues[i].count, char *,
-								    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
+					if (!(gConfigValues[i].value.str_array_value =
+						ralloc_array(NULL, char *, gConfigValues[i].count)))
+						return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 				}
 			}
 		}

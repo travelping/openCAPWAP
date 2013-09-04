@@ -147,9 +147,10 @@ CWBool CWParseChangeStateEventRequestMessage(unsigned char *msg,
 	if (completeMsg.offset != len)
 		return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Garbage at the End of the Message");
 
-	valuesPtr->radioOperationalInfo.radios = CW_CREATE_ARRAY_ERR(valuesPtr->radioOperationalInfo.radiosCount,
-								     CWRadioOperationalInfoValues,
-								     return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
+	if (!(valuesPtr->radioOperationalInfo.radios =
+	      ralloc_array(NULL, CWRadioOperationalInfoValues, valuesPtr->radioOperationalInfo.radiosCount)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+
 	completeMsg.offset = offsetTillMessages;
 	i = 0;
 
@@ -190,8 +191,8 @@ CWBool CWAssembleChangeStateEventResponse(CWProtocolMessage ** messagesPtr, int 
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
 	CWDebugLog("Assembling Change State Event Response...");
-	/*msgElems = CW_CREATE_ARRAY_ERR(
-	 *            msgElemCount,
+	/*
+	 * if (!(msgElems = ralloc_array(NULL, *            msgElemCount, )))
 	 *            CWProtocolMessage,
 	 *            return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL););
 	 */

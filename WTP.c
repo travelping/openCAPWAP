@@ -581,14 +581,16 @@ CWBool CWWTPLoadConfiguration()
 	if (gCWACCount == 0)
 		return CWErrorRaise(CW_ERROR_NEED_RESOURCE, "No AC Configured");
 
-	gCWACList = CW_CREATE_ARRAY_ERR(gCWACCount, CWACDescriptor, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(gCWACList = ralloc_array(NULL, CWACDescriptor, gCWACCount)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	for (i = 0; i < gCWACCount; i++) {
 
 		CWDebugLog("Init Configuration for AC at %s", gCWACAddresses[i]);
-		if (!(gCWACList[i].address = ralloc_strdup(NULL,  gCWACAddresses[i])))
-						 return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+		if (!(gCWACList[i].address = ralloc_strdup(gCWACList, gCWACAddresses[i]))) {
+			ralloc_free(gCWACList);
+			return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+		}
 	}
 
 	CW_FREE_OBJECTS_ARRAY(gCWACAddresses, gCWACCount);
@@ -623,9 +625,8 @@ CWBool CWWTPInitConfiguration()
 
 	gRadiosInfo.radioCount = CWWTPGetMaxRadios();
 
-	gRadiosInfo.radiosInfo = CW_CREATE_ARRAY_ERR(gRadiosInfo.radioCount, CWWTPRadioInfoValues,
-			    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(gRadiosInfo.radiosInfo = ralloc_array(NULL, CWWTPRadioInfoValues, gRadiosInfo.radioCount)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	gRadiosInfo.radiosInfo[0].radioID = 0;
 
 	/* gRadiosInfo.radiosInfo[0].numEntries = 0; */

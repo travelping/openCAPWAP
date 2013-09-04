@@ -489,8 +489,8 @@ CWBool CWNetworkInitSocketServerMultiHomed(CWMultiHomedSocket * sockPtr,
 	 * convert it into an array. The "interfaces" field of CWMultiHomedSocket
 	 * is actually an array.
 	 */
-	sockPtr->interfaces = CW_CREATE_ARRAY_ERR(sockPtr->count, CWMultiHomedInterface,
-						  return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
+	if (!(sockPtr->interfaces = ralloc_array(NULL, CWMultiHomedInterface, sockPtr->count)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	/* create array from list */
 	for (el = interfaceList, i = 0; el != NULL; el = el->next, i++) {
@@ -769,15 +769,12 @@ CWBool CWNetworkGetInterfaceAddresses(CWMultiHomedSocket * sockPtr,
 	if (sockPtr == NULL || addressesPtr == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
-	*addressesPtr = CW_CREATE_ARRAY_ERR(
-			    CWNetworkCountInterfaceAddresses(sockPtr),
-			    CWNetworkLev4Address, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
+	if (!(*addressesPtr = ralloc_array(NULL, CWNetworkLev4Address, CWNetworkCountInterfaceAddresses(sockPtr))))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	if (IPv4AddressesPtr != NULL && gNetworkPreferredFamily == CW_IPv6) {
-
-		*IPv4AddressesPtr = CW_CREATE_ARRAY_ERR(
-				    CWNetworkCountInterfaceAddresses(sockPtr),
-				    struct sockaddr_in, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
+		if (!(*IPv4AddressesPtr = ralloc_array(NULL, struct sockaddr_in, CWNetworkCountInterfaceAddresses(sockPtr))))
+			return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	}
 
 	for (i = 0, j = 0; i < sockPtr->count; i++) {

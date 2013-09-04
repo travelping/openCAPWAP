@@ -39,9 +39,8 @@ CWBool CWACInitBinding(int i)
 
 	(gWTPs[i].WTPProtocolManager).bindingValuesPtr = (void *)aux;
 
-	aux->qosValues = CW_CREATE_ARRAY_ERR(NUM_QOS_PROFILES, WTPQosValues,
-			    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(aux->qosValues = ralloc_array(aux, WTPQosValues, NUM_QOS_PROFILES)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	//Init default values
 	for (j = 0; j < NUM_QOS_PROFILES; j++) {
@@ -202,7 +201,7 @@ CWBool CWBindingAssembleConfigureResponse(CWProtocolMessage ** msgElems, int *ms
 	CWLog("Assembling Binding Configuration Response...");
 
 	//Reserve memory for msg Elements
-	CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(*msgElems, *msgElemCountPtr, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	*msgElems = CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(*msgElemCountPtr, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
 	if (!CWThreadMutexLock(&(gWTPs[*iPtr].interfaceMutex))) {
@@ -262,7 +261,7 @@ CWBool CWBindingAssembleConfigurationUpdateRequest(CWProtocolMessage ** msgElems
 
 	CWLog("Assembling Binding Configuration Update Request...");
 
-	CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(*msgElems, *msgElemCountPtr, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	*msgElems = CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(*msgElemCountPtr, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
 	/* Selection of type of Conf Update Request */

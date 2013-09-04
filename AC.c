@@ -246,9 +246,10 @@ void CWACInit()
 		exit(1);
 	}
 
-	gInterfaces = CW_CREATE_ARRAY_ERR(gInterfacesCount, CWProtocolNetworkInterface, CWLog("Out of Memory");
-			    return;
-	    );
+	if (!(gInterfaces = ralloc_array(NULL, CWProtocolNetworkInterface, gInterfacesCount))) {
+		CWLog("Out of Memory");
+		return;
+	}
 
 	for (i = 0; i < gInterfacesCount; i++) {
 		gInterfaces[i].WTPCount = 0;

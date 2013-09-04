@@ -52,7 +52,7 @@ CWBool CWProtocolAssembleConfigurationUpdateRequest(CWProtocolMessage ** msgElem
 
 	CWLog("Assembling Protocol Configuration Update Request...");
 
-	CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(*msgElems, *msgElemCountPtr, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	*msgElems = CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(*msgElemCountPtr, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
 	/* Selection of type of Conf Update Request */
@@ -404,7 +404,7 @@ CWBool CWAssembleMsgElemDecryptErrorReportPeriod(CWProtocolMessage * msgPtr)
 	radiosInfoPtr = gWTPs[*iPtr].WTPProtocolManager.radioAdminInfo.radios;
 	radioCount = gWTPs[*iPtr].WTPProtocolManager.radioAdminInfo.radiosCount;
 
-	CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(msgs, radioCount, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	msgs = CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(radioCount, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
 	for (i = 0; i < radioCount; i++) {
@@ -496,7 +496,7 @@ CWBool CWAssembleMsgElemRadioOperationalState(int radioID, CWProtocolMessage * m
 		return CW_FALSE;
 	}
 
-	CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(msgs, (infos.radiosCount), return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	msgs = CW_CREATE_PROTOCOL_MSG_ARRAY_ERR((infos.radiosCount), return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
 	for (i = 0; i < infos.radiosCount; i++) {
@@ -646,9 +646,8 @@ CWBool CWParseWTPBoardData(CWProtocolMessage * msgPtr, int len, CWWTPVendorInfos
 	msgPtr->offset = theOffset;
 
 	// actually read each vendor ID
-	valPtr->vendorInfos = CW_CREATE_ARRAY_ERR(valPtr->vendorInfosCount, CWWTPVendorInfoValues,
-			    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(valPtr->vendorInfos = ralloc_array(NULL, CWWTPVendorInfoValues, valPtr->vendorInfosCount)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	for (i = 0; i < valPtr->vendorInfosCount; i++) {
 		(valPtr->vendorInfos)[i].vendorIdentifier = vendorID;
@@ -694,10 +693,9 @@ CWBool CWParseWTPDescriptor(CWProtocolMessage * msgPtr, int len, CWWTPDescriptor
 //  CWDebugLog("WTP Descriptor Active Radios: %d",  valPtr->radiosInUse);
 
 	valPtr->encCapabilities.encryptCapsCount = CWProtocolRetrieve8(msgPtr);
-	valPtr->encCapabilities.encryptCaps =
-		CW_CREATE_ARRAY_ERR(valPtr->encCapabilities.encryptCapsCount,
-				    CWWTPEncryptCapValues,
-				    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
+	if (!(valPtr->encCapabilities.encryptCaps =
+	      ralloc_array(NULL, CWWTPEncryptCapValues, valPtr->encCapabilities.encryptCapsCount)))
+				    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	for (i = 0; i < valPtr->encCapabilities.encryptCapsCount; i++) {
 		(valPtr->encCapabilities.encryptCaps)[i].WBID = CWProtocolRetrieve8(msgPtr) & 0x1f;
 		(valPtr->encCapabilities.encryptCaps)[i].encryptionCapabilities = CWProtocolRetrieve16(msgPtr);
@@ -720,10 +718,9 @@ CWBool CWParseWTPDescriptor(CWProtocolMessage * msgPtr, int len, CWWTPDescriptor
 	msgPtr->offset = theOffset;
 
 	// actually read each vendor ID
-	valPtr->vendorInfos.vendorInfos =
-		CW_CREATE_ARRAY_ERR(valPtr->vendorInfos.vendorInfosCount,
-				    CWWTPVendorInfoValues,
-				    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
+	if (!(valPtr->vendorInfos.vendorInfos =
+	      ralloc_array(NULL, CWWTPVendorInfoValues, valPtr->vendorInfos.vendorInfosCount)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	for (i = 0; i < valPtr->vendorInfos.vendorInfosCount; i++) {
 		valPtr->vendorInfos.vendorInfos[i].vendorIdentifier = CWProtocolRetrieve32(msgPtr);
@@ -920,9 +917,9 @@ CWBool CWParseMsgElemDecryptErrorReport(CWProtocolMessage * msgPtr, int len, CWD
 
 	valPtr->decryptErrorMACAddressList = NULL;
 	if ((valPtr->numEntries) > 0) {
-		valPtr->decryptErrorMACAddressList = CW_CREATE_ARRAY_ERR(valPtr->numEntries, CWMACAddress,
-				    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-		    );
+		if (!(valPtr->decryptErrorMACAddressList = ralloc_array(NULL, CWMACAddress, valPtr->numEntries)))
+			return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+
 		int size = sizeof(CWMACAddress) * (valPtr->numEntries);
 		CW_COPY_MEMORY(valPtr->decryptErrorMACAddressList, CWProtocolRetrieveRawBytes(msgPtr, size), size);
 		//valPtr->decryptErrorMACAddressList =(unsigned char*) CWProtocolRetrieveRawBytes(msgPtr, sizeof(CWMACAddress)*(valPtr->numEntries));

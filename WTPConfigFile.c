@@ -102,9 +102,8 @@ CWBool CWConfigFileDestroyLib()
 
 	// save the preferences we read
 
-	gCWACAddresses = CW_CREATE_ARRAY_ERR(gConfigValues[0].count, char *,
-			    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(gCWACAddresses = ralloc_array(NULL, char *, gConfigValues[0].count)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	for (i = 0; i < gConfigValues[0].count; i++)
 		if (!(gCWACAddresses[i] = ralloc_strdup(NULL, gConfigValues[0].value.str_array_value[i])))

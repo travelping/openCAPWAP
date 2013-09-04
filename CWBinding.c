@@ -115,7 +115,7 @@ CWBool CWAssembleDataMessage(CWProtocolMessage ** completeMsgPtr, int *fragments
 		int totalSize = frame->offset;
 
 		//CWDebugLog("%d Fragments", *fragmentsNumPtr);
-		CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(*completeMsgPtr, *fragmentsNumPtr,
+		*completeMsgPtr = CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(*fragmentsNumPtr,
 						 return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 		    );
 		frame->offset = 0;

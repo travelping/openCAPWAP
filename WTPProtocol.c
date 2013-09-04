@@ -81,7 +81,7 @@ CWBool CWAssembleMsgElemACNameWithIndex(CWProtocolMessage * msgPtr)
 		return CW_FALSE;
 	}
 
-	CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(msgs, ACsinfo.count, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	msgs = CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(ACsinfo.count, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
 	// create message
@@ -589,8 +589,9 @@ CWBool CWAssembleMsgElemDuplicateIPv4Address(CWProtocolMessage * msgPtr)
 
 	CWProtocolStore8(msgPtr, 6);
 
-	macAddress = CW_CREATE_ARRAY_ERR(6, unsigned char, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(macAddress = ralloc_array(NULL, unsigned char, 6)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+
 	macAddress[0] = 103;
 	macAddress[1] = 204;
 	macAddress[2] = 204;
@@ -630,8 +631,9 @@ CWBool CWAssembleMsgElemDuplicateIPv6Address(CWProtocolMessage * msgPtr)
 
 	CWProtocolStore8(msgPtr, 6);
 
-	macAddress = CW_CREATE_ARRAY_ERR(6, unsigned char, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(macAddress = ralloc_array(NULL, unsigned char, 6)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+
 	macAddress[0] = 103;
 	macAddress[1] = 204;
 	macAddress[2] = 204;
@@ -663,7 +665,7 @@ CWBool CWAssembleMsgElemRadioAdminState(CWProtocolMessage * msgPtr)
 		return CW_FALSE;
 	}
 
-	CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(msgs, (infos.radiosCount), return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	msgs = CW_CREATE_PROTOCOL_MSG_ARRAY_ERR((infos.radiosCount), return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
 	for (i = 0; i < infos.radiosCount; i++) {
@@ -718,7 +720,7 @@ CWBool CWAssembleMsgElemRadioOperationalState(int radioID, CWProtocolMessage * m
 		return CW_FALSE;
 	}
 
-	CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(msgs, (infos.radiosCount), return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	msgs = CW_CREATE_PROTOCOL_MSG_ARRAY_ERR((infos.radiosCount), return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
 	for (i = 0; i < infos.radiosCount; i++) {
@@ -773,7 +775,7 @@ CWBool CWAssembleMsgElemDecryptErrorReport(CWProtocolMessage * msgPtr, int radio
 		return CW_FALSE;
 	}
 
-	CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(msgs, (infos.radiosCount), return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	msgs = CW_CREATE_PROTOCOL_MSG_ARRAY_ERR((infos.radiosCount), return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
 	for (i = 0; i < infos.radiosCount; i++) {
@@ -854,7 +856,7 @@ CWBool CWAssembleMsgElemWTPRadioInformation(CWProtocolMessage *msgPtr) {
 
     // create one message element for each radio
 
-    msgs = CW_CREATE_ARRAY_ERR((infos.radiosCount), CWProtocolMessage, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL););
+    if (!(msgs = ralloc_array(NULL, CWProtocolMessage, (infos.radiosCount)))) return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
     for(i = 0; i < infos.radiosCount; i++) {
         // create message
@@ -973,9 +975,8 @@ CWBool CWParseACDescriptor(CWProtocolMessage * msgPtr, int len, CWACInfoValues *
 	msgPtr->offset = theOffset;
 
 	// actually read each vendor ID
-	valPtr->vendorInfos.vendorInfos = CW_CREATE_ARRAY_ERR(valPtr->vendorInfos.vendorInfosCount, CWACVendorInfoValues,
-			    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(valPtr->vendorInfos.vendorInfos = ralloc_array(NULL, CWACVendorInfoValues, valPtr->vendorInfos.vendorInfosCount)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 #if 0
 	CWDebugLog("len %d", len);
@@ -1015,9 +1016,8 @@ CWBool CWParseACIPv4List(CWProtocolMessage * msgPtr, int len, ACIPv4ListValues *
 
 	valPtr->ACIPv4ListCount = (len / 4);
 
-	valPtr->ACIPv4List = CW_CREATE_ARRAY_ERR(valPtr->ACIPv4ListCount, int,
-			    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(valPtr->ACIPv4List = ralloc_array(NULL, int, valPtr->ACIPv4ListCount)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	for (i = 0; i < valPtr->ACIPv4ListCount; i++) {
 		struct sockaddr_in addr;
@@ -1042,9 +1042,8 @@ CWBool CWParseACIPv6List(CWProtocolMessage * msgPtr, int len, ACIPv6ListValues *
 
 	valPtr->ACIPv6ListCount = (len / 16);
 
-	valPtr->ACIPv6List = CW_CREATE_ARRAY_ERR(valPtr->ACIPv6ListCount, struct in6_addr,
-			    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(valPtr->ACIPv6List = ralloc_array(NULL, struct in6_addr, valPtr->ACIPv6ListCount)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	for (i = 0; i < valPtr->ACIPv6ListCount; i++) {
 		struct sockaddr_in6 addr;

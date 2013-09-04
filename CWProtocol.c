@@ -521,7 +521,7 @@ CWBool CWAssembleMessage(CWProtocolMessage ** completeMsgPtr, int *fragmentsNumP
 		int totalSize = msg.offset;
 		//CWDebugLog("%d Fragments", *fragmentsNumPtr);
 
-		CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(*completeMsgPtr, *fragmentsNumPtr,
+		*completeMsgPtr = CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(*fragmentsNumPtr,
 						 return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 		    );
 		msg.offset = 0;

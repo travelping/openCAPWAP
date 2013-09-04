@@ -132,12 +132,8 @@ CWBool CWSecurityInitLib()
 	SSL_library_init();
 
 	/* setup mutexes for openssl internal locking */
-	mutexOpensslBuf = CW_CREATE_ARRAY_ERR(
-			    CRYPTO_num_locks() * sizeof(CWThreadMutex),
-			    CWThreadMutex, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, "Cannot create openssl mutexes");
-		);
-
-	    CW_ZERO_MEMORY(mutexOpensslBuf, CRYPTO_num_locks() * sizeof(CWThreadMutex));
+	if (!(mutexOpensslBuf = rzalloc_array(NULL, CWThreadMutex, CRYPTO_num_locks())))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, "Cannot create openssl mutexes");
 
 	for (i = 0; i < CRYPTO_num_locks(); i++) {
 

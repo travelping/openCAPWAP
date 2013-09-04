@@ -191,7 +191,7 @@ CWBool CWAssembleJoinRequest(CWProtocolMessage ** messagesPtr,
 	if (messagesPtr == NULL || fragmentsNumPtr == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
-	CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(msgElems, msgElemCount, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	msgElems = CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(msgElemCount, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
 	CWLog("Sending Join Request...");
@@ -339,17 +339,15 @@ CWBool CWParseJoinResponseMessage(unsigned char *msg, int len, int seqNum, CWPro
 		return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Garbage at the End of the Message");
 
 	/* actually read each interface info */
-	valuesPtr->ACInfoPtr.IPv4Addresses = CW_CREATE_ARRAY_ERR(
-			    valuesPtr->ACInfoPtr.IPv4AddressesCount,
-			    CWProtocolIPv4NetworkInterface, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(valuesPtr->ACInfoPtr.IPv4Addresses = ralloc_array(NULL, CWProtocolIPv4NetworkInterface,
+								valuesPtr->ACInfoPtr.IPv4AddressesCount)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	if (valuesPtr->ACInfoPtr.IPv6AddressesCount > 0) {
 
-		valuesPtr->ACInfoPtr.IPv6Addresses = CW_CREATE_ARRAY_ERR(
-				    valuesPtr->ACInfoPtr.IPv6AddressesCount,
-				    CWProtocolIPv6NetworkInterface, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-		    );
+		if (!(valuesPtr->ACInfoPtr.IPv6Addresses = ralloc_array(NULL, CWProtocolIPv6NetworkInterface,
+									valuesPtr->ACInfoPtr.IPv6AddressesCount)))
+			return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	}
 
 	int i = 0;

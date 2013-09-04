@@ -60,9 +60,8 @@ CWBool CWParseSettingsFile()
 		CWErrorRaiseSystemError(CW_ERROR_GENERAL);
 	}
 
-	gDefaultQosValues = CW_CREATE_ARRAY_ERR(NUM_QOS_PROFILES, WTPQosValues,
-			    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(gDefaultQosValues = ralloc_array(NULL, WTPQosValues, NUM_QOS_PROFILES)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	while (CWGetCommand(gSettingsFile, line, sizeof(line)) == CW_TRUE) {
 		char *startTag = NULL;

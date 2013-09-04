@@ -94,7 +94,7 @@ CWBool CWAssembleConfigureRequest(CWProtocolMessage ** messagesPtr,
 	if (messagesPtr == NULL || fragmentsNumPtr == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
-	CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(msgElems, msgElemCount, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	msgElems = CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(msgElemCount, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
 	CWDebugLog("Assembling Configure Request...");
@@ -274,15 +274,13 @@ CWBool CWParseConfigureResponseMessage(unsigned char *msg, int len, int seqNum, 
 	if (completeMsg.offset != len)
 		return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Garbage at the End of the Message");
 
-	(*valuesPtr).radioOperationalInfo = CW_CREATE_ARRAY_ERR(
-			    (*valuesPtr).radioOperationalInfoCount,
-			    CWRadioOperationalInfoValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!((*valuesPtr).radioOperationalInfo = ralloc_array(NULL, CWRadioOperationalInfoValues,
+							       (*valuesPtr).radioOperationalInfoCount)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
-	(*valuesPtr).radiosDecryptErrorPeriod.radios = CW_CREATE_ARRAY_ERR(
-			    (*valuesPtr).radiosDecryptErrorPeriod.radiosCount,
-			    WTPDecryptErrorReportValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!((*valuesPtr).radiosDecryptErrorPeriod.radios = ralloc_array(NULL, WTPDecryptErrorReportValues,
+									  (*valuesPtr).radiosDecryptErrorPeriod.radiosCount)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	completeMsg.offset = offsetTillMessages;
 

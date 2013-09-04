@@ -148,7 +148,7 @@ CWBool CWAssembleJoinResponse(CWProtocolMessage ** messagesPtr,
 
 	msgElemCount = CWCountElementInList(msgElemList);
 
-	CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(msgElems,
+	msgElems = CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(
 					 msgElemCount + mandatoryMsgElemCount,
 					 return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
@@ -372,10 +372,9 @@ CWBool CWSaveJoinRequestMessage(CWProtocolJoinRequestValues * joinRequest, CWWTP
 	WTPProtocolManager->radiosInfo.radioCount = (joinRequest->WTPDescriptor).radiosInUse;
 	CW_FREE_OBJECT(WTPProtocolManager->radiosInfo.radiosInfo);
 
-	WTPProtocolManager->radiosInfo.radiosInfo = CW_CREATE_ARRAY_ERR(
-			    WTPProtocolManager->radiosInfo.radioCount,
-			    CWWTPRadioInfoValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(WTPProtocolManager->radiosInfo.radiosInfo =
+	      ralloc_array(NULL, CWWTPRadioInfoValues, WTPProtocolManager->radiosInfo.radioCount)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	int i;
 

@@ -1091,18 +1091,20 @@ CWBool CWParseWTPEventRequestMessage(CWProtocolMessage * msgPtr, int len, CWProt
 			if (!(valuesPtr->duplicateIPv4 = ralloc(NULL, WTPDuplicateIPv4)))
 				return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
-			(valuesPtr->duplicateIPv4)->MACoffendingDevice_forIpv4 =
-				CW_CREATE_ARRAY_ERR(6, unsigned char, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
+			if (!((valuesPtr->duplicateIPv4)->MACoffendingDevice_forIpv4 =
+			      ralloc_array(NULL, unsigned char, 6)))
+				return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 			if (!(CWParseMsgElemDuplicateIPv4Address(msgPtr, elemLen, valuesPtr->duplicateIPv4)))
 				return CW_FALSE;
 			break;
 		case CW_MSG_ELEMENT_DUPLICATE_IPV6_ADDRESS_CW_TYPE:
-			if (!(valuesPtr->duplicateIPv6 =	ralloc(NULL, WTPDuplicateIPv6)))
+			if (!(valuesPtr->duplicateIPv6 = ralloc(NULL, WTPDuplicateIPv6)))
 				return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
-			(valuesPtr->duplicateIPv6)->MACoffendingDevice_forIpv6 =
-				CW_CREATE_ARRAY_ERR(6, unsigned char, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
+			if (!((valuesPtr->duplicateIPv6)->MACoffendingDevice_forIpv6 =
+			      ralloc_array(NULL, unsigned char, 6)))
+				return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 			if (!(CWParseMsgElemDuplicateIPv6Address(msgPtr, elemLen, valuesPtr->duplicateIPv6)))
 				return CW_FALSE;
@@ -1132,15 +1134,13 @@ CWBool CWParseWTPEventRequestMessage(CWProtocolMessage * msgPtr, int len, CWProt
 	if ((msgPtr->offset - offsetTillMessages) != len)
 		return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Garbage at the End of the Message");
 
-	valuesPtr->WTPOperationalStatistics = CW_CREATE_ARRAY_ERR(
-			    valuesPtr->WTPOperationalStatisticsCount,
-			    WTPOperationalStatisticsValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(valuesPtr->WTPOperationalStatistics =
+	      ralloc_array(NULL, WTPOperationalStatisticsValues, valuesPtr->WTPOperationalStatisticsCount)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
-	valuesPtr->WTPRadioStatistics = CW_CREATE_ARRAY_ERR(
-			    valuesPtr->WTPRadioStatisticsCount,
-			    WTPRadioStatisticsValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(valuesPtr->WTPRadioStatistics =
+	      ralloc_array(NULL, WTPRadioStatisticsValues, valuesPtr->WTPRadioStatisticsCount)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	msgPtr->offset = offsetTillMessages;
 
@@ -1364,10 +1364,9 @@ CWBool CWParseChangeStateEventRequestMessage2(CWProtocolMessage * msgPtr,
 	if ((msgPtr->offset - offsetTillMessages) != len)
 		return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Garbage at the End of the Message");
 
-	(*valuesPtr)->radioOperationalInfo.radios = CW_CREATE_ARRAY_ERR(
-			    (*valuesPtr)->radioOperationalInfo.radiosCount,
-			    CWRadioOperationalInfoValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!((*valuesPtr)->radioOperationalInfo.radios =
+	      ralloc_array(NULL, CWRadioOperationalInfoValues, (*valuesPtr)->radioOperationalInfo.radiosCount)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	msgPtr->offset = offsetTillMessages;
 
@@ -1599,7 +1598,7 @@ CWBool CWAssembleWLANConfigurationRequest(CWProtocolMessage ** messagesPtr, int 
 
 	CWLog("Assembling WLAN 802.11 Configuration Request...");
 
-	CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(msgElems, msgElemCount, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	msgElems = CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(msgElemCount, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 	// Assemble Message Elements
 
@@ -1661,7 +1660,7 @@ CWBool CWAssembleStationConfigurationRequest(CWProtocolMessage ** messagesPtr, i
 
 	CWLog("Assembling Station Configuration Request...");
 
-	CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(msgElems, msgElemCount, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	msgElems = CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(msgElemCount, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 	// Assemble Message Elements
 	if (Operation == CW_MSG_ELEMENT_ADD_STATION_CW_TYPE) {

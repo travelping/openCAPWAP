@@ -643,7 +643,7 @@ CWBool CWAssembleDiscoveryRequest(CWProtocolMessage ** messagesPtr, int seqNum)
 	if (messagesPtr == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
-	CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(msgElems, msgElemCount, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	msgElems = CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(msgElemCount, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
 	/* Assemble Message Elements */
@@ -809,17 +809,14 @@ CWBool CWParseDiscoveryResponseMessage(unsigned char *msg, int len, int *seqNumP
 		return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Garbage at the End of the Message");
 
 	/* actually read each interface info */
-	ACInfoPtr->IPv4Addresses = CW_CREATE_ARRAY_ERR(
-			    ACInfoPtr->IPv4AddressesCount,
-			    CWProtocolIPv4NetworkInterface, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(ACInfoPtr->IPv4Addresses = ralloc_array(NULL, CWProtocolIPv4NetworkInterface,
+						      ACInfoPtr->IPv4AddressesCount)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	if (ACInfoPtr->IPv6AddressesCount > 0) {
-
-		ACInfoPtr->IPv6Addresses = CW_CREATE_ARRAY_ERR(
-				    ACInfoPtr->IPv6AddressesCount,
-				    CWProtocolIPv6NetworkInterface, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-		    );
+		if (!(ACInfoPtr->IPv6Addresses = ralloc_array(NULL, CWProtocolIPv6NetworkInterface,
+							      ACInfoPtr->IPv6AddressesCount)))
+			return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	}
 
 	i = 0, j = 0;

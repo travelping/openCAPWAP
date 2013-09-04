@@ -54,8 +54,12 @@
 		(mess).offset = 0;					\
 	} while (0)
 
-#define CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(ar_name, ar_size, on_err)	\
-	(ar_name) = CW_CREATE_ARRAY_ERR(ar_size, CWProtocolMessage, on_err)
+#define CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(ar_size, on_err)		\
+	({                                                              \
+		CWProtocolMessage * __p = (CWProtocolMessage *)ralloc_array(NULL, CWProtocolMessage, ar_size); \
+		CW_ON_ERROR(__p, on_err);                               \
+		__p;                                                    \
+	})
 
 #define CW_FREE_PROTOCOL_MESSAGE(mess)			\
 	do {						\

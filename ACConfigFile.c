@@ -113,11 +113,12 @@ CWBool CWConfigFileDestroyLib()
 	/* avoid to allocate 0 bytes */
 	if (gConfigValues[6].count) {
 
-		gMulticastGroups = CW_CREATE_ARRAY_ERR(gConfigValues[6].count, char *,
-				    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
+		if (!(gMulticastGroups = ralloc_array(NULL, char *, gConfigValues[6].count)))
+			return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 		for (i = 0; i < gConfigValues[6].count; i++)
-			if (!(gMulticastGroups[i] = ralloc_strdup(NULL, gConfigValues[6].value.str_array_value[i])))
+			if (!(gMulticastGroups[i] = ralloc_strdup(gMulticastGroups, gConfigValues[6].value.str_array_value[i])))
+				ralloc_free(gMulticastGroups);
 				return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	}
 

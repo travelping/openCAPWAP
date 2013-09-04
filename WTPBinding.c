@@ -63,9 +63,8 @@ CWBool CWWTPInitBinding(int radioIndex)
 
 	gRadiosInfo.radiosInfo[radioIndex].bindingValuesPtr = (void *)aux;
 
-	aux->qosValues = CW_CREATE_ARRAY_ERR(NUM_QOS_PROFILES, WTPQosValues,
-			    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(aux->qosValues = ralloc_array(NULL, WTPQosValues, NUM_QOS_PROFILES)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	for (i = 0; i < NUM_QOS_PROFILES; i++) {
 		/* TODO: Get info from Hostapd UNIX DOMAIN SOCKET */
@@ -107,9 +106,8 @@ CWBool CWWTPInitBinding(int radioIndex)
 
 	gRadiosInfo.radiosInfo[radioIndex].bindingValuesPtr = (void *)aux;
 
-	aux->qosValues = CW_CREATE_ARRAY_ERR(NUM_QOS_PROFILES, WTPQosValues,
-			    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(aux->qosValues = ralloc_array(NULL, WTPQosValues, NUM_QOS_PROFILES)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	for (i = 0; i < NUM_QOS_PROFILES; i++) {
 
@@ -148,9 +146,8 @@ CWBool CWWTPInitBinding(int radioIndex)
 
 	gRadiosInfo.radiosInfo[radioIndex].bindingValuesPtr = (void *)aux;
 
-	aux->qosValues = CW_CREATE_ARRAY_ERR(NUM_QOS_PROFILES, WTPQosValues,
-			    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(aux->qosValues = ralloc_array(NULL, WTPQosValues, NUM_QOS_PROFILES)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	for (i = 0; i < NUM_QOS_PROFILES; i++) {
 		/*Daniele: i driver Broadcom non permettono get sulle WME: setto i parametri del Qos a valori costanti */
@@ -576,9 +573,9 @@ CWBool CWBindingParseConfigurationUpdateRequest(unsigned char *msg, int len, voi
 			auxBindingPtr->qosCount = qosCount;
 			auxBindingPtr->radioQosValues = NULL;
 
-			auxBindingPtr->radioQosValues = CW_CREATE_ARRAY_ERR(auxBindingPtr->qosCount, RadioQosValues,
-					    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-			    );
+			if (!(auxBindingPtr->radioQosValues = ralloc_array(NULL, RadioQosValues, auxBindingPtr->qosCount)))
+				return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+
 			break;
 		}
 	case BINDING_MSG_ELEMENT_TYPE_OFDM_CONTROL:
@@ -705,9 +702,8 @@ CWBool CWBindingParseConfigureResponse(unsigned char *msg, int len, void **value
 		return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Garbage at the End of the Message");
 
 	// actually read each radio info
-	auxBindingPtr->radioQosValues = CW_CREATE_ARRAY_ERR(auxBindingPtr->qosCount, RadioQosValues,
-			    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(auxBindingPtr->radioQosValues = ralloc_array(NULL, RadioQosValues, auxBindingPtr->qosCount)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	i = 0;
 	completeMsg.offset = 0;

@@ -210,13 +210,12 @@ CWBool CWParseConfigureRequestMessage(unsigned char *msg, int len,
 		return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Garbage at the End of the Message");
 
 	/* actually read each radio info */
-	valuesPtr->ACinWTP.ACNameIndex = CW_CREATE_ARRAY_ERR(valuesPtr->ACinWTP.count,
-							     CWACNameWithIndexValues,
-							     return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
+	if (!(valuesPtr->ACinWTP.ACNameIndex = ralloc_array(NULL, CWACNameWithIndexValues, valuesPtr->ACinWTP.count)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
-	valuesPtr->radioAdminInfo = CW_CREATE_ARRAY_ERR(valuesPtr->radioAdminInfoCount,
-							CWRadioAdminInfoValues,
-							return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
+	if (!(valuesPtr->radioAdminInfo = ralloc_array(NULL, CWRadioAdminInfoValues, valuesPtr->radioAdminInfoCount)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+
 	i = 0;
 	j = 0;
 
@@ -262,7 +261,7 @@ CWBool CWAssembleConfigureResponse(CWProtocolMessage ** messagesPtr, int *fragme
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
 	CWDebugLog("Assembling Configure Response...");
-	CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(msgElems, MsgElemCount, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	msgElems = CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(MsgElemCount, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
 	/* Assemble Message Elements */

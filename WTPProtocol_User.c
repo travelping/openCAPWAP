@@ -65,9 +65,9 @@ CWBool CWWTPGetEncCapabilities(CWWTPEncryptCaps * encc)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
 	encc->encryptCapsCount = 1;
-	(encc->encryptCaps) = CW_CREATE_ARRAY_ERR(encc->encryptCapsCount, CWWTPEncryptCapValues,
-			    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!((encc->encryptCaps) = ralloc_array(NULL, CWWTPEncryptCapValues, encc->encryptCapsCount)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+
 	(encc->encryptCaps)[0].WBID = 1;
 	(encc->encryptCaps)[0].encryptionCapabilities = 2569;
 
@@ -88,9 +88,8 @@ CWBool CWWTPGetBoardData(CWWTPVendorInfos * valPtr)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
 	valPtr->vendorInfosCount = 2;	// we fill 2 information (just the required ones)
-	valPtr->vendorInfos = CW_CREATE_ARRAY_ERR(valPtr->vendorInfosCount, CWWTPVendorInfoValues,
-			    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(valPtr->vendorInfos = ralloc_array(NULL, CWWTPVendorInfoValues, valPtr->vendorInfosCount)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	// my vendor identifier (IANA assigned "SMI Network Management Private Enterprise Code")
 	valPtr->vendorInfos[0].vendorIdentifier = CW_IANA_ENTERPRISE_NUMBER_VENDOR_TRAVELPING;
@@ -115,9 +114,8 @@ CWBool CWWTPGetVendorInfos(CWWTPVendorInfos * valPtr)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
 	valPtr->vendorInfosCount = 4;	// we fill 3 information (just the required ones)
-	valPtr->vendorInfos = CW_CREATE_ARRAY_ERR(valPtr->vendorInfosCount, CWWTPVendorInfoValues,
-			    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(valPtr->vendorInfos = ralloc_array(NULL, CWWTPVendorInfoValues, valPtr->vendorInfosCount)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	valPtr->vendorInfos[0] = (CWWTPVendorInfoValues){
 		.vendorIdentifier = 0,
@@ -240,7 +238,7 @@ __inline__ char *CWWTPGetName()
 
     valPtr->radiosCount = 2;
 
-    valPtr->radios = CW_CREATE_ARRAY_ERR(valPtr->radiosCount, CWRadioInformationValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL););
+    if (!(valPtr->radios = ralloc_array(NULL, CWRadioInformationValues, valPtr->radiosCount))) return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
     (valPtr->radios)[0].ID = 0; // first radio
     (valPtr->radios)[0].type = CW_802_DOT_11b;
@@ -262,9 +260,8 @@ CWBool CWGetWTPRadiosAdminState(CWRadiosAdminInfo * valPtr)
 
 	valPtr->radiosCount = gRadiosInfo.radioCount;
 
-	valPtr->radios = CW_CREATE_ARRAY_ERR(valPtr->radiosCount, CWRadioAdminInfoValues,
-			    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!(valPtr->radios = ralloc_array(NULL, CWRadioAdminInfoValues, valPtr->radiosCount)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	for (i = 0; i < gRadiosInfo.radioCount; i++) {
 		(valPtr->radios)[i].ID = gRadiosInfo.radiosInfo[i].radioID;	// first radio
@@ -287,9 +284,8 @@ CWBool CWGetWTPRadiosOperationalState(int radioID, CWRadiosOperationalInfo * val
 
 		valPtr->radiosCount = gRadiosInfo.radioCount;
 
-		valPtr->radios = CW_CREATE_ARRAY_ERR(valPtr->radiosCount, CWRadioOperationalInfoValues,
-				    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-		    );
+		if (!(valPtr->radios = ralloc_array(NULL, CWRadioOperationalInfoValues, valPtr->radiosCount)))
+			return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 		for (i = 0; i < gRadiosInfo.radioCount; i++) {
 			(valPtr->radios)[i].ID = gRadiosInfo.radiosInfo[i].radioID;
@@ -302,9 +298,9 @@ CWBool CWGetWTPRadiosOperationalState(int radioID, CWRadiosOperationalInfo * val
 			if (gRadiosInfo.radiosInfo[i].radioID == radioID) {
 				found = CW_TRUE;
 				valPtr->radiosCount = 1;
-				valPtr->radios = CW_CREATE_ARRAY_ERR(valPtr->radiosCount, CWRadioOperationalInfoValues,
-						    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-				    );
+				if (!(valPtr->radios = ralloc_array(NULL, CWRadioOperationalInfoValues, valPtr->radiosCount)))
+					return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+
 				(valPtr->radios)[0].ID = gRadiosInfo.radiosInfo[i].radioID;
 				(valPtr->radios)[0].state = gRadiosInfo.radiosInfo[i].operationalState;
 				(valPtr->radios)[0].cause = gRadiosInfo.radiosInfo[i].operationalCause;
@@ -341,19 +337,18 @@ CWBool CWGetDecryptErrorReport(int radioID, CWDecryptErrorReportInfo * valPtr)
 
 		valPtr->radiosCount = gRadiosInfo.radioCount;
 
-		valPtr->radios = CW_CREATE_ARRAY_ERR(valPtr->radiosCount, CWDecryptErrorReportValues,
-				    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-		    );
+		if (!(valPtr->radios = ralloc_array(NULL, CWDecryptErrorReportValues, valPtr->radiosCount)))
+			return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 		for (i = 0; i < gRadiosInfo.radioCount; i++) {
 			(valPtr->radios)[i].ID = gRadiosInfo.radiosInfo[i].radioID;
 			(valPtr->radios)[i].numEntries =
 			    CWCountElementInList(gRadiosInfo.radiosInfo[i].decryptErrorMACAddressList);
 			(valPtr->radios[i]).decryptErrorMACAddressList = NULL;
-			(valPtr->radios[i]).decryptErrorMACAddressList = CW_CREATE_ARRAY_ERR(
-					    (valPtr->radios[i]).numEntries, CWMACAddress,
-					    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-			    );
+			if (!((valPtr->radios[i]).decryptErrorMACAddressList =
+			      ralloc_array(NULL, CWMACAddress, valPtr->radios[i].numEntries)))
+				return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+
 			int j;
 			CWListElement *temp;
 			temp = gRadiosInfo.radiosInfo[i].decryptErrorMACAddressList;
@@ -369,17 +364,18 @@ CWBool CWGetDecryptErrorReport(int radioID, CWDecryptErrorReportInfo * valPtr)
 			if (gRadiosInfo.radiosInfo[i].radioID == radioID) {
 				found = CW_TRUE;
 				valPtr->radiosCount = 1;
-				valPtr->radios = CW_CREATE_ARRAY_ERR(valPtr->radiosCount, CWDecryptErrorReportValues,
-						    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-				    );
+				if (!(valPtr->radios = ralloc_array(NULL, CWDecryptErrorReportValues, valPtr->radiosCount)))
+					return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+
 				(valPtr->radios)[0].ID = gRadiosInfo.radiosInfo[i].radioID;
 				(valPtr->radios)[0].numEntries =
 				    CWCountElementInList(gRadiosInfo.radiosInfo[i].decryptErrorMACAddressList);
 				(valPtr->radios[0]).decryptErrorMACAddressList = NULL;
-				(valPtr->radios[0]).decryptErrorMACAddressList = CW_CREATE_ARRAY_ERR(
-						    (valPtr->radios[0]).numEntries, CWMACAddress,
-						    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-				    );
+				if (!((valPtr->radios[0]).decryptErrorMACAddressList = ralloc_array(NULL,
+												    CWMACAddress,
+												    (valPtr->radios[0]).numEntries)))
+					return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+
 				int j;
 				CWListElement *temp;
 				temp = gRadiosInfo.radiosInfo[0].decryptErrorMACAddressList;
@@ -416,8 +412,8 @@ CWBool CWWTPGetACNameWithIndex(CWACNamesWithIndex * ACsInfo)
 
 	ACsInfo->count = 2;
 
-	ACsInfo->ACNameIndex = CW_CREATE_ARRAY_ERR(ACsInfo->count, CWACNameWithIndexValues,
-			    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
+	if (!(ACsInfo->ACNameIndex = ralloc_array(NULL, CWACNameWithIndexValues, ACsInfo->count)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	ACsInfo->ACNameIndex[0].index = 0;	// first radio
 	if (!(ACsInfo->ACNameIndex[0].ACName = ralloc_strdup(NULL, "ACPrimary")))
