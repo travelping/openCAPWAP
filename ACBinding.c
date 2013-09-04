@@ -38,12 +38,12 @@ CWBool CWACInitBinding(int i)
 	int j;
 	bindingValues *aux;
 
-	CW_CREATE_OBJECT_ERR(aux, bindingValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	aux = CW_CREATE_OBJECT_ERR(bindingValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
 	(gWTPs[i].WTPProtocolManager).bindingValuesPtr = (void *)aux;
 
-	CW_CREATE_ARRAY_ERR(aux->qosValues, NUM_QOS_PROFILES, WTPQosValues,
+	aux->qosValues = CW_CREATE_ARRAY_ERR(NUM_QOS_PROFILES, WTPQosValues,
 			    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 

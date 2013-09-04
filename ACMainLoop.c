@@ -136,7 +136,7 @@ void CWACManageIncomingPacket(CWSocket sock,
 	if (wtpPtr != NULL) {
 		/* known WTP */
 		/* Clone data packet */
-		CW_CREATE_OBJECT_SIZE_ERR(pData, readBytes, {
+		pData = CW_CREATE_OBJECT_SIZE_ERR(readBytes, {
 					  CWLog("Out Of Memory");
 					  return;
 					  }
@@ -229,7 +229,7 @@ void CWACManageIncomingPacket(CWSocket sock,
 			CWSetMutexSafeList(gWTPs[i].packetReceiveList, &gWTPs[i].interfaceMutex);
 			CWSetConditionSafeList(gWTPs[i].packetReceiveList, &gWTPs[i].interfaceWait);
 
-			CW_CREATE_OBJECT_ERR(argPtr, CWACThreadArg, {
+			argPtr = CW_CREATE_OBJECT_ERR(CWACThreadArg, {
 					     CWLog("Out Of Memory");
 					     return;
 					     }
@@ -273,7 +273,7 @@ void CWACManageIncomingPacket(CWSocket sock,
 			}
 
 			/* Clone data packet */
-			CW_CREATE_OBJECT_SIZE_ERR(pData, readBytes, {
+			pData = CW_CREATE_OBJECT_SIZE_ERR(readBytes, {
 						  CWLog("Out Of Memory");
 						  return;
 						  }

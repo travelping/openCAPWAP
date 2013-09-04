@@ -109,28 +109,20 @@ CWBool CWConfigFileDestroyLib()
 #endif
 
 	if (gConfigValues[5].value.str_value != NULL) {
-
-		CW_CREATE_STRING_FROM_STRING_ERR(gACName,
-						 (gConfigValues[5].value.str_value),
-						 return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-		    );
+		gACName = CW_CREATE_STRING_FROM_STRING_ERR(gConfigValues[5].value.str_value,
+							   return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
 		//CW_FREE_OBJECT(gACName);
 	}
 
 	/* avoid to allocate 0 bytes */
 	if (gConfigValues[6].count) {
 
-		CW_CREATE_ARRAY_ERR(gMulticastGroups, gConfigValues[6].count, char *,
-				    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-		    );
+		gMulticastGroups = CW_CREATE_ARRAY_ERR(gConfigValues[6].count, char *,
+				    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
 
-		for (i = 0; i < gConfigValues[6].count; i++) {
-
-			CW_CREATE_STRING_FROM_STRING_ERR(gMulticastGroups[i],
-							 (gConfigValues[6].value.str_array_value)[i],
-							 return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-			    );
-		}
+		for (i = 0; i < gConfigValues[6].count; i++)
+			gMulticastGroups[i] = CW_CREATE_STRING_FROM_STRING_ERR(gConfigValues[6].value.str_array_value[i],
+									       return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
 	}
 
 	gMulticastGroupsCount = gConfigValues[6].count;

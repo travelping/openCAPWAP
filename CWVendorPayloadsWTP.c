@@ -48,15 +48,12 @@ CWBool CWParseUCIPayload(CWProtocolMessage * msgPtr, CWVendorUciValues ** payloa
 	int argsLen;
 	CWVendorUciValues *uciPayload = NULL;
 
-	CW_CREATE_OBJECT_ERR(uciPayload, CWVendorUciValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	uciPayload = CW_CREATE_OBJECT_ERR(CWVendorUciValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 	uciPayload->command = (unsigned char)CWProtocolRetrieve8(msgPtr);
 	uciPayload->response = NULL;
 	argsLen = (unsigned int)CWProtocolRetrieve32(msgPtr);
 	if (argsLen != 0) {
-		CW_CREATE_STRING_ERR(uciPayload->commandArgs, argsLen,
-				     return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-		    );
 		uciPayload->commandArgs = CWProtocolRetrieveStr(msgPtr, argsLen);
 	} else
 		uciPayload->commandArgs = NULL;
@@ -71,7 +68,7 @@ CWBool CWParseWUMPayload(CWProtocolMessage * msgPtr, CWVendorWumValues ** payloa
 {
 	CWVendorWumValues *wumPayload = NULL;
 
-	CW_CREATE_OBJECT_ERR(wumPayload, CWVendorWumValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	wumPayload = CW_CREATE_OBJECT_ERR(CWVendorWumValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 	wumPayload->type = (unsigned char)CWProtocolRetrieve8(msgPtr);
 
@@ -609,10 +606,9 @@ CWBool CWWTPSaveUCIValues(CWVendorUciValues * uciPayload, CWProtocolResultCode *
 					return CWErrorRaise(CW_ERROR_GENERAL, NULL);
 				}
 
-				/*Copy the buffer in the uci payload structure */
-				CW_CREATE_STRING_ERR(uciPayload->response, responseSize,
-						     return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-				    );
+				/* Copy the buffer in the uci payload structure */
+				uciPayload->response = CW_CREATE_STRING_ERR(responseSize,
+									    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
 				memcpy(uciPayload->response, bufferMessage, responseSize);
 				uciPayload->response[responseSize] = '\0';
 

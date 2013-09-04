@@ -33,7 +33,7 @@
 
 int extractFrame(CWProtocolMessage ** frame, unsigned char *buffer, int len)	//len: frame length
 {
-	CW_CREATE_OBJECT_ERR(*frame, CWProtocolMessage, return 0;
+	*frame = CW_CREATE_OBJECT_ERR(CWProtocolMessage, return 0;
 	    );
 	CWProtocolMessage *auxPtr = *frame;
 	CW_CREATE_PROTOCOL_MESSAGE(*auxPtr, len, return 0;
@@ -210,11 +210,11 @@ void dealWithPacket(struct pcap_pkthdr *header, const u_char * packet, u_char * 
 		//CWDebugLog("\nRSSI: %d",RSSI);
 		//CWDebugLog("\nSNR: %d",SNR);
 		//CWDebugLog("\nData Rate: %d Mbs\n",data_rate);
-		CW_CREATE_OBJECT_ERR(bindingValuesPtr, CWBindingTransportHeaderValues, EXIT_THREAD);
+		bindingValuesPtr = CW_CREATE_OBJECT_ERR(CWBindingTransportHeaderValues, EXIT_THREAD);
 		bindingValuesPtr->RSSI = RSSI;
 		bindingValuesPtr->SNR = SNR;
 		bindingValuesPtr->dataRate = data_rate;
-		CW_CREATE_OBJECT_ERR(listElement, CWBindingDataListElement, EXIT_THREAD);
+		listElement = CW_CREATE_OBJECT_ERR(CWBindingDataListElement, EXIT_THREAD);
 		if (!extractFrame(&frame, buffer, packet_len - sizeof(prism_hdr))) {
 			CWDebugLog("THR FRAME: Error extracting a frame");
 		EXIT_THREAD}

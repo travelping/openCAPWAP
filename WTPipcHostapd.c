@@ -379,7 +379,7 @@ CW_THREAD_RETURN_TYPE CWWTPThread_read_data_from_hostapd(void *arg)
 
 			CWDebugLog("Send 802.11 management(len:%d) to AC", len - 1);
 
-			CW_CREATE_OBJECT_ERR(listElement, CWBindingDataListElement, EXIT_FRAME_THREAD(sock);
+			listElement = CW_CREATE_OBJECT_ERR(CWBindingDataListElement, EXIT_FRAME_THREAD(sock);
 			    );
 			listElement->frame = frame;
 			listElement->bindingValues = NULL;

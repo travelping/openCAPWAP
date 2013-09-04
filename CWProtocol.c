@@ -68,7 +68,7 @@ char *CWProtocolRetrieveStr(CWProtocolMessage * msgPtr, int len)
 {
 	char *str;
 
-	CW_CREATE_OBJECT_SIZE_ERR(str, (len + 1), return NULL;
+	str = CW_CREATE_OBJECT_SIZE_ERR((len + 1), return NULL;
 	    );
 
 	CW_COPY_MEMORY(str, &((msgPtr->msg)[(msgPtr->offset)]), len);
@@ -83,7 +83,7 @@ unsigned char *CWProtocolRetrieveRawBytes(CWProtocolMessage * msgPtr, int len)
 {
 	unsigned char *bytes;
 
-	CW_CREATE_OBJECT_SIZE_ERR(bytes, len, return NULL;
+	bytes = CW_CREATE_OBJECT_SIZE_ERR(len, return NULL;
 	    );
 
 	CW_COPY_MEMORY(bytes, &((msgPtr->msg)[(msgPtr->offset)]), len);
@@ -501,7 +501,7 @@ CWBool CWAssembleMessage(CWProtocolMessage ** completeMsgPtr, int *fragmentsNumP
 	if (*fragmentsNumPtr == 1) {
 		CWDebugLog("1 Fragment");
 
-		CW_CREATE_OBJECT_ERR(*completeMsgPtr, CWProtocolMessage,
+		*completeMsgPtr = CW_CREATE_OBJECT_ERR(CWProtocolMessage,
 				     return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 		    );
 
@@ -636,7 +636,7 @@ CWBool CWProtocolParseFragment(unsigned char *buf, int readBytes,
 		CWProtocolFragment *fragPtr;
 		int currentSize;
 
-		CW_CREATE_OBJECT_ERR(fragPtr, CWProtocolFragment, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+		fragPtr = CW_CREATE_OBJECT_ERR(CWProtocolFragment, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 		    );
 
 		fragPtr->transportVal.fragmentID = values.fragmentID;
@@ -651,7 +651,7 @@ CWBool CWProtocolParseFragment(unsigned char *buf, int readBytes,
 		if (*fragmentsListPtr == NULL ||	// empty list
 		    (((CWProtocolFragment *) ((*fragmentsListPtr)->data))->transportVal.fragmentID) == fragPtr->transportVal.fragmentID)	// this fragment is in the set of fragments we are receiving
 			/*      {
-			   CW_CREATE_OBJECT_SIZE_ERR(fragPtr->data, fragPtr->dataLen, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL););
+			   fragPtr->data = CW_CREATE_OBJECT_SIZE_ERR(fragPtr->dataLen, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL););
 			   CW_COPY_MEMORY(fragPtr->data, &(buf[msg.offset]), fragPtr->dataLen);
 
 			   if(!CWAddElementToList(fragmentsListPtr, fragPtr)) {
@@ -664,7 +664,7 @@ CWBool CWProtocolParseFragment(unsigned char *buf, int readBytes,
 			CWListElement *aux = NULL;
 			aux = CWSearchInList(*fragmentsListPtr, fragPtr, CWCompareFragment);
 			if (aux == NULL) {
-				CW_CREATE_OBJECT_SIZE_ERR(fragPtr->data, fragPtr->dataLen,
+				fragPtr->data = CW_CREATE_OBJECT_SIZE_ERR(fragPtr->dataLen,
 							  return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 				    );
 				CW_COPY_MEMORY(fragPtr->data, &(buf[msg.offset]), fragPtr->dataLen);
@@ -684,7 +684,7 @@ CWBool CWProtocolParseFragment(unsigned char *buf, int readBytes,
 				   fragPtr->transportVal.fragmentID,
 				   (((CWProtocolFragment *) ((*fragmentsListPtr)->data))->transportVal).fragmentID);
 			CWDeleteList(fragmentsListPtr, CWProtocolDestroyFragment);
-			CW_CREATE_OBJECT_SIZE_ERR(fragPtr->data, fragPtr->dataLen,
+			fragPtr->data = CW_CREATE_OBJECT_SIZE_ERR(fragPtr->dataLen,
 						  return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 			    );
 			CW_COPY_MEMORY(fragPtr->data, &(buf[msg.offset]), fragPtr->dataLen);
@@ -832,7 +832,7 @@ CWBool CWParseTransportHeader(CWProtocolMessage * msgPtr, CWProtocolTransportHea
 		} else if (valuesPtr->type == 0) {	//IEEE 802.3 frame
 			CWDebugLog("802.3 frame");
 			if (optionalWireless) {
-				CW_CREATE_OBJECT_ERR(valuesPtr->bindingValuesPtr, CWBindingTransportHeaderValues,
+				valuesPtr->bindingValuesPtr = CW_CREATE_OBJECT_ERR(CWBindingTransportHeaderValues,
 						     return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 				    );
 				if (!CWParseTransportHeaderBinding(msgPtr, valuesPtr->bindingValuesPtr)) {
@@ -845,7 +845,7 @@ CWBool CWParseTransportHeader(CWProtocolMessage * msgPtr, CWProtocolTransportHea
 		} else if (valuesPtr->type == 1) {	//IEEE 802.11 frame
 			CWDebugLog("802.11 frame");
 			if (optionalWireless) {
-				CW_CREATE_OBJECT_ERR(valuesPtr->bindingValuesPtr, CWBindingTransportHeaderValues,
+				valuesPtr->bindingValuesPtr = CW_CREATE_OBJECT_ERR(CWBindingTransportHeaderValues,
 						     return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 				    );
 				if (!CWParseTransportHeaderBinding(msgPtr, valuesPtr->bindingValuesPtr)) {
@@ -858,7 +858,7 @@ CWBool CWParseTransportHeader(CWProtocolMessage * msgPtr, CWProtocolTransportHea
 			CWLog("Todo: This should be a keep-alive data packet!!!!");
 		}
 		if (m) {
-			//CW_CREATE_OBJECT_ERR( valuesPtr->MACValuesPtr, CWMACTransportHeaderValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY,NULL););
+			// valuesPtr->MACValuesPtr = CW_CREATE_OBJECT_ERR(CWMACTransportHeaderValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY,NULL););
 
 			if (!CWParseTransportHeaderMACAddress(msgPtr, RadioMAC)) {
 				//CW_FREE_OBJECT(valuesPtr->bindingValuesPtr);
@@ -869,7 +869,7 @@ CWBool CWParseTransportHeader(CWProtocolMessage * msgPtr, CWProtocolTransportHea
 	} else {
 		if (transport4BytesLen == 4 && optionalWireless == 1) {
 			*dataFlagPtr = CW_TRUE;
-			CW_CREATE_OBJECT_ERR(valuesPtr->bindingValuesPtr, CWBindingTransportHeaderValues,
+			valuesPtr->bindingValuesPtr = CW_CREATE_OBJECT_ERR(CWBindingTransportHeaderValues,
 					     return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 			    );
 			if (!CWParseTransportHeaderBinding(msgPtr, valuesPtr->bindingValuesPtr)) {
@@ -877,7 +877,7 @@ CWBool CWParseTransportHeader(CWProtocolMessage * msgPtr, CWProtocolTransportHea
 				return CW_FALSE;
 			}
 		} else if (m) {
-			//CW_CREATE_OBJECT_ERR( valuesPtr->MACValuesPtr, CWMACTransportHeaderValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY,NULL););
+			// valuesPtr->MACValuesPtr = CW_CREATE_OBJECT_ERR(CWMACTransportHeaderValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY,NULL););
 
 			if (!CWParseTransportHeaderMACAddress(msgPtr, RadioMAC)) {
 				//CW_FREE_OBJECT(valuesPtr->bindingValuesPtr);
@@ -931,7 +931,7 @@ CWBool CWAssembleUnrecognizedMessageResponse(CWProtocolMessage ** messagesPtr, i
 
 	CWLog("Assembling Unrecognized Message Response...");
 
-	CW_CREATE_OBJECT_ERR(msgElems, CWProtocolMessage, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	msgElems = CW_CREATE_OBJECT_ERR(CWProtocolMessage, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
 	if (!(CWAssembleMsgElemResultCode(msgElems, CW_PROTOCOL_FAILURE_UNRECOGNIZED_REQ))) {

@@ -62,12 +62,12 @@ CWBool CWWTPInitBinding(int radioIndex)
 	bindingValues *aux;
 	int i;
 
-	CW_CREATE_OBJECT_ERR(aux, bindingValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	aux = CW_CREATE_OBJECT_ERR(bindingValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
 	gRadiosInfo.radiosInfo[radioIndex].bindingValuesPtr = (void *)aux;
 
-	CW_CREATE_ARRAY_ERR(aux->qosValues, NUM_QOS_PROFILES, WTPQosValues,
+	aux->qosValues = CW_CREATE_ARRAY_ERR(NUM_QOS_PROFILES, WTPQosValues,
 			    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
@@ -106,12 +106,12 @@ CWBool CWWTPInitBinding(int radioIndex)
 
 	CWLog("wrq.ifr_name %s ", wrq.ifr_name);
 
-	CW_CREATE_OBJECT_ERR(aux, bindingValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	aux = CW_CREATE_OBJECT_ERR(bindingValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
 	gRadiosInfo.radiosInfo[radioIndex].bindingValuesPtr = (void *)aux;
 
-	CW_CREATE_ARRAY_ERR(aux->qosValues, NUM_QOS_PROFILES, WTPQosValues,
+	aux->qosValues = CW_CREATE_ARRAY_ERR(NUM_QOS_PROFILES, WTPQosValues,
 			    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
@@ -147,12 +147,12 @@ CWBool CWWTPInitBinding(int radioIndex)
 	bindingValues *aux;
 	int i;
 
-	CW_CREATE_OBJECT_ERR(aux, bindingValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	aux = CW_CREATE_OBJECT_ERR(bindingValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
 	gRadiosInfo.radiosInfo[radioIndex].bindingValuesPtr = (void *)aux;
 
-	CW_CREATE_ARRAY_ERR(aux->qosValues, NUM_QOS_PROFILES, WTPQosValues,
+	aux->qosValues = CW_CREATE_ARRAY_ERR(NUM_QOS_PROFILES, WTPQosValues,
 			    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
@@ -572,7 +572,7 @@ CWBool CWBindingParseConfigurationUpdateRequest(unsigned char *msg, int len, voi
 
 	switch (GlobalElemType) {
 	case BINDING_MSG_ELEMENT_TYPE_WTP_QOS:{
-			CW_CREATE_OBJECT_ERR(auxBindingPtr, CWBindingConfigurationUpdateRequestValues,
+			auxBindingPtr = CW_CREATE_OBJECT_ERR(CWBindingConfigurationUpdateRequestValues,
 					     return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 			    );
 			*valuesPtr = (void *)auxBindingPtr;
@@ -580,19 +580,19 @@ CWBool CWBindingParseConfigurationUpdateRequest(unsigned char *msg, int len, voi
 			auxBindingPtr->qosCount = qosCount;
 			auxBindingPtr->radioQosValues = NULL;
 
-			CW_CREATE_ARRAY_ERR(auxBindingPtr->radioQosValues, auxBindingPtr->qosCount, RadioQosValues,
+			auxBindingPtr->radioQosValues = CW_CREATE_ARRAY_ERR(auxBindingPtr->qosCount, RadioQosValues,
 					    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 			    );
 			break;
 		}
 	case BINDING_MSG_ELEMENT_TYPE_OFDM_CONTROL:
-		CW_CREATE_OBJECT_ERR(ofdmBindingPtr, CWBindingConfigurationUpdateRequestValuesOFDM,
+		ofdmBindingPtr = CW_CREATE_OBJECT_ERR(CWBindingConfigurationUpdateRequestValuesOFDM,
 				     return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 		    );
 
 		*valuesPtr = (void *)ofdmBindingPtr;
 
-		CW_CREATE_OBJECT_ERR(ofdmBindingPtr->radioOFDMValues, OFDMControlValues,
+		ofdmBindingPtr->radioOFDMValues = CW_CREATE_OBJECT_ERR(OFDMControlValues,
 				     return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 		    );
 		break;
@@ -676,7 +676,7 @@ CWBool CWBindingParseConfigureResponse(unsigned char *msg, int len, void **value
 	completeMsg.offset = 0;
 
 	CWBindingConfigurationRequestValues *auxBindingPtr;
-	CW_CREATE_OBJECT_ERR(auxBindingPtr, CWBindingConfigurationRequestValues,
+	auxBindingPtr = CW_CREATE_OBJECT_ERR(CWBindingConfigurationRequestValues,
 			     return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 	*valuesPtr = (void *)auxBindingPtr;
@@ -712,7 +712,7 @@ CWBool CWBindingParseConfigureResponse(unsigned char *msg, int len, void **value
 		return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Garbage at the End of the Message");
 
 	// actually read each radio info
-	CW_CREATE_ARRAY_ERR(auxBindingPtr->radioQosValues, auxBindingPtr->qosCount, RadioQosValues,
+	auxBindingPtr->radioQosValues = CW_CREATE_ARRAY_ERR(auxBindingPtr->qosCount, RadioQosValues,
 			    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 

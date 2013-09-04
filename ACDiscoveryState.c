@@ -179,7 +179,7 @@ CWBool CWParseDiscoveryRequestMessage(unsigned char *msg, int len,
 
 	/*
 	   // actually read each radio info
-	   CW_CREATE_ARRAY_ERR((*valuesPtr).radios.radios, (*valuesPtr).radios.radiosCount, CWRadioInformationValues,
+	   (*valuesPtr).radios.radios = CW_CREATE_ARRAY_ERR((*valuesPtr).radios.radiosCount, CWRadioInformationValues,
 	   return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL););
 	   i = 0;
 

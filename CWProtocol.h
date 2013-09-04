@@ -48,13 +48,13 @@
 #define CW_CREATE_PROTOCOL_MESSAGE(mess, size, err)			\
 	do {								\
 		CW_ZERO_MEMORY(&(mess), sizeof((mess)));		\
-		CW_CREATE_OBJECT_SIZE_ERR(((mess).msg), (size), err);	\
+		((mess).msg) = CW_CREATE_OBJECT_SIZE_ERR((size), err);	\
 		CW_ZERO_MEMORY(((mess).msg), (size));			\
 		(mess).offset = 0;					\
 	} while (0)
 
 #define CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(ar_name, ar_size, on_err)	\
-	CW_CREATE_ARRAY_ERR(ar_name, ar_size, CWProtocolMessage, on_err)
+	(ar_name) = CW_CREATE_ARRAY_ERR(ar_size, CWProtocolMessage, on_err)
 
 #define CW_FREE_PROTOCOL_MESSAGE(mess)			\
 	do {						\

@@ -106,11 +106,9 @@ CWBool CWParseTheFile(CWBool isCount)
 
 				/* avoid to allocate 0 bytes */
 				if (gConfigValues[i].count) {
-
-					CW_CREATE_ARRAY_ERR((gConfigValues[i].value.str_array_value),
-							    gConfigValues[i].count, char *,
-							    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-					    );
+					gConfigValues[i].value.str_array_value =
+						CW_CREATE_ARRAY_ERR(gConfigValues[i].count, char *,
+								    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
 				}
 			}
 		}
@@ -157,14 +155,13 @@ CWBool CWParseTheFile(CWBool isCount)
 					 * 19/10/2009 - Donato Capitella
 					 */
 
-					if (!isCount)
-						CW_CREATE_STRING_FROM_STRING_ERR(gConfigValues[i].value.str_value,
-										 myLine,
-										 return
-										 CWErrorRaise(CW_ERROR_OUT_OF_MEMORY,
-											      NULL);
-					    );
+					if (isCount)
+						break;
+
+					gConfigValues[i].value.str_value =
+						CW_CREATE_STRING_FROM_STRING_ERR(myLine, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
 					break;
+
 				case CW_STRING_ARRAY:
 #ifdef CW_DEBUGGING
 					CWDebugLog("*** Parsing String Array... *** \n");
@@ -180,12 +177,8 @@ CWBool CWParseTheFile(CWBool isCount)
 						if (isCount)
 							gConfigValues[i].count++;
 						else {
-							CW_CREATE_STRING_FROM_STRING_ERR((gConfigValues[i].value.
-											  str_array_value)[j], line,
-											 return
-											 CWErrorRaise
-											 (CW_ERROR_OUT_OF_MEMORY, NULL);
-							    );
+							gConfigValues[i].value.str_array_value[j] =
+								CW_CREATE_STRING_FROM_STRING_ERR(line, return CWErrorRaise (CW_ERROR_OUT_OF_MEMORY, NULL););
 							j++;
 						}
 						CW_FREE_OBJECT(line);

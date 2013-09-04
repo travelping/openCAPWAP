@@ -41,14 +41,14 @@ CWBool CWAddElementToList(CWList * list, void *element)
 		return CW_FALSE;
 
 	if ((*list) == NULL) {	// first element
-		CW_CREATE_OBJECT_ERR((*list), CWListElement, return CW_FALSE;
+		(*list) = CW_CREATE_OBJECT_ERR(CWListElement, return CW_FALSE;
 		    );
 		(*list)->data = element;
 		(*list)->next = NULL;
 		return CW_TRUE;
 	}
 
-	CW_CREATE_OBJECT_ERR(newElem, CWListElement, return CW_FALSE;
+	newElem = CW_CREATE_OBJECT_ERR(CWListElement, return CW_FALSE;
 	    );
 	newElem->data = element;
 	newElem->next = (*list);
@@ -68,7 +68,7 @@ CWBool CWAddElementToListTail(CWList * list, void *element)
 		return CW_FALSE;
 
 	if ((*list) == NULL) {	// first element
-		CW_CREATE_OBJECT_ERR((*list), CWListElement, return CW_FALSE;
+		(*list) = CW_CREATE_OBJECT_ERR(CWListElement, return CW_FALSE;
 		    );
 		(*list)->data = element;
 		(*list)->next = NULL;
@@ -80,7 +80,7 @@ CWBool CWAddElementToListTail(CWList * list, void *element)
 		newElem = newElem->next;
 	}
 
-	CW_CREATE_OBJECT_ERR(newElem->next, CWListElement, return CW_FALSE;
+	newElem->next = CW_CREATE_OBJECT_ERR(CWListElement, return CW_FALSE;
 	    );
 	newElem->next->data = element;
 	newElem->next->next = NULL;

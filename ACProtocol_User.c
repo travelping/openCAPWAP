@@ -135,7 +135,7 @@ CWBool CWACGetVendorInfos(CWACVendorInfos * valPtr)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
 	valPtr->vendorInfosCount = 2;
-	CW_CREATE_ARRAY_ERR((valPtr->vendorInfos), valPtr->vendorInfosCount, CWACVendorInfoValues,
+	(valPtr->vendorInfos) = CW_CREATE_ARRAY_ERR(valPtr->vendorInfosCount, CWACVendorInfoValues,
 			    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
@@ -143,7 +143,7 @@ CWBool CWACGetVendorInfos(CWACVendorInfos * valPtr)
 	(valPtr->vendorInfos)[0].vendorIdentifier = 65432;
 	(valPtr->vendorInfos)[0].type = CW_AC_HARDWARE_VERSION;
 	(valPtr->vendorInfos)[0].length = 4;	// just one int
-	CW_CREATE_OBJECT_SIZE_ERR((((valPtr->vendorInfos)[0]).valuePtr), 4,
+	(((valPtr->vendorInfos)[0]).valuePtr) = CW_CREATE_OBJECT_SIZE_ERR(4,
 				  return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 	*(((valPtr->vendorInfos)[0]).valuePtr) = CWACGetHWVersion();	// HW version
@@ -152,7 +152,7 @@ CWBool CWACGetVendorInfos(CWACVendorInfos * valPtr)
 	((valPtr->vendorInfos)[1]).vendorIdentifier = 65432;
 	((valPtr->vendorInfos)[1]).type = CW_AC_SOFTWARE_VERSION;
 	((valPtr->vendorInfos)[1]).length = 4;	// just one int
-	CW_CREATE_OBJECT_SIZE_ERR((((valPtr->vendorInfos)[1]).valuePtr), 4,
+	(((valPtr->vendorInfos)[1]).valuePtr) = CW_CREATE_OBJECT_SIZE_ERR(4,
 				  return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 	*(((valPtr->vendorInfos)[1]).valuePtr) = CWACGetSWVersion();	// SW version
@@ -185,7 +185,7 @@ CWBool CWACGetACIPv4List(int **listPtr, int *countPtr)
 
 	*countPtr = 2;
 
-	CW_CREATE_ARRAY_ERR((*listPtr), (*countPtr), int, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	(*listPtr) = CW_CREATE_ARRAY_ERR((*countPtr), int, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
 	inet_pton(AF_INET, "192.168.1.2", &addr);	// TO-DO take the addresses from config file?
@@ -205,7 +205,7 @@ CWBool CWACGetACIPv6List(struct in6_addr ** listPtr, int *countPtr)
 
 	*countPtr = 2;
 
-	CW_CREATE_ARRAY_ERR(*listPtr, (*countPtr), struct in6_addr, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	*listPtr = CW_CREATE_ARRAY_ERR((*countPtr), struct in6_addr, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
 	inet_pton(AF_INET6, "5f1b:df00:ce3e:e200:0020:0800:2078:e3e3", &((*listPtr)[0]));	// TO-DO take the addresses from config file?
@@ -246,7 +246,7 @@ CWBool CWGetWTPRadiosAdminState(CWRadiosAdminInfo * valPtr)
 
 	valPtr->radiosCount = gWTPs[*WTPIndexPtr].WTPProtocolManager.radiosInfo.radioCount;
 
-	CW_CREATE_ARRAY_ERR(valPtr->radios, valPtr->radiosCount, CWRadioAdminInfoValues,
+	valPtr->radios = CW_CREATE_ARRAY_ERR(valPtr->radiosCount, CWRadioAdminInfoValues,
 			    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
@@ -276,7 +276,7 @@ CWBool CWGetWTPRadiosOperationalState(int radioID, CWRadiosOperationalInfo * val
 	if (radioID < 0) {
 		valPtr->radiosCount = gWTPs[*WTPIndexPtr].WTPProtocolManager.radiosInfo.radioCount;
 
-		CW_CREATE_ARRAY_ERR(valPtr->radios, valPtr->radiosCount, CWRadioOperationalInfoValues,
+		valPtr->radios = CW_CREATE_ARRAY_ERR(valPtr->radiosCount, CWRadioOperationalInfoValues,
 				    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 		    );
 
@@ -294,7 +294,7 @@ CWBool CWGetWTPRadiosOperationalState(int radioID, CWRadiosOperationalInfo * val
 			if (gWTPs[*WTPIndexPtr].WTPProtocolManager.radiosInfo.radiosInfo[i].radioID == radioID) {
 				found = CW_TRUE;
 				valPtr->radiosCount = 1;
-				CW_CREATE_ARRAY_ERR(valPtr->radios, valPtr->radiosCount, CWRadioOperationalInfoValues,
+				valPtr->radios = CW_CREATE_ARRAY_ERR(valPtr->radiosCount, CWRadioOperationalInfoValues,
 						    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 				    );
 				(valPtr->radios)[i].ID =

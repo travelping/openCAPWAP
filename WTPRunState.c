@@ -144,7 +144,7 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveDtlsPacket(void *arg)
 			break;
 		}
 		/* Clone data packet */
-		CW_CREATE_OBJECT_SIZE_ERR(pData, readBytes, {
+		pData = CW_CREATE_OBJECT_SIZE_ERR(readBytes, {
 					  CWLog("Out Of Memory");
 					  return NULL;
 					  }
@@ -1112,7 +1112,7 @@ CWBool CWAssembleConfigurationUpdateResponse(CWProtocolMessage ** messagesPtr,
 
 	CWLog("Assembling Configuration Update Response...");
 
-	CW_CREATE_OBJECT_ERR(msgElems, CWProtocolMessage, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	msgElems = CW_CREATE_OBJECT_ERR(CWProtocolMessage, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
 	if (protoValues) {
@@ -1167,7 +1167,7 @@ CWBool CWAssembleClearConfigurationResponse(CWProtocolMessage ** messagesPtr, in
 
 	CWLog("Assembling Clear Configuration Response...");
 
-	CW_CREATE_OBJECT_ERR(msgElems, CWProtocolMessage, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	msgElems = CW_CREATE_OBJECT_ERR(CWProtocolMessage, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
 	if (!(CWAssembleMsgElemResultCode(msgElems, resultCode))) {
@@ -1202,7 +1202,7 @@ CWBool CWAssembleStationConfigurationResponse(CWProtocolMessage ** messagesPtr, 
 
 	CWLog("Assembling Sattion Configuration Response...");
 
-	CW_CREATE_OBJECT_ERR(msgElems, CWProtocolMessage, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	msgElems = CW_CREATE_OBJECT_ERR(CWProtocolMessage, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
 	if (!(CWAssembleMsgElemResultCode(msgElems, resultCode))) {
@@ -1237,7 +1237,7 @@ CWBool CWAssembleWLANConfigurationResponse(CWProtocolMessage ** messagesPtr, int
 
 	CWLog("Assembling WLAN Configuration Response...");
 
-	//CW_CREATE_OBJECT_ERR(msgElems, CWProtocolMessage, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL););
+	//msgElems = CW_CREATE_OBJECT_ERR(CWProtocolMessage, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL););
 	CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(msgElems, msgElemCount, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
@@ -1314,7 +1314,7 @@ CWBool CWParseVendorMessage(unsigned char *msg, int len, void **valuesPtr)
 
 	switch (GlobalElemType) {
 	case CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_CW_TYPE:
-		CW_CREATE_OBJECT_ERR(vendPtr, CWProtocolVendorSpecificValues,
+		vendPtr = CW_CREATE_OBJECT_ERR(CWProtocolVendorSpecificValues,
 				     return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 		    );
 		/*Allocate various other vendor specific fields */

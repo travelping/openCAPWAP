@@ -129,45 +129,43 @@ extern int gEchoInterval;
 	} while (0)
 
 // custom error
-#define CW_CREATE_OBJECT_ERR(ptr, type, on_err)				\
-	do {								\
-		(ptr) = (type *)malloc(sizeof(type));			\
-		CW_ON_ERROR((ptr), on_err);				\
-	} while (0)
+#define CW_CREATE_OBJECT_ERR(type, on_err)				\
+	({								\
+		type * __p = (type *)malloc(sizeof(type));		\
+		CW_ON_ERROR(__p, on_err);				\
+		__p;							\
+	})
 
-#define CW_CREATE_OBJECT_SIZE_ERR(ptr, size, on_err)			\
-	do {								\
-		(ptr) = malloc((size));					\
-		CW_ON_ERROR((ptr), on_err);				\
-	} while (0)
+#define CW_CREATE_OBJECT_SIZE_ERR(size, on_err)				\
+	({								\
+		void * __p = malloc((size));				\
+		CW_ON_ERROR(__p, on_err);				\
+		__p;							\
+	})
 
-#define CW_CREATE_ARRAY_ERR(ptr, size, type, on_err)			\
-	do {								\
-		(ptr) = (type *)calloc(sizeof(type), (size));		\
-		CW_ON_ERROR((ptr), on_err);				\
-	} while (0)
+#define CW_CREATE_ARRAY_ERR(size, type, on_err)				\
+	({								\
+		type * __p = (type *)calloc(sizeof(type), (size));	\
+		CW_ON_ERROR(__p, on_err);				\
+		__p;							\
+	})
 
-#define CW_CREATE_STRING_ERR(s, length, on_err)				\
-	do {								\
-		(s) = (char *)malloc(sizeof(char) * ((length)+1));	\
-		CW_ON_ERROR((s), on_err);				\
-	} while (0)
+#define CW_CREATE_STRING_ERR(length, on_err)				\
+	({								\
+		char *__s = (char *)malloc(sizeof(char) * ((length)+1)); \
+		CW_ON_ERROR(__s, on_err);				\
+		__s;							\
+	})
 
 #define CW_CREATE_STRING_FROM_STRING(src)				\
 	strdup((src))
 
-#define CW_CREATE_STRING_FROM_STRING_ERR2(src, on_err)			\
+#define CW_CREATE_STRING_FROM_STRING_ERR(src, on_err)			\
 	({								\
-		char *dest = strdup((src));				\
-		CW_ON_ERROR(dest, on_err);				\
-		dest;							\
+		char *__dest = strdup((src));				\
+		CW_ON_ERROR(__dest, on_err);				\
+		__dest;							\
 	})
-
-#define CW_CREATE_STRING_FROM_STRING_ERR(dest, src, on_err)		\
-	do {								\
-		(dest) = strdup((src));					\
-		CW_ON_ERROR((dest), on_err);				\
-	} while (0)
 
 #include "CWStevens.h"
 #include "config.h"

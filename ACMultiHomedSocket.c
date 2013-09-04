@@ -181,7 +181,7 @@ CWBool CWNetworkInitSocketServerMultiHomed(CWMultiHomedSocket * sockPtr,
 		    );
 
 		/* store socket inside multihomed socket */
-		CW_CREATE_OBJECT_ERR(p, CWMultiHomedInterface, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+		p = CW_CREATE_OBJECT_ERR(CWMultiHomedInterface, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 		    );
 		p->sock = sock;
 		if (CWNetworkGetInterfaceAlreadyStored(interfaceList, ifi->ifi_index) == NULL &&
@@ -285,7 +285,7 @@ CWBool CWNetworkInitSocketServerMultiHomed(CWMultiHomedSocket * sockPtr,
 
 			/* store socket inside multihomed socket */
 
-			CW_CREATE_OBJECT_ERR(p, CWMultiHomedInterface,
+			p = CW_CREATE_OBJECT_ERR(CWMultiHomedInterface,
 					     return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 			    );
 			p->sock = sock;
@@ -405,7 +405,7 @@ CWBool CWNetworkInitSocketServerMultiHomed(CWMultiHomedSocket * sockPtr,
 
 	CWUseSockNtop(&wildaddr, CWLog("bound %s", str););
 
-	CW_CREATE_OBJECT_ERR(p, CWMultiHomedInterface, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	p = CW_CREATE_OBJECT_ERR(CWMultiHomedInterface, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 	p->sock = sock;
 	p->kind = CW_BROADCAST_OR_ALIAS;
@@ -468,7 +468,7 @@ CWBool CWNetworkInitSocketServerMultiHomed(CWMultiHomedSocket * sockPtr,
 
 		CWUseSockNtop((res->ai_addr), CWLog("Joined Multicast Group: %s", str););
 
-		CW_CREATE_OBJECT_ERR(p, CWMultiHomedInterface, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+		p = CW_CREATE_OBJECT_ERR(CWMultiHomedInterface, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 		    );
 		p->sock = sock;
 		p->kind = CW_BROADCAST_OR_ALIAS;
@@ -491,9 +491,8 @@ CWBool CWNetworkInitSocketServerMultiHomed(CWMultiHomedSocket * sockPtr,
 	 * convert it into an array. The "interfaces" field of CWMultiHomedSocket
 	 * is actually an array.
 	 */
-	CW_CREATE_ARRAY_ERR((sockPtr->interfaces), sockPtr->count, CWMultiHomedInterface,
-			    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	sockPtr->interfaces = CW_CREATE_ARRAY_ERR(sockPtr->count, CWMultiHomedInterface,
+						  return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
 
 	/* create array from list */
 	for (el = interfaceList, i = 0; el != NULL; el = el->next, i++) {
@@ -622,7 +621,7 @@ CWBool CWNetworkUnsafeMultiHomed(CWMultiHomedSocket * sockPtr,
 				get_mac_addr(macAddrTap, gWTPs[i].tap_name);
 				unsigned char buf80211[CW_BUFFER_SIZE + 24];
 				int readByest80211 = from_8023_to_80211(buf, readBytes, buf80211, macAddrTap);
-				CW_CREATE_OBJECT_ERR(frame, CWProtocolMessage, return 0;
+				frame = CW_CREATE_OBJECT_ERR(CWProtocolMessage, return 0;
 				    );
 				CW_CREATE_PROTOCOL_MESSAGE(*frame, readByest80211, return 0;
 				    );
@@ -771,17 +770,15 @@ CWBool CWNetworkGetInterfaceAddresses(CWMultiHomedSocket * sockPtr,
 	if (sockPtr == NULL || addressesPtr == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
-	CW_CREATE_ARRAY_ERR(*addressesPtr,
+	*addressesPtr = CW_CREATE_ARRAY_ERR(
 			    CWNetworkCountInterfaceAddresses(sockPtr),
-			    CWNetworkLev4Address, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+			    CWNetworkLev4Address, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
 
 	if (IPv4AddressesPtr != NULL && gNetworkPreferredFamily == CW_IPv6) {
 
-		CW_CREATE_ARRAY_ERR(*IPv4AddressesPtr,
+		*IPv4AddressesPtr = CW_CREATE_ARRAY_ERR(
 				    CWNetworkCountInterfaceAddresses(sockPtr),
-				    struct sockaddr_in, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-		    );
+				    struct sockaddr_in, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
 	}
 
 	for (i = 0, j = 0; i < sockPtr->count; i++) {

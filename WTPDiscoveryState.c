@@ -103,7 +103,7 @@ static CWBool CWAddDiscoverACAddress(CWList *ACList, CWNetworkLev4Address *addre
        if (!CWSearchInList(*ACList, (void *)address, CWNetworkCompareAddress)) {
                CWDiscoverAC *AC;
 
-               CW_CREATE_OBJECT_ERR(AC, CWDiscoverAC, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+               AC = CW_CREATE_OBJECT_ERR(CWDiscoverAC, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
                        );
                CW_ZERO_MEMORY(AC, sizeof(CWDiscoverAC));
                CW_COPY_NET_ADDR_PTR(&AC->address, address);
@@ -379,7 +379,7 @@ CWBool CWReceiveDiscoveryResponse()
 	if (!AC)
 		return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "got discovery response from invalid address");
 
-	CW_CREATE_OBJECT_ERR(ACInfoPtr, CWACInfoValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	ACInfoPtr = CW_CREATE_OBJECT_ERR(CWACInfoValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 	CW_COPY_NET_ADDR_PTR(&(ACInfoPtr->incomingAddress), &(addr));
 
@@ -812,14 +812,14 @@ CWBool CWParseDiscoveryResponseMessage(unsigned char *msg, int len, int *seqNumP
 		return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Garbage at the End of the Message");
 
 	/* actually read each interface info */
-	CW_CREATE_ARRAY_ERR(ACInfoPtr->IPv4Addresses,
+	ACInfoPtr->IPv4Addresses = CW_CREATE_ARRAY_ERR(
 			    ACInfoPtr->IPv4AddressesCount,
 			    CWProtocolIPv4NetworkInterface, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
 	if (ACInfoPtr->IPv6AddressesCount > 0) {
 
-		CW_CREATE_ARRAY_ERR(ACInfoPtr->IPv6Addresses,
+		ACInfoPtr->IPv6Addresses = CW_CREATE_ARRAY_ERR(
 				    ACInfoPtr->IPv6AddressesCount,
 				    CWProtocolIPv6NetworkInterface, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 		    );

@@ -250,7 +250,7 @@ void CWACInit()
 		exit(1);
 	}
 
-	CW_CREATE_ARRAY_ERR(gInterfaces, gInterfacesCount, CWProtocolNetworkInterface, CWLog("Out of Memory");
+	gInterfaces = CW_CREATE_ARRAY_ERR(gInterfacesCount, CWProtocolNetworkInterface, CWLog("Out of Memory");
 			    return;
 	    );
 

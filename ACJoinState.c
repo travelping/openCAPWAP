@@ -76,21 +76,21 @@ CWBool ACEnterJoin(int WTPIndex, CWProtocolMessage * msgPtr)
 
 	CWMsgElemData *auxData;
 	if (ACIpv4List) {
-		CW_CREATE_OBJECT_ERR(auxData, CWMsgElemData, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+		auxData = CW_CREATE_OBJECT_ERR(CWMsgElemData, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 		    );
 		auxData->type = CW_MSG_ELEMENT_AC_IPV4_LIST_CW_TYPE;
 		auxData->value = 0;
 		CWAddElementToList(&msgElemList, auxData);
 	}
 	if (ACIpv6List) {
-		CW_CREATE_OBJECT_ERR(auxData, CWMsgElemData, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+		auxData = CW_CREATE_OBJECT_ERR(CWMsgElemData, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 		    );
 		auxData->type = CW_MSG_ELEMENT_AC_IPV6_LIST_CW_TYPE;
 		auxData->value = 0;
 		CWAddElementToList(&msgElemList, auxData);
 	}
 	if (resultCode) {
-		CW_CREATE_OBJECT_ERR(auxData, CWMsgElemData, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+		auxData = CW_CREATE_OBJECT_ERR(CWMsgElemData, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 		    );
 		auxData->type = CW_MSG_ELEMENT_RESULT_CODE_CW_TYPE;
 		auxData->value = resultCodeValue;
@@ -98,7 +98,7 @@ CWBool ACEnterJoin(int WTPIndex, CWProtocolMessage * msgPtr)
 	}
 	/*
 	   if(sessionID){
-	   CW_CREATE_OBJECT_ERR(auxData, CWMsgElemData, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL););
+	   auxData = CW_CREATE_OBJECT_ERR(CWMsgElemData, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL););
 	   auxData->type =  CW_MSG_ELEMENT_SESSION_ID_CW_TYPE;
 	   auxData->value = CWRandomIntInRange(0, INT_MAX);
 	   CWAddElementToList(&msgElemList,auxData);
@@ -372,7 +372,7 @@ CWBool CWSaveJoinRequestMessage(CWProtocolJoinRequestValues * joinRequest, CWWTP
 	WTPProtocolManager->radiosInfo.radioCount = (joinRequest->WTPDescriptor).radiosInUse;
 	CW_FREE_OBJECT(WTPProtocolManager->radiosInfo.radiosInfo);
 
-	CW_CREATE_ARRAY_ERR(WTPProtocolManager->radiosInfo.radiosInfo,
+	WTPProtocolManager->radiosInfo.radiosInfo = CW_CREATE_ARRAY_ERR(
 			    WTPProtocolManager->radiosInfo.radioCount,
 			    CWWTPRadioInfoValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );

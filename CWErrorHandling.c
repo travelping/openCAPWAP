@@ -48,7 +48,7 @@ void CWErrorHandlingInitLib()
 		exit(1);
 	}
 #else
-	CW_CREATE_OBJECT_ERR(infoPtr, CWErrorHandlingInfo, return;
+	infoPtr = CW_CREATE_OBJECT_ERR(CWErrorHandlingInfo, return;
 	    );
 	infoPtr->code = CW_ERROR_NONE;
 	gLastErrorDataPtr = infoPtr;
@@ -62,7 +62,7 @@ CWBool _CWErrorRaise(CWErrorCode code, const char *msg, const char *fileName, in
 #ifndef CW_SINGLE_THREAD
 	infoPtr = CWThreadGetSpecific(&gLastError);
 	if (infoPtr == NULL) {
-		CW_CREATE_OBJECT_ERR(infoPtr, CWErrorHandlingInfo, exit(1);
+		infoPtr = CW_CREATE_OBJECT_ERR(CWErrorHandlingInfo, exit(1);
 		    );
 		infoPtr->code = CW_ERROR_NONE;
 		if (!CWThreadSetSpecific(&gLastError, infoPtr)) {

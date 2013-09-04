@@ -104,12 +104,12 @@ CWBool CWWTPCheckForWTPEventRequest()
 
 	seqNum = CWGetSeqNum();
 
-	CW_CREATE_OBJECT_ERR(pendingReqIndex, int, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	pendingReqIndex = CW_CREATE_OBJECT_ERR(int, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
-	CW_CREATE_OBJECT_ERR(msgElemList, CWListElement, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	msgElemList = CW_CREATE_OBJECT_ERR(CWListElement, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
-	CW_CREATE_OBJECT_ERR(msgElemList->data, CWMsgElemData, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	msgElemList->data = CW_CREATE_OBJECT_ERR(CWMsgElemData, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 	msgElemList->next = NULL;
 	//Change type and value to change the msg elem to send

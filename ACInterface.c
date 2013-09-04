@@ -262,7 +262,7 @@ CW_THREAD_RETURN_TYPE CWManageApplication(void *arg)
 				switch (msg_elem) {
 				case MSG_ELEMENT_TYPE_OFDM:{
 						/* Antonio Case */
-						CW_CREATE_OBJECT_ERR(ofdmValues, OFDMControlValues, {
+						ofdmValues = CW_CREATE_OBJECT_ERR(OFDMControlValues, {
 								     CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 								     return 0;
 								     }
@@ -305,12 +305,12 @@ CW_THREAD_RETURN_TYPE CWManageApplication(void *arg)
 						/* Matteo Case */
 						/*Do stuff to parse uci payload */
 						int commandLength = 0;
-						CW_CREATE_OBJECT_ERR(vendorValues, CWProtocolVendorSpecificValues, {
+						vendorValues = CW_CREATE_OBJECT_ERR(CWProtocolVendorSpecificValues, {
 								     CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 								     return 0;
 								     }
 						);
-						CW_CREATE_OBJECT_ERR(uciValues, CWVendorUciValues, {
+						uciValues = CW_CREATE_OBJECT_ERR(CWVendorUciValues, {
 								     CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 								     return 0;
 								     }
@@ -339,7 +339,7 @@ CW_THREAD_RETURN_TYPE CWManageApplication(void *arg)
 								goto quit_manage;
 							}
 
-							CW_CREATE_STRING_ERR(uciValues->commandArgs, commandLength, {
+							uciValues->commandArgs = CW_CREATE_STRING_ERR(commandLength, {
 									     CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 									     return 0;
 									     }
@@ -387,12 +387,12 @@ CW_THREAD_RETURN_TYPE CWManageApplication(void *arg)
 				case MSG_ELEMENT_TYPE_VENDOR_WUM:{
 						/* Donato's Case */
 
-						CW_CREATE_OBJECT_ERR(vendorValues, CWProtocolVendorSpecificValues, {
+						vendorValues = CW_CREATE_OBJECT_ERR(CWProtocolVendorSpecificValues, {
 								     CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 								     return 0;
 								     }
 						);
-						CW_CREATE_OBJECT_ERR(wumValues, CWVendorWumValues, {
+						wumValues = CW_CREATE_OBJECT_ERR(CWVendorWumValues, {
 								     CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 								     return 0;
 								     }
@@ -611,7 +611,7 @@ CW_THREAD_RETURN_TYPE CWInterface(void *arg)
 
 			if (appsManager.numSocketFree > 0) {
 
-				CW_CREATE_OBJECT_ERR(argPtr, CWInterfaceThreadArg, {
+				argPtr = CW_CREATE_OBJECT_ERR(CWInterfaceThreadArg, {
 						     CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 						     return 0;
 						     }

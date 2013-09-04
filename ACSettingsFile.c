@@ -64,7 +64,7 @@ CWBool CWParseSettingsFile()
 		CWErrorRaiseSystemError(CW_ERROR_GENERAL);
 	}
 
-	CW_CREATE_ARRAY_ERR(gDefaultQosValues, NUM_QOS_PROFILES, WTPQosValues,
+	gDefaultQosValues = CW_CREATE_ARRAY_ERR(NUM_QOS_PROFILES, WTPQosValues,
 			    return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
@@ -220,7 +220,7 @@ CWBool CWParseSettingsFile()
 
 			CWExtractValue(endTag, &startValue, &endValue, &offset);
 
-			CW_CREATE_STRING_ERR(gHostapd_unix_path, offset,
+			gHostapd_unix_path = CW_CREATE_STRING_ERR(offset,
 					     return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 			    );
 			strncpy(gHostapd_unix_path, startValue, offset);

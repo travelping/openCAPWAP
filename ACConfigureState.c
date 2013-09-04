@@ -182,9 +182,8 @@ CWBool CWParseConfigureRequestMessage(unsigned char *msg, int len,
 				return CW_FALSE;
 			break;
 		case CW_MSG_ELEMENT_WTP_REBOOT_STATISTICS_CW_TYPE:
-			CW_CREATE_OBJECT_ERR(valuesPtr->WTPRebootStatistics,
-					     WTPRebootStatisticsInfo, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-			    );
+			valuesPtr->WTPRebootStatistics =
+				CW_CREATE_OBJECT_ERR(WTPRebootStatisticsInfo, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
 			if (!(CWParseWTPRebootStatistics(&completeMsg, elemLen, valuesPtr->WTPRebootStatistics)))
 				/* will be handled by the caller */
 				return CW_FALSE;
@@ -214,15 +213,13 @@ CWBool CWParseConfigureRequestMessage(unsigned char *msg, int len,
 		return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Garbage at the End of the Message");
 
 	/* actually read each radio info */
-	CW_CREATE_ARRAY_ERR((valuesPtr->ACinWTP).ACNameIndex,
-			    (valuesPtr->ACinWTP).count,
-			    CWACNameWithIndexValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	valuesPtr->ACinWTP.ACNameIndex = CW_CREATE_ARRAY_ERR(valuesPtr->ACinWTP.count,
+							     CWACNameWithIndexValues,
+							     return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
 
-	CW_CREATE_ARRAY_ERR(valuesPtr->radioAdminInfo,
-			    valuesPtr->radioAdminInfoCount,
-			    CWRadioAdminInfoValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	valuesPtr->radioAdminInfo = CW_CREATE_ARRAY_ERR(valuesPtr->radioAdminInfoCount,
+							CWRadioAdminInfoValues,
+							return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
 	i = 0;
 	j = 0;
 

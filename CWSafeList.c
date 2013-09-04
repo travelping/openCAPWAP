@@ -38,7 +38,7 @@ CWBool CWCreateSafeList(CWSafeList * pSafeList)
 	if (pSafeList == NULL)
 		return CW_FALSE;
 
-	CW_CREATE_OBJECT_ERR(pNewList, CWPrivateSafeList, return CW_FALSE;
+	pNewList = CW_CREATE_OBJECT_ERR(CWPrivateSafeList, return CW_FALSE;
 	    );
 
 	//
@@ -158,7 +158,7 @@ CWBool CWAddElementToSafeListHead(CWSafeList safeList, void *pData, int nSize)
 	if ((pList == NULL) || (pData == NULL))
 		return CW_FALSE;
 
-	CW_CREATE_OBJECT_ERR(pNewElement, CWPrivateSafeElement, return CW_FALSE;
+	pNewElement = CW_CREATE_OBJECT_ERR(CWPrivateSafeElement, return CW_FALSE;
 	    );
 	pNewElement->pData = pData;
 	pNewElement->nSize = nSize;
@@ -258,7 +258,7 @@ CWBool CWAddElementToSafeListTail(CWSafeList safeList, void *pData, int nSize)
 	if ((pList == NULL) || (pData == NULL))
 		return CW_FALSE;
 
-	CW_CREATE_OBJECT_ERR(pNewElement, CWPrivateSafeElement, return CW_FALSE;
+	pNewElement = CW_CREATE_OBJECT_ERR(CWPrivateSafeElement, return CW_FALSE;
 	    );
 	pNewElement->pData = pData;
 	pNewElement->nSize = nSize;
@@ -284,7 +284,7 @@ CWBool CWAddElementToSafeListTailwitDataFlag(CWSafeList safeList, void *pData, i
 	if ((pList == NULL) || (pData == NULL))
 		return CW_FALSE;
 
-	CW_CREATE_OBJECT_ERR(pNewElement, CWPrivateSafeElement, return CW_FALSE;
+	pNewElement = CW_CREATE_OBJECT_ERR(CWPrivateSafeElement, return CW_FALSE;
 	    );
 	pNewElement->pData = pData;
 	pNewElement->nSize = nSize;

@@ -278,12 +278,12 @@ CWBool CWParseConfigureResponseMessage(unsigned char *msg, int len, int seqNum, 
 	if (completeMsg.offset != len)
 		return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Garbage at the End of the Message");
 
-	CW_CREATE_ARRAY_ERR((*valuesPtr).radioOperationalInfo,
+	(*valuesPtr).radioOperationalInfo = CW_CREATE_ARRAY_ERR(
 			    (*valuesPtr).radioOperationalInfoCount,
 			    CWRadioOperationalInfoValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
-	CW_CREATE_ARRAY_ERR((*valuesPtr).radiosDecryptErrorPeriod.radios,
+	(*valuesPtr).radiosDecryptErrorPeriod.radios = CW_CREATE_ARRAY_ERR(
 			    (*valuesPtr).radiosDecryptErrorPeriod.radiosCount,
 			    WTPDecryptErrorReportValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );

@@ -88,23 +88,19 @@ CWBool CWParseSettingsFile()
 		Value = ltrim(endTag);
 
 		if (!strcmp(startTag, "IF_NAME")) {
-			CW_CREATE_STRING_FROM_STRING_ERR(gInterfaceName, Value, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-				);
+			gInterfaceName = CW_CREATE_STRING_FROM_STRING_ERR(Value, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
 			CWLog(": %s", gInterfaceName);
 		}
 		else if (!strcmp(startTag, "WTP_ETH_IF_NAME")) {
-			CW_CREATE_STRING_FROM_STRING_ERR(gEthInterfaceName, Value, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-				);
+			gEthInterfaceName = CW_CREATE_STRING_FROM_STRING_ERR(Value, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
 			CWLog(": %s", gEthInterfaceName);
 		}
 		else if (!strcmp(startTag, "RADIO_0_IF_NAME")) {
-			CW_CREATE_STRING_FROM_STRING_ERR(gRadioInterfaceName_0, Value, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-				);
+			gRadioInterfaceName_0 = CW_CREATE_STRING_FROM_STRING_ERR(Value, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
 			CWLog(": %s", gRadioInterfaceName_0);
 		}
 		else if (!strcmp(startTag, "BASE_MAC_IF_NAME")) {
-			CW_CREATE_STRING_FROM_STRING_ERR(gBaseMACInterfaceName, Value, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-				);
+			gBaseMACInterfaceName = CW_CREATE_STRING_FROM_STRING_ERR(Value, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
 			CWLog(": %s", gBaseMACInterfaceName);
 		}
 		else if (!strcmp(startTag, "BOARD_REVISION_NO")) {
@@ -116,33 +112,27 @@ CWBool CWParseSettingsFile()
 			CWLog(": %d", gHostapd_port);
 		}
 		else if (!strcmp(startTag, "WTP_HOSTAPD_UNIX_PATH")) {
-			CW_CREATE_STRING_FROM_STRING_ERR(gHostapd_unix_path, Value, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-				);
+			gHostapd_unix_path = CW_CREATE_STRING_FROM_STRING_ERR(Value, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);	);
 			CWLog(": %s", gHostapd_unix_path);
 		}
 		else if (!strcmp(startTag, "WTP_MODEL_NUM")) {
-			CW_CREATE_STRING_FROM_STRING_ERR(gWtpModelNumber, Value, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-			    );
+			gWtpModelNumber = CW_CREATE_STRING_FROM_STRING_ERR(Value, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
 			CWLog(": %s", gWtpModelNumber);
 		}
 		else if (!strcmp(startTag, "WTP_SERIAL_NUM")) {
-			CW_CREATE_STRING_FROM_STRING_ERR(gWtpSerialNumber, Value, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-				);
+			gWtpSerialNumber = CW_CREATE_STRING_FROM_STRING_ERR(Value, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
 			CWLog(": %s", gWtpSerialNumber);
 		}
 		else if (!strcmp(startTag, "WTP_HARDWARE_VERSION")) {
-			CW_CREATE_STRING_FROM_STRING_ERR(gWtpHardwareVersion, Value, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-				);
+			gWtpHardwareVersion = CW_CREATE_STRING_FROM_STRING_ERR(Value, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
 			CWLog(": %s", gWtpHardwareVersion);
 		}
 		else if (!strcmp(startTag, "WTP_ACTIVE_SOFTWARE_VERSION")) {
-			CW_CREATE_STRING_FROM_STRING_ERR(gWtpActiveSoftwareVersion, Value, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-				);
+			gWtpActiveSoftwareVersion = CW_CREATE_STRING_FROM_STRING_ERR(Value, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
 			CWLog(": %s", gWtpActiveSoftwareVersion);
 		}
 		else if (!strcmp(startTag, "WTP_BOOT_VERSION")) {
-			CW_CREATE_STRING_FROM_STRING_ERR(gWtpBootVersion, Value, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-				);
+			gWtpBootVersion = CW_CREATE_STRING_FROM_STRING_ERR(Value, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
 			CWLog(": %s", gWtpBootVersion);
 		}
 		else

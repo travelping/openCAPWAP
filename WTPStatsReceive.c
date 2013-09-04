@@ -27,7 +27,7 @@
 int create_data_Frame(CWProtocolMessage ** frame, char *buffer, int len)
 {
 
-	CW_CREATE_OBJECT_ERR(*frame, CWProtocolMessage, return 0;
+	*frame = CW_CREATE_OBJECT_ERR(CWProtocolMessage, return 0;
 	    );
 	CWProtocolMessage *auxPtr = *frame;
 	CW_CREATE_PROTOCOL_MESSAGE(*auxPtr, len, return 0;
@@ -41,7 +41,6 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveStats(void *arg)
 {
 
 	int sock, rlen, len, k, fragmentsNum = 0, fromlen;
-	MM_MONITOR_DATA *pData;
 	struct sockaddr_un servaddr;
 	struct sockaddr_un from;
 	static char buffer[PACKET_SIZE + 1];
@@ -72,7 +71,6 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveStats(void *arg)
 		CWExitThread();
 	}
 
-	CW_CREATE_OBJECT_ERR(pData, MM_MONITOR_DATA, EXIT_THREAD);
 	fromlen = sizeof(from);
 
 	/*      Receive data */
@@ -89,9 +87,7 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveStats(void *arg)
 				CWExitThread();
 			};
 
-			pData = (MM_MONITOR_DATA *) data->msg;
-
-			CW_CREATE_OBJECT_ERR(bindingValuesPtr, CWBindingTransportHeaderValues, EXIT_THREAD);
+			bindingValuesPtr = CW_CREATE_OBJECT_ERR(CWBindingTransportHeaderValues, EXIT_THREAD);
 			bindingValuesPtr->dataRate = -1;	//to distinguish between wireless frame e data message (Daniele) see CWBindig.c line 224
 
 			if (CWAssembleDataMessage(&completeMsgPtr, &fragmentsNum, gWTPPathMTU, data, bindingValuesPtr,

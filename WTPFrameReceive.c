@@ -72,7 +72,7 @@ int extractFrameInfo(char *buffer, char *RSSI, char *SNR, int *dataRate)
 int extractFrame(CWProtocolMessage ** frame, unsigned char *buffer, int len)	//len: frame length including prism header
 {
 
-	CW_CREATE_OBJECT_ERR(*frame, CWProtocolMessage, return 0;
+	*frame = CW_CREATE_OBJECT_ERR(CWProtocolMessage, return 0;
 	    );
 	CWProtocolMessage *auxPtr = *frame;
 	CW_CREATE_PROTOCOL_MESSAGE(*auxPtr, len - PRISMH_LEN, return 0;
@@ -84,7 +84,7 @@ int extractFrame(CWProtocolMessage ** frame, unsigned char *buffer, int len)	//l
 
 int extract802_3_Frame(CWProtocolMessage ** frame, unsigned char *buffer, int len)
 {
-	CW_CREATE_OBJECT_ERR(*frame, CWProtocolMessage, return 0;
+	*frame = CW_CREATE_OBJECT_ERR(CWProtocolMessage, return 0;
 	    );
 	CWProtocolMessage *auxPtr = *frame;
 	CW_CREATE_PROTOCOL_MESSAGE(*auxPtr, len, return 0;
@@ -261,7 +261,7 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveFrame(void *arg)
 							extractFrameInfo((char *)buffer, &(bindingValuesPtr->RSSI),
 									 &(bindingValuesPtr->SNR),
 									 &(bindingValuesPtr->dataRate));
-							CW_CREATE_OBJECT_ERR(listElement, CWBindingDataListElement,
+							listElement = CW_CREATE_OBJECT_ERR(CWBindingDataListElement,
 									     EXIT_FRAME_THREAD(gRawSock);
 							    );
 							listElement->frame = frame;
@@ -337,7 +337,7 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveFrame(void *arg)
 				}
 				CWDebugLog("Send 802.3 data(len:%d) to AC", n);
 				;
-				CW_CREATE_OBJECT_ERR(listElement, CWBindingDataListElement, EXIT_FRAME_THREAD(gRawSock);
+				listElement = CW_CREATE_OBJECT_ERR(CWBindingDataListElement, EXIT_FRAME_THREAD(gRawSock);
 				    );
 				listElement->frame = frame;
 				listElement->bindingValues = NULL;

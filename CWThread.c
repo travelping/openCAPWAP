@@ -797,9 +797,9 @@ CWBool CWTimerRequest(int sec, CWThread * threadPtr, CWTimerID * idPtr, int sign
 	if (sec < 0 || threadPtr == NULL || idPtr == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
-	CW_CREATE_OBJECT_ERR(arg, CWThreadTimerArg, return CW_FALSE;
+	arg = CW_CREATE_OBJECT_ERR(CWThreadTimerArg, return CW_FALSE;
 	    );
-	CW_CREATE_OBJECT_ERR(arg->requestedThreadPtr, CWThread, CW_FREE_OBJECT(arg);
+	arg->requestedThreadPtr = CW_CREATE_OBJECT_ERR(CWThread, CW_FREE_OBJECT(arg);
 			     return CW_FALSE;
 	    );
 	CW_COPY_MEMORY(arg->requestedThreadPtr, threadPtr, sizeof(CWThread));

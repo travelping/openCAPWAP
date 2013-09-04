@@ -47,9 +47,8 @@ CWBool ACEnterDataCheck(int WTPIndex, CWProtocolMessage * msgPtr)
 		CWCloseThread();
 	}
 
-	CW_CREATE_OBJECT_ERR(changeStateEvent,
-			     CWProtocolChangeStateEventRequestValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	changeStateEvent =
+		CW_CREATE_OBJECT_ERR(CWProtocolChangeStateEventRequestValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
 
 	if (!(CWParseChangeStateEventRequestMessage(msgPtr->msg, msgPtr->offset, &seqNum, changeStateEvent))) {
 		/* note: we can kill our thread in case of out-of-memory
@@ -152,11 +151,9 @@ CWBool CWParseChangeStateEventRequestMessage(unsigned char *msg,
 	if (completeMsg.offset != len)
 		return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Garbage at the End of the Message");
 
-	CW_CREATE_ARRAY_ERR(valuesPtr->radioOperationalInfo.radios,
-			    valuesPtr->radioOperationalInfo.radiosCount,
-			    CWRadioOperationalInfoValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
-
+	valuesPtr->radioOperationalInfo.radios = CW_CREATE_ARRAY_ERR(valuesPtr->radioOperationalInfo.radiosCount,
+								     CWRadioOperationalInfoValues,
+								     return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
 	completeMsg.offset = offsetTillMessages;
 	i = 0;
 
@@ -197,7 +194,7 @@ CWBool CWAssembleChangeStateEventResponse(CWProtocolMessage ** messagesPtr, int 
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
 	CWDebugLog("Assembling Change State Event Response...");
-	/*CW_CREATE_ARRAY_ERR(msgElems,
+	/*msgElems = CW_CREATE_ARRAY_ERR(
 	 *            msgElemCount,
 	 *            CWProtocolMessage,
 	 *            return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL););

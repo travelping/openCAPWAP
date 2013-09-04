@@ -78,7 +78,7 @@ CWStateTransition CWWTPEnterJoin()
 		return CW_ENTER_DISCOVERY;
 
 	if (gWTPForceACAddress != NULL) {
-		CW_CREATE_OBJECT_ERR(gACInfoPtr, CWACInfoValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+		gACInfoPtr = CW_CREATE_OBJECT_ERR(CWACInfoValues, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 		    );
 		CWNetworkGetAddressForHost(gWTPForceACAddress, &(gACInfoPtr->preferredAddress));
 		gACInfoPtr->security = gWTPForceSecurity;
@@ -342,14 +342,14 @@ CWBool CWParseJoinResponseMessage(unsigned char *msg, int len, int seqNum, CWPro
 		return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Garbage at the End of the Message");
 
 	/* actually read each interface info */
-	CW_CREATE_ARRAY_ERR(valuesPtr->ACInfoPtr.IPv4Addresses,
+	valuesPtr->ACInfoPtr.IPv4Addresses = CW_CREATE_ARRAY_ERR(
 			    valuesPtr->ACInfoPtr.IPv4AddressesCount,
 			    CWProtocolIPv4NetworkInterface, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
 	if (valuesPtr->ACInfoPtr.IPv6AddressesCount > 0) {
 
-		CW_CREATE_ARRAY_ERR(valuesPtr->ACInfoPtr.IPv6Addresses,
+		valuesPtr->ACInfoPtr.IPv6Addresses = CW_CREATE_ARRAY_ERR(
 				    valuesPtr->ACInfoPtr.IPv6AddressesCount,
 				    CWProtocolIPv6NetworkInterface, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 		    );
