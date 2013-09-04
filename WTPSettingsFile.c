@@ -57,28 +57,24 @@ char *gHostapd_unix_path;
 
 CWBool CWParseSettingsFile()
 {
-	char *line = NULL;
+	char line[CW_BUFFER_SIZE];
 
 	gSettingsFile = fopen(gCWSettingsFileName, "rb");
 	if (gSettingsFile == NULL) {
 		CWErrorRaiseSystemError(CW_ERROR_GENERAL);
 	}
 
-	while ((line = (char *)CWGetCommand(gSettingsFile)) != NULL) {
+	while (CWGetCommand(gSettingsFile, line, sizeof(line)) == CW_TRUE) {
 		char *startTag = NULL;
 		char *endTag = NULL;
 		char *Value = NULL;
 
-		if ((startTag = strchr(line, '<')) == NULL) {
-			CW_FREE_OBJECT(line);
+		if ((startTag = strchr(line, '<')) == NULL)
 			continue;
-		}
 		startTag++;
 
-		if ((endTag = strchr(startTag, '>')) == NULL) {
-			CW_FREE_OBJECT(line);
+		if ((endTag = strchr(startTag, '>')) == NULL)
 			continue;
-		}
 		*endTag++ = '\0';
 
 		Value = ltrim(endTag);
@@ -134,7 +130,6 @@ CWBool CWParseSettingsFile()
 		else
 			CWLog(": unknown Tag: %s = %s", startTag, Value);
 
-		CW_FREE_OBJECT(line);
 	}
 	return CW_TRUE;
 }

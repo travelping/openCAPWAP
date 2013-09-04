@@ -53,7 +53,7 @@ extern CWConfigValue gConfigValues[];
 extern int gConfigValuesCount;
 
 CWBool CWParseConfigFile();
-char *CWGetCommand(FILE * configFile);
+CWBool CWGetCommand(FILE * configFile, char *buf, size_t size);
 CWBool CWConfigFileDestroyLib(void);
 
 #endif

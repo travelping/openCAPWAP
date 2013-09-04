@@ -67,17 +67,15 @@ char *CWFgets(char *buf, int bufSize, FILE * f)
 /*
  * Get one "useful" (not a comment, not blank) line from the config file
  */
-char *CWGetCommand(FILE * configFile)
+CWBool CWGetCommand(FILE * configFile, char *buf, size_t size)
 {
-	char buf[CW_BUFFER_SIZE];
-
 	do {
-		if (CWFgets(buf, sizeof(buf), configFile) == NULL)
-			return NULL;
+		if (CWFgets(buf, size, configFile) == NULL)
+			return CW_FALSE;
 		rtrim(buf);
 	} while (buf[0] == '#' || buf[0] == '\0');	/* skip comments and empty lines */
 
-	return CW_CREATE_STRING_FROM_STRING(buf);
+	return CW_TRUE;
 }
 
 /*
@@ -90,8 +88,7 @@ char *CWGetCommand(FILE * configFile)
  */
 CWBool CWParseTheFile(CWBool isCount)
 {
-
-	char *line = NULL;
+	char line[CW_BUFFER_SIZE];
 	int i;
 
 	if (!isCount) {
@@ -123,7 +120,7 @@ CWBool CWParseTheFile(CWBool isCount)
 	if (gCWConfigFile == NULL)
 		CWErrorRaiseSystemError(CW_ERROR_GENERAL);
 
-	while ((line = CWGetCommand(gCWConfigFile)) != NULL) {
+	while (CWGetCommand(gCWConfigFile, line, sizeof(line)) == CW_TRUE) {
 
 		int i, j;
 
@@ -163,8 +160,7 @@ CWBool CWParseTheFile(CWBool isCount)
 					CWDebugLog("*** Parsing String Array... *** \n");
 #endif
 					j = 0;
-					CW_FREE_OBJECT(line);
-					while ((line = CWGetCommand(gCWConfigFile)) != NULL
+					while (CWGetCommand(gCWConfigFile, line, sizeof(line)) == CW_TRUE
 					       && strcmp(line, gConfigValues[i].endCode)) {
 #ifdef CW_DEBUGGING
 						CWDebugLog("*** Parsing String (%s) *** \n", line);
@@ -177,14 +173,12 @@ CWBool CWParseTheFile(CWBool isCount)
 								CW_CREATE_STRING_FROM_STRING_ERR(line, return CWErrorRaise (CW_ERROR_OUT_OF_MEMORY, NULL););
 							j++;
 						}
-						CW_FREE_OBJECT(line);
 					}
 					break;
 				}
 				break;
 			}
 		}
-		CW_FREE_OBJECT(line);
 	}
 
 	CWDebugLog("*** Config File Parsed ***");

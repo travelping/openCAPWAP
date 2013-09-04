@@ -146,9 +146,6 @@ static inline void *ralloc_memdup(const void *ctx, void *src, size_t size)
 		__p;							\
 	})
 
-#define CW_CREATE_STRING_FROM_STRING(src)				\
-	strdup((src))
-
 #define CW_CREATE_STRING_FROM_STRING_ERR(src, on_err)			\
 	({								\
 		char *__dest = strdup((src));				\
