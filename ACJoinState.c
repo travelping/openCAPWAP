@@ -77,7 +77,7 @@ CWBool ACEnterJoin(int WTPIndex, CWProtocolMessage * msgPtr)
 
 		auxData->type = CW_MSG_ELEMENT_AC_IPV4_LIST_CW_TYPE;
 		auxData->value = 0;
-		CWAddElementToList(&msgElemList, auxData);
+		CWAddElementToList(NULL, &msgElemList, auxData);
 	}
 	if (ACIpv6List) {
 		if (!(auxData = ralloc(NULL, CWMsgElemData)))
@@ -85,7 +85,7 @@ CWBool ACEnterJoin(int WTPIndex, CWProtocolMessage * msgPtr)
 
 		auxData->type = CW_MSG_ELEMENT_AC_IPV6_LIST_CW_TYPE;
 		auxData->value = 0;
-		CWAddElementToList(&msgElemList, auxData);
+		CWAddElementToList(NULL, &msgElemList, auxData);
 	}
 	if (resultCode) {
 		if (!(auxData = ralloc(NULL, CWMsgElemData)))
@@ -93,7 +93,7 @@ CWBool ACEnterJoin(int WTPIndex, CWProtocolMessage * msgPtr)
 
 		auxData->type = CW_MSG_ELEMENT_RESULT_CODE_CW_TYPE;
 		auxData->value = resultCodeValue;
-		CWAddElementToList(&msgElemList, auxData);
+		CWAddElementToList(NULL, &msgElemList, auxData);
 	}
 	/*
 	   if(sessionID){
@@ -101,7 +101,7 @@ CWBool ACEnterJoin(int WTPIndex, CWProtocolMessage * msgPtr)
 	   	return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	   auxData->type =  CW_MSG_ELEMENT_SESSION_ID_CW_TYPE;
 	   auxData->value = CWRandomIntInRange(0, INT_MAX);
-	   CWAddElementToList(&msgElemList,auxData);
+	   CWAddElementToList(NULL, &msgElemList,auxData);
 	   }
 	 */
 

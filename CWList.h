@@ -42,8 +42,8 @@ typedef enum {
 
 typedef CWListElement *CWList;
 
-CWBool CWAddElementToList(CWList * list, void *element);
-CWBool CWAddElementToListTail(CWList * list, void *element);
+CWBool CWAddElementToList(const void *ctx, CWList * list, void *element);
+CWBool CWAddElementToListTail(const void *ctx, CWList * list, void *element);
 CWList CWListGetFirstElem(CWList * list);
 void *CWListGetNext(CWList list, CWListIterateMode mode);
 void *CWSearchInList(CWList list, void *baseElement, CWBool(*compareFunc) (const void *, const void *));

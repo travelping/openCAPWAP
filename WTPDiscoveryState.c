@@ -105,7 +105,7 @@ static CWBool CWAddDiscoverACAddress(CWList *ACList, CWNetworkLev4Address *addre
                CW_COPY_NET_ADDR_PTR(&AC->address, address);
                AC->received = 0;
 
-               if (!CWAddElementToList(ACList, AC)) {
+               if (!CWAddElementToList(NULL, ACList, AC)) {
                        CW_FREE_OBJECT(AC);
                        return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
                }

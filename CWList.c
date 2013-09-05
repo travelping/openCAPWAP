@@ -29,7 +29,7 @@
 
 // adds an element at the head of the list
 // CW_TRUE if the operation is successful, CW_FALSE otherwise
-CWBool CWAddElementToList(CWList * list, void *element)
+CWBool CWAddElementToList(const void *ctx, CWList * list, void *element)
 {
 	CWListElement *newElem;
 
@@ -37,7 +37,7 @@ CWBool CWAddElementToList(CWList * list, void *element)
 		return CW_FALSE;
 
 	if ((*list) == NULL) {	// first element
-		if (!((*list) = ralloc(NULL, CWListElement)))
+		if (!((*list) = ralloc(ctx, CWListElement)))
 			return CW_FALSE;
 
 		(*list)->data = element;
@@ -45,7 +45,7 @@ CWBool CWAddElementToList(CWList * list, void *element)
 		return CW_TRUE;
 	}
 
-	if (!(newElem = ralloc(NULL, CWListElement)))
+	if (!(newElem = ralloc(ctx, CWListElement)))
 		return CW_FALSE;
 
 	newElem->data = element;
@@ -58,7 +58,7 @@ CWBool CWAddElementToList(CWList * list, void *element)
 
 // adds an element at the tail of the list
 // CW_TRUE if the operation is successful, CW_FALSE otherwise
-CWBool CWAddElementToListTail(CWList * list, void *element)
+CWBool CWAddElementToListTail(const void *ctx, CWList * list, void *element)
 {
 	CWListElement *newElem;
 
@@ -66,7 +66,7 @@ CWBool CWAddElementToListTail(CWList * list, void *element)
 		return CW_FALSE;
 
 	if ((*list) == NULL) {	// first element
-		if (!((*list) = ralloc(NULL, CWListElement)))
+		if (!((*list) = ralloc(ctx, CWListElement)))
 			return CW_FALSE;
 
 		(*list)->data = element;
@@ -79,7 +79,7 @@ CWBool CWAddElementToListTail(CWList * list, void *element)
 		newElem = newElem->next;
 	}
 
-	if (!(newElem->next = ralloc(NULL, CWListElement)))
+	if (!(newElem->next = ralloc(ctx, CWListElement)))
 		return CW_FALSE;
 
 	newElem->next->data = element;

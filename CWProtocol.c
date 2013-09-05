@@ -644,7 +644,7 @@ CWBool CWProtocolParseFragment(unsigned char *buf, int readBytes,
 			   if (!(fragPtr->data = ralloc_memdup(NULL, buf + msg.offset, fragPtr->dataLen)))
 				   return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
-			   if(!CWAddElementToList(fragmentsListPtr, fragPtr)) {
+			   if(!CWAddElementToList(NULL, fragmentsListPtr, fragPtr)) {
 			   CWDeleteList(fragmentsListPtr, CWProtocolDestroyFragment);
 			   CW_FREE_OBJECT(fragPtr);
 			   return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
@@ -657,7 +657,7 @@ CWBool CWProtocolParseFragment(unsigned char *buf, int readBytes,
 				if (!(fragPtr->data = ralloc_memdup(NULL, buf + msg.offset, fragPtr->dataLen)))
 					return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
-				if (!CWAddElementToList(fragmentsListPtr, fragPtr)) {
+				if (!CWAddElementToList(NULL, fragmentsListPtr, fragPtr)) {
 					CWDeleteList(fragmentsListPtr, CWProtocolDestroyFragment);
 					CW_FREE_OBJECT(fragPtr);
 					return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
@@ -675,7 +675,7 @@ CWBool CWProtocolParseFragment(unsigned char *buf, int readBytes,
 			if (!(fragPtr->data = ralloc_memdup(NULL, buf + msg.offset, fragPtr->dataLen)))
 				return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
-			if (!CWAddElementToList(fragmentsListPtr, fragPtr)) {
+			if (!CWAddElementToList(NULL, fragmentsListPtr, fragPtr)) {
 				CWDeleteList(fragmentsListPtr, CWProtocolDestroyFragment);
 				CW_FREE_OBJECT(fragPtr);
 				return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);

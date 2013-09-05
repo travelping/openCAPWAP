@@ -241,7 +241,7 @@ CWBool CWNetworkInitSocketServerMultiHomed(CWMultiHomedSocket * sockPtr,
 		CW_COPY_NET_ADDR_PTR(&(p->dataAddr), ifi->ifi_addr);
 		p->dataSock = sock;
 
-		if (!CWAddElementToList(&interfaceList, p)) {
+		if (!CWAddElementToList(NULL, &interfaceList, p)) {
 
 			return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 		}
@@ -299,7 +299,7 @@ CWBool CWNetworkInitSocketServerMultiHomed(CWMultiHomedSocket * sockPtr,
 			 */
 			p->addrIPv4.ss_family = AF_UNSPEC;
 
-			if (!CWAddElementToList(&interfaceList, p)) {
+			if (!CWAddElementToList(NULL, &interfaceList, p)) {
 
 				return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 			}
@@ -415,7 +415,7 @@ CWBool CWNetworkInitSocketServerMultiHomed(CWMultiHomedSocket * sockPtr,
 	p->addrIPv4.ss_family = AF_UNSPEC;
 
 	CW_COPY_NET_ADDR_PTR(&(p->addr), &wildaddr);
-	if (!CWAddElementToList(&interfaceList, p)) {
+	if (!CWAddElementToList(NULL, &interfaceList, p)) {
 		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	}
 	sockPtr->count++;
@@ -475,7 +475,7 @@ CWBool CWNetworkInitSocketServerMultiHomed(CWMultiHomedSocket * sockPtr,
 		p->addrIPv4.ss_family = AF_UNSPEC;
 
 		CW_COPY_NET_ADDR_PTR(&(p->addr), res->ai_addr);
-		if (!CWAddElementToList(&interfaceList, p)) {
+		if (!CWAddElementToList(NULL, &interfaceList, p)) {
 			return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 		}
 		sockPtr->count++;	/* we add a socket to the multihomed socket */
