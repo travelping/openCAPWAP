@@ -728,8 +728,8 @@ static inline unsigned int CWProtocolRetrieve32(CWProtocolMessage * msgPtr)
 	return val;
 }
 
-char *CWProtocolRetrieveStr(CWProtocolMessage * msgPtr, int len);
-unsigned char *CWProtocolRetrieveRawBytes(CWProtocolMessage * msgPtr, int len);
+char *CWProtocolRetrieveStr(const void *ctx, CWProtocolMessage * msgPtr, int len);
+unsigned char *CWProtocolRetrieveRawBytes(const void *ctx, CWProtocolMessage * msgPtr, int len);
 void CWProtocolCopyRawBytes(void * dest, CWProtocolMessage * msgPtr, int len);
 
 CWBool CWProtocolParseFragment(unsigned char *buf, int readBytes,

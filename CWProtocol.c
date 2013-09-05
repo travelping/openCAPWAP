@@ -60,11 +60,11 @@ void CWProtocolStoreRawBytes(CWProtocolMessage * msgPtr, unsigned char *bytes, i
 
 // retrieves a string (not null-terminated) from the message, increments the current offset in bytes.
 // Adds the '\0' char at the end of the string which is returned
-char *CWProtocolRetrieveStr(CWProtocolMessage * msgPtr, int len)
+char *CWProtocolRetrieveStr(const void *ctx, CWProtocolMessage * msgPtr, int len)
 {
 	char *str;
 
-	if (!(str = ralloc_strndup(NULL, (char *)msgPtr->msg + msgPtr->offset, len)))
+	if (!(str = ralloc_strndup(ctx, (char *)msgPtr->msg + msgPtr->offset, len)))
 		return NULL;
 
 	msgPtr->offset += len;
@@ -72,11 +72,11 @@ char *CWProtocolRetrieveStr(CWProtocolMessage * msgPtr, int len)
 }
 
 // retrieves len bytes from the message, increments the current offset in bytes.
-unsigned char *CWProtocolRetrieveRawBytes(CWProtocolMessage * msgPtr, int len)
+unsigned char *CWProtocolRetrieveRawBytes(const void *ctx, CWProtocolMessage * msgPtr, int len)
 {
 	unsigned char *bytes;
 
-	if (!(bytes = ralloc_memdup(NULL, msgPtr->msg + msgPtr->offset, len)))
+	if (!(bytes = ralloc_memdup(ctx, msgPtr->msg + msgPtr->offset, len)))
 		return NULL;
 
 	msgPtr->offset += len;
@@ -86,8 +86,8 @@ unsigned char *CWProtocolRetrieveRawBytes(CWProtocolMessage * msgPtr, int len)
 // retrieves len bytes from the message, increments the current offset in bytes.
 void CWProtocolCopyRawBytes(void *dest, CWProtocolMessage * msgPtr, int len)
 {
-	CW_COPY_MEMORY(dest, &((msgPtr->msg)[(msgPtr->offset)]), len);
-	(msgPtr->offset) += len;
+	CW_COPY_MEMORY(dest, msgPtr->msg + msgPtr->offset, len);
+	msgPtr->offset += len;
 }
 
 void CWProtocolDestroyMsgElemData(void *f)
@@ -960,7 +960,7 @@ CWBool CWParseACName(CWProtocolMessage * msgPtr, int len, char **valPtr)
 {
 	CWParseMessageElementStart();
 
-	*valPtr = CWProtocolRetrieveStr(msgPtr, len);
+	*valPtr = CWProtocolRetrieveStr(NULL, msgPtr, len);
 	if (valPtr == NULL)
 		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 //  CWDebugLog("AC Name:%s", *valPtr);
@@ -1036,7 +1036,7 @@ void CWFreeMessageFragments(CWProtocolMessage * messages, int fragmentsNum)
 
 unsigned char *CWParseSessionID(CWProtocolMessage * msgPtr, int len)
 {
-	return CWProtocolRetrieveRawBytes(msgPtr, 16);
+	return CWProtocolRetrieveRawBytes(NULL, msgPtr, 16);
 }
 
 CWBool CWParseTPIEEE80211WLanHoldTime(CWProtocolMessage * msgPtr, int len, unsigned short int * valPtr)

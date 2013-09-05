@@ -736,7 +736,7 @@ CWBool CWParseConfigurationUpdateResponseMessage(CWProtocolMessage * msgPtr,
 					payloadSize = CWProtocolRetrieve32(msgPtr);
 					if (payloadSize != 0) {
 						(*vendValues)->payload =
-						    (void *)CWProtocolRetrieveStr(msgPtr, payloadSize);
+						    (void *)CWProtocolRetrieveStr(NULL, msgPtr, payloadSize);
 					} else
 						(*vendValues)->payload = NULL;
 					break;
@@ -750,7 +750,7 @@ CWBool CWParseConfigurationUpdateResponseMessage(CWProtocolMessage * msgPtr,
 								    "Unrecognized Message Element in Configuration Update Response");
 					}
 					(*vendValues)->payload =
-					    (void *)CWProtocolRetrieveRawBytes(msgPtr, payloadSize);
+					    (void *)CWProtocolRetrieveRawBytes(NULL, msgPtr, payloadSize);
 					break;
 				default:
 					return CWErrorRaise(CW_ERROR_INVALID_FORMAT,

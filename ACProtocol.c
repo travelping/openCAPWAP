@@ -544,7 +544,7 @@ CWBool CWParseACNameWithIndex(CWProtocolMessage * msgPtr, int len, CWACNameWithI
 	valPtr->index = CWProtocolRetrieve8(msgPtr);
 	//CWDebugLog("CW_MSG_ELEMENT_WTP_RADIO_ID: %d", (valPtr->radios)[radioIndex].ID);
 
-	valPtr->ACName = CWProtocolRetrieveStr(msgPtr, len - 1);
+	valPtr->ACName = CWProtocolRetrieveStr(NULL, msgPtr, len - 1);
 	//CWDebugLog("CW_MSG_ELEMENT_WTP_RADIO_TYPE: %d",   (valPtr->radios)[radioIndex].type);
 
 	//CWDebugLog("AC Name with index: %d - %s", valPtr->index, valPtr->ACName);
@@ -565,7 +565,7 @@ CWBool CWParseLocationData(CWProtocolMessage * msgPtr, int len, char **valPtr)
 {
 	CWParseMessageElementStart();
 
-	*valPtr = CWProtocolRetrieveStr(msgPtr, len);
+	*valPtr = CWProtocolRetrieveStr(NULL, msgPtr, len);
 	if (valPtr == NULL)
 		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 //  CWDebugLog("Location Data:%s", *valPtr);
@@ -580,9 +580,9 @@ CWBool CWParseMsgElemDuplicateIPv4Address(CWProtocolMessage * msgPtr, int len, W
 	valPtr->ipv4Address = CWProtocolRetrieve32(msgPtr);
 	valPtr->status = CWProtocolRetrieve8(msgPtr);
 	valPtr->length = CWProtocolRetrieve8(msgPtr);
-	valPtr->MACoffendingDevice_forIpv4 = (unsigned char *)CWProtocolRetrieveRawBytes(msgPtr, valPtr->length);
+	valPtr->MACoffendingDevice_forIpv4 = (unsigned char *)CWProtocolRetrieveRawBytes(NULL, msgPtr, valPtr->length);
 
-	//valPtr->MACoffendingDevice_forIpv4 = (unsigned char*)CWProtocolRetrieveRawBytes(msgPtr,6);
+	//valPtr->MACoffendingDevice_forIpv4 = (unsigned char*)CWProtocolRetrieveRawBytes(NULL, msgPtr,6);
 	//valPtr->status = CWProtocolRetrieve8(msgPtr);
 //  CWDebugLog("Duplicate IPv4: %d", valPtr->ipv4Address);
 
@@ -596,18 +596,18 @@ CWBool CWParseMsgElemDuplicateIPv6Address(CWProtocolMessage * msgPtr, int len, W
 	int i;
 	for (i = 0; i < 16; i++) {
 		unsigned char *aux;
-		aux = CWProtocolRetrieveRawBytes(msgPtr, 1);
+		aux = CWProtocolRetrieveRawBytes(NULL, msgPtr, 1);
 		(valPtr->ipv6Address).s6_addr[i] = *aux;
 	}
 
 //  CWDebugLog("Duplicate IPv6");
-	//valPtr->MACoffendingDevice_forIpv6 = (unsigned char*)CWProtocolRetrieveRawBytes(msgPtr,6);
+	//valPtr->MACoffendingDevice_forIpv6 = (unsigned char*)CWProtocolRetrieveRawBytes(NULL, msgPtr,6);
 
 	valPtr->status = CWProtocolRetrieve8(msgPtr);
 
 	valPtr->length = CWProtocolRetrieve8(msgPtr);
 
-	valPtr->MACoffendingDevice_forIpv6 = (unsigned char *)CWProtocolRetrieveRawBytes(msgPtr, valPtr->length);
+	valPtr->MACoffendingDevice_forIpv6 = (unsigned char *)CWProtocolRetrieveRawBytes(NULL, msgPtr, valPtr->length);
 
 	CWParseMessageElementEnd();
 }
@@ -654,7 +654,7 @@ CWBool CWParseWTPBoardData(CWProtocolMessage * msgPtr, int len, CWWTPVendorInfos
 		(valPtr->vendorInfos)[i].type = CWProtocolRetrieve16(msgPtr);
 		(valPtr->vendorInfos)[i].length = CWProtocolRetrieve16(msgPtr);
 		(valPtr->vendorInfos)[i].valuePtr =
-			(char *)CWProtocolRetrieveRawBytes(msgPtr, valPtr->vendorInfos[i].length);
+			(char *)CWProtocolRetrieveRawBytes(NULL, msgPtr, valPtr->vendorInfos[i].length);
 
 		if ((valPtr->vendorInfos)[i].valuePtr == NULL)
 			return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
@@ -675,7 +675,7 @@ CWBool CWParseMsgElemDataTransferData(CWProtocolMessage * msgPtr, int len,
 
 	valPtr->data = CWProtocolRetrieve8(msgPtr);
 	valPtr->length = CWProtocolRetrieve8(msgPtr);
-	valPtr->debug_info = CWProtocolRetrieveStr(msgPtr, valPtr->length);
+	valPtr->debug_info = CWProtocolRetrieveStr(NULL, msgPtr, valPtr->length);
 	//CWDebugLog("- %s ---",valPtr->debug_info);
 
 	CWParseMessageElementEnd();
@@ -727,7 +727,7 @@ CWBool CWParseWTPDescriptor(CWProtocolMessage * msgPtr, int len, CWWTPDescriptor
 		valPtr->vendorInfos.vendorInfos[i].type             = CWProtocolRetrieve16(msgPtr);
 		valPtr->vendorInfos.vendorInfos[i].length           = CWProtocolRetrieve16(msgPtr);
 		valPtr->vendorInfos.vendorInfos[i].valuePtr =
-			CWProtocolRetrieveStr(msgPtr, valPtr->vendorInfos.vendorInfos[i].length);
+			CWProtocolRetrieveStr(NULL, msgPtr, valPtr->vendorInfos.vendorInfos[i].length);
 		if (valPtr->vendorInfos.vendorInfos[i].valuePtr == NULL)
 			return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
@@ -839,7 +839,7 @@ CWBool CWParseWTPName(CWProtocolMessage * msgPtr, int len, char **valPtr)
 {
 	CWParseMessageElementStart();
 
-	*valPtr = CWProtocolRetrieveStr(msgPtr, len);
+	*valPtr = CWProtocolRetrieveStr(NULL, msgPtr, len);
 	if (valPtr == NULL)
 		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 //  CWDebugLog("WTP Name:%s", *valPtr);
@@ -921,9 +921,9 @@ CWBool CWParseMsgElemDecryptErrorReport(CWProtocolMessage * msgPtr, int len, CWD
 			return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 		int size = sizeof(CWMACAddress) * (valPtr->numEntries);
-		CW_COPY_MEMORY(valPtr->decryptErrorMACAddressList, CWProtocolRetrieveRawBytes(msgPtr, size), size);
-		//valPtr->decryptErrorMACAddressList =(unsigned char*) CWProtocolRetrieveRawBytes(msgPtr, sizeof(CWMACAddress)*(valPtr->numEntries));
-		//CW_COPY_MEMORY(&((valPtr->ACIPv6List)[i]), CWProtocolRetrieveRawBytes(msgPtr, 16), 16);
+		CW_COPY_MEMORY(valPtr->decryptErrorMACAddressList, CWProtocolRetrieveRawBytes(NULL, msgPtr, size), size);
+		//valPtr->decryptErrorMACAddressList =(unsigned char*) CWProtocolRetrieveRawBytes(NULL, msgPtr, sizeof(CWMACAddress)*(valPtr->numEntries));
+		//CW_COPY_MEMORY(&((valPtr->ACIPv6List)[i]), CWProtocolRetrieveRawBytes(NULL, msgPtr, 16), 16);
 		/*
 		   int j;
 		   for (j=0;j<(sizeof(CWMACAddress)*(valPtr->numEntries)); j++)

@@ -223,7 +223,7 @@ CWBool CWParseTransportHeaderMACAddress(CWProtocolMessage * msgPtr, unsigned cha
 	//CWDebugLog("Parse Transport Header");
 	int Mac_len = CWProtocolRetrieve8(msgPtr);
 
-	vval = (unsigned char *)CWProtocolRetrieveRawBytes(msgPtr, 7);
+	vval = (unsigned char *)CWProtocolRetrieveRawBytes(NULL, msgPtr, 7);
 
 	if (mac_ptr != NULL) {
 

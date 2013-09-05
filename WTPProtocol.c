@@ -988,7 +988,7 @@ CWBool CWParseACDescriptor(CWProtocolMessage * msgPtr, int len, CWACInfoValues *
 		valPtr->vendorInfos.vendorInfos[i].type = CWProtocolRetrieve16(msgPtr);
 		valPtr->vendorInfos.vendorInfos[i].length = CWProtocolRetrieve16(msgPtr);
 		valPtr->vendorInfos.vendorInfos[i].valuePtr =
-		  CWProtocolRetrieveRawBytes(msgPtr, valPtr->vendorInfos.vendorInfos[i].length);
+		  CWProtocolRetrieveRawBytes(NULL, msgPtr, valPtr->vendorInfos.vendorInfos[i].length);
 
 		if (valPtr->vendorInfos.vendorInfos[i].valuePtr == NULL)
 			return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
@@ -1053,7 +1053,7 @@ CWBool CWParseACIPv6List(CWProtocolMessage * msgPtr, int len, ACIPv6ListValues *
 		 * 19/10/2009 - Donato Capitella
 		 */
 		void *ptr;
-		ptr = CWProtocolRetrieveRawBytes(msgPtr, 16);
+		ptr = CWProtocolRetrieveRawBytes(NULL, msgPtr, 16);
 		CW_COPY_MEMORY(&((valPtr->ACIPv6List)[i]), ptr, 16);
 		CW_FREE_OBJECT(ptr);
 		CW_COPY_MEMORY(&(addr.sin6_addr), &((valPtr->ACIPv6List)[i]), 16);
@@ -1084,7 +1084,7 @@ CWBool CWParseDeleteStation(CWProtocolMessage * msgPtr, int len)
 	//CWDebugLog("radio ID %d",radioID);
 	Length = CWProtocolRetrieve8(msgPtr);
 	//CWDebugLog("Length of mac address field %d",Length);
-	StationMacAddress = (unsigned char *)CWProtocolRetrieveRawBytes(msgPtr, Length);
+	StationMacAddress = (unsigned char *)CWProtocolRetrieveRawBytes(NULL, msgPtr, Length);
 
 	CWDebugLog("DEL MAC: %02X:%02X:%02X:%02X:%02X:%02X", (unsigned char)StationMacAddress[0],
 		   (unsigned char)StationMacAddress[1],
@@ -1195,7 +1195,7 @@ CWBool CWParseAddStation(CWProtocolMessage * msgPtr, int len)
 	//CWDebugLog("radio ID %d",radioID);
 	Length = CWProtocolRetrieve8(msgPtr);
 	//CWDebugLog("Length of mac address field %d",Length);
-	StationMacAddress = (unsigned char *)CWProtocolRetrieveRawBytes(msgPtr, Length);
+	StationMacAddress = (unsigned char *)CWProtocolRetrieveRawBytes(NULL, msgPtr, Length);
 
 	CWDebugLog("ADD MAC: %02X:%02X:%02X:%02X:%02X:%02X", (unsigned char)StationMacAddress[0],
 		   (unsigned char)StationMacAddress[1],
@@ -1238,7 +1238,7 @@ CWBool CWParseCWControlIPv6Addresses(CWProtocolMessage * msgPtr, int len, CWProt
 {
 	CWParseMessageElementStart();
 
-	CW_COPY_MEMORY(&(valPtr->addr.sin6_addr), CWProtocolRetrieveRawBytes(msgPtr, 16), 16);
+	CWProtocolCopyRawBytes(&valPtr->addr.sin6_addr, msgPtr, 16);
 	valPtr->addr.sin6_family = AF_INET6;
 	valPtr->addr.sin6_port = htons(CW_CONTROL_PORT);
 

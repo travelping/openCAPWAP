@@ -51,7 +51,7 @@ CWBool CWParseUCIPayload(CWProtocolMessage * msgPtr, CWVendorUciValues ** payloa
 	uciPayload->response = NULL;
 	argsLen = (unsigned int)CWProtocolRetrieve32(msgPtr);
 	if (argsLen != 0) {
-		uciPayload->commandArgs = CWProtocolRetrieveStr(msgPtr, argsLen);
+		uciPayload->commandArgs = CWProtocolRetrieveStr(NULL, msgPtr, argsLen);
 	} else
 		uciPayload->commandArgs = NULL;
 
@@ -81,7 +81,7 @@ CWBool CWParseWUMPayload(CWProtocolMessage * msgPtr, CWVendorWumValues ** payloa
 	} else if (wumPayload->type == WTP_CUP_FRAGMENT) {
 		wumPayload->_seq_num_ = (unsigned int)CWProtocolRetrieve32(msgPtr);
 		wumPayload->_cup_fragment_size_ = (unsigned int)CWProtocolRetrieve32(msgPtr);
-		wumPayload->_cup_ = CWProtocolRetrieveRawBytes(msgPtr, wumPayload->_cup_fragment_size_);
+		wumPayload->_cup_ = CWProtocolRetrieveRawBytes(NULL, msgPtr, wumPayload->_cup_fragment_size_);
 	}
 
 	*payloadPtr = wumPayload;
