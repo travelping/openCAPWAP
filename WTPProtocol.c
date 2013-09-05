@@ -83,8 +83,8 @@ CWBool CWAssembleMsgElemACNameWithIndex(const void *ctx, CWProtocolMessage * msg
 	for (i = 0; i < ACsinfo.count; i++) {
 		//      CWDebugLog("AC Name with index: %d - %s", ACsinfo.ACNameIndex[i].index, ACsinfo.ACNameIndex[i].ACName);
 		CWInitMsgElem(msgs, msgs +i, ac_Index_length + strlen(ACsinfo.ACNameIndex[i].ACName), CW_MSG_ELEMENT_AC_NAME_INDEX_CW_TYPE);
-		CWProtocolStore8(&(msgs[i]), ACsinfo.ACNameIndex[i].index);	// ID of the AC
-		CWProtocolStoreStr(&(msgs[i]), ACsinfo.ACNameIndex[i].ACName);	// name of the AC
+		CWProtocolStore8(msgs + i, ACsinfo.ACNameIndex[i].index);	// ID of the AC
+		CWProtocolStoreStr(msgs + i, ACsinfo.ACNameIndex[i].ACName);	// name of the AC
 		CWFinalizeMsgElem(msgs + i);
 
 		len += msgs[i].offset;
@@ -93,7 +93,7 @@ CWBool CWAssembleMsgElemACNameWithIndex(const void *ctx, CWProtocolMessage * msg
 	    );
 
 	for (i = 0; i < ACsinfo.count; i++)
-		CWProtocolStoreMessage(msgPtr, &(msgs[i]));
+		CWProtocolStoreMessage(msgPtr, msgs + i);
 
 	CW_FREE_OBJECT(msgs);
 	CW_FREE_OBJECT(ACsinfo.ACNameIndex);
@@ -586,8 +586,8 @@ CWBool CWAssembleMsgElemRadioAdminState(const void *ctx, CWProtocolMessage * msg
 	for (i = 0; i < infos.radiosCount; i++) {
 		//      CWDebugLog("Radio Admin State: %d - %d - %d", infos.radios[i].ID, infos.radios[i].state, infos.radios[i].cause);
 		CWInitMsgElem(msgs, msgs +i, 2, CW_MSG_ELEMENT_RADIO_ADMIN_STATE_CW_TYPE);
-		CWProtocolStore8(&(msgs[i]), infos.radios[i].ID);	// ID of the radio
-		CWProtocolStore8(&(msgs[i]), infos.radios[i].state);	// state of the radio
+		CWProtocolStore8(msgs + i, infos.radios[i].ID);	// ID of the radio
+		CWProtocolStore8(msgs + i, infos.radios[i].state);	// state of the radio
 		CWFinalizeMsgElem(msgs + i);
 
 		len += msgs[i].offset;
@@ -597,7 +597,7 @@ CWBool CWAssembleMsgElemRadioAdminState(const void *ctx, CWProtocolMessage * msg
 	    );
 
 	for (i = 0; i < infos.radiosCount; i++)
-		CWProtocolStoreMessage(msgPtr, &(msgs[i]));
+		CWProtocolStoreMessage(msgPtr, msgs + i);
 
 	CW_FREE_OBJECT(msgs);
 	CW_FREE_OBJECT(infos.radios);
@@ -626,9 +626,9 @@ CWBool CWAssembleMsgElemRadioOperationalState(const void *ctx, int radioID, CWPr
 	for (i = 0; i < infos.radiosCount; i++) {
 		//      CWDebugLog("Radio Operational State: %d - %d - %d", infos.radios[i].ID, infos.radios[i].state, infos.radios[i].cause);
 		CWInitMsgElem(msgs, msgs +i, 3, CW_MSG_ELEMENT_RADIO_OPERAT_STATE_CW_TYPE);
-		CWProtocolStore8(&(msgs[i]), infos.radios[i].ID);	// ID of the radio
-		CWProtocolStore8(&(msgs[i]), infos.radios[i].state);	// state of the radio
-		CWProtocolStore8(&(msgs[i]), infos.radios[i].cause);
+		CWProtocolStore8(msgs + i, infos.radios[i].ID);	// ID of the radio
+		CWProtocolStore8(msgs + i, infos.radios[i].state);	// state of the radio
+		CWProtocolStore8(msgs + i, infos.radios[i].cause);
 		CWFinalizeMsgElem(msgs + i);
 
 		len += msgs[i].offset;
@@ -638,7 +638,7 @@ CWBool CWAssembleMsgElemRadioOperationalState(const void *ctx, int radioID, CWPr
 	    );
 
 	for (i = 0; i < infos.radiosCount; i++)
-		CWProtocolStoreMessage(msgPtr, &(msgs[i]));
+		CWProtocolStoreMessage(msgPtr, msgs + i);
 
 	CW_FREE_OBJECT(msgs);
 	CW_FREE_OBJECT(infos.radios);
@@ -669,10 +669,10 @@ CWBool CWAssembleMsgElemDecryptErrorReport(const void *ctx, CWProtocolMessage * 
 		decrypy_Error_Report_Length = 2 + sizeof(CWMACAddress) * (infos.radios[i].numEntries);
 
 		CWInitMsgElem(msgs, msgs +i, decrypy_Error_Report_Length, CW_MSG_ELEMENT_CW_DECRYPT_ER_REPORT_CW_TYPE);
-		CWProtocolStore8(&(msgs[i]), infos.radios[i].ID);               // ID of the radio
-		CWProtocolStore8(&(msgs[i]), infos.radios[i].numEntries);       // state of the radio
-		CWProtocolStore8(&(msgs[i]), (unsigned char)sizeof(CWMACAddress) * (infos.radios[i].numEntries));
-		CWProtocolStoreRawBytes(&(msgs[i]), (unsigned char *)*(infos.radios[i].decryptErrorMACAddressList),
+		CWProtocolStore8(msgs + i, infos.radios[i].ID);               // ID of the radio
+		CWProtocolStore8(msgs + i, infos.radios[i].numEntries);       // state of the radio
+		CWProtocolStore8(msgs + i, (unsigned char)sizeof(CWMACAddress) * (infos.radios[i].numEntries));
+		CWProtocolStoreRawBytes(msgs + i, (unsigned char *)*(infos.radios[i].decryptErrorMACAddressList),
 					sizeof(CWMACAddress) * (infos.radios[i].numEntries));
 
 		/*
@@ -692,7 +692,7 @@ CWBool CWAssembleMsgElemDecryptErrorReport(const void *ctx, CWProtocolMessage * 
 	    );
 
 	for (i = 0; i < infos.radiosCount; i++)
-		CWProtocolStoreMessage(msgPtr, &(msgs[i]));
+		CWProtocolStoreMessage(msgPtr, msgs + i);
 
 	CW_FREE_OBJECT(msgs);
 	CW_FREE_OBJECT(infos.radios);
@@ -724,8 +724,8 @@ CWBool CWAssembleMsgElemWTPRadioInformation(const void *ctx, CWProtocolMessage *
     for(i = 0; i < infos.radiosCount; i++) {
         CWDebugLog("WTPRadioInformation: %d - %d", infos.radios[i].ID, infos.radios[i].type);
         CWInitMsgElem(msgs, msgs +i, 5, CW_MSG_ELEMENT_WTP_RADIO_INFO_CW_TYPE);
-        CWProtocolStore8(&(msgs[i]), infos.radios[i].ID); // ID of the radio
-        CWProtocolStore32(&(msgs[i]), infos.radios[i].type); // type of the radio
+        CWProtocolStore8(msgs + i, infos.radios[i].ID); // ID of the radio
+        CWProtocolStore32(msgs + i, infos.radios[i].type); // type of the radio
 	CWFinalizeMsgElem(msgs + i);
 
         len += msgs[i].offset;
@@ -735,7 +735,7 @@ CWBool CWAssembleMsgElemWTPRadioInformation(const void *ctx, CWProtocolMessage *
     CW_CREATE_PROTOCOL_MESSAGE(ctx, *msgPtr, len, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL););
 
     for(i = 0; i < infos.radiosCount; i++)
-        CWProtocolStoreMessage(msgPtr, &(msgs[i]));
+        CWProtocolStoreMessage(msgPtr, msgs + i);
 
     CW_FREE_OBJECT(msgs);
     CW_FREE_OBJECT(infos.radios);

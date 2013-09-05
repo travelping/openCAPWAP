@@ -260,8 +260,8 @@ CWBool CWAssembleMsgElemCWControlIPv4Addresses(const void *ctx, CWProtocolMessag
 
 	for (i = 0; i < count; i++) {	// one Message Element for each interface
 		CWInitMsgElem(msgs, msgs + i, 6, CW_MSG_ELEMENT_RADIO_ADMIN_STATE_CW_TYPE);
-		CWProtocolStore32(&(msgs[i]), CWACGetInterfaceIPv4AddressAtIndex(i));
-		CWProtocolStore16(&(msgs[i]), CWACGetInterfaceWTPCountAtIndex(i));
+		CWProtocolStore32(msgs + i, CWACGetInterfaceIPv4AddressAtIndex(i));
+		CWProtocolStore16(msgs + i, CWACGetInterfaceWTPCountAtIndex(i));
 		CWFinalizeMsgElem(msgs + i);
 
 		len += msgs[i].offset;
@@ -270,7 +270,7 @@ CWBool CWAssembleMsgElemCWControlIPv4Addresses(const void *ctx, CWProtocolMessag
 	CW_CREATE_PROTOCOL_MESSAGE(ctx, *msgPtr, len, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
 
 	for (i = 0; i < count; i++)
-		CWProtocolStoreMessage(msgPtr, &(msgs[i]));
+		CWProtocolStoreMessage(msgPtr, msgs + i);
 
 	CW_FREE_OBJECT(msgs);
 
@@ -292,8 +292,8 @@ CWBool CWAssembleMsgElemCWControlIPv6Addresses(const void *ctx, CWProtocolMessag
 
 	for (i = 0; i < count; i++) {	// one Message Element for each interface
 		CWInitMsgElem(msgs, msgs +i, 18, CW_MSG_ELEMENT_RADIO_ADMIN_STATE_CW_TYPE);
-		CWProtocolStoreRawBytes(&(msgs[i]), CWACGetInterfaceIPv6AddressAtIndex(i), 16);
-		CWProtocolStore16(&(msgs[i]), CWACGetInterfaceWTPCountAtIndex(i));
+		CWProtocolStoreRawBytes(msgs + i, CWACGetInterfaceIPv6AddressAtIndex(i), 16);
+		CWProtocolStore16(msgs + i, CWACGetInterfaceWTPCountAtIndex(i));
 		CWFinalizeMsgElem(msgs + i);
 
 		len += msgs[i].offset;
@@ -302,7 +302,7 @@ CWBool CWAssembleMsgElemCWControlIPv6Addresses(const void *ctx, CWProtocolMessag
 	CW_CREATE_PROTOCOL_MESSAGE(ctx, *msgPtr, len, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
 
 	for (i = 0; i < count; i++)
-		CWProtocolStoreMessage(msgPtr, &(msgs[i]));
+		CWProtocolStoreMessage(msgPtr, msgs + i);
 
 	CW_FREE_OBJECT(msgs);
 
@@ -358,8 +358,8 @@ CWBool CWAssembleMsgElemDecryptErrorReportPeriod(const void *ctx, CWProtocolMess
 	for (i = 0; i < radioCount; i++) {
 		//      CWDebugLog("Decrypt Error Report Period: %d - %d", radiosInfoPtr[i].ID, reportInterval);
 		CWInitMsgElem(msgs, msgs +i, 3, CW_MSG_ELEMENT_CW_DECRYPT_ER_REPORT_PERIOD_CW_TYPE);
-		CWProtocolStore8(&(msgs[i]), radiosInfoPtr[i].ID);	// ID of the radio
-		CWProtocolStore16(&(msgs[i]), reportInterval);	// state of the radio
+		CWProtocolStore8(msgs + i, radiosInfoPtr[i].ID);	// ID of the radio
+		CWProtocolStore16(msgs + i, reportInterval);	// state of the radio
 		CWFinalizeMsgElem(msgs + i);
 
 		len += msgs[i].offset;
@@ -368,7 +368,7 @@ CWBool CWAssembleMsgElemDecryptErrorReportPeriod(const void *ctx, CWProtocolMess
 	CW_CREATE_PROTOCOL_MESSAGE(ctx, *msgPtr, len, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
 
 	for (i = 0; i < radioCount; i++)
-		CWProtocolStoreMessage(msgPtr, &(msgs[i]));
+		CWProtocolStoreMessage(msgPtr, msgs + i);
 
 	CW_FREE_OBJECT(msgs);
 
@@ -426,9 +426,9 @@ CWBool CWAssembleMsgElemRadioOperationalState(const void *ctx, int radioID, CWPr
 	for (i = 0; i < infos.radiosCount; i++) {
 		//      CWDebugLog("Radio operational State: %d - %d - %d", infos.radios[i].ID, infos.radios[i].state, infos.radios[i].cause);
 		CWInitMsgElem(msgs, msgs +i, 3, CW_MSG_ELEMENT_RADIO_OPERAT_STATE_CW_TYPE);
-		CWProtocolStore8(&(msgs[i]), infos.radios[i].ID);	// ID of the radio
-		CWProtocolStore8(&(msgs[i]), infos.radios[i].state);	// state of the radio
-		CWProtocolStore8(&(msgs[i]), infos.radios[i].cause);
+		CWProtocolStore8(msgs + i, infos.radios[i].ID);	// ID of the radio
+		CWProtocolStore8(msgs + i, infos.radios[i].state);	// state of the radio
+		CWProtocolStore8(msgs + i, infos.radios[i].cause);
 		CWFinalizeMsgElem(msgs + i);
 
 		len += msgs[i].offset;
@@ -437,7 +437,7 @@ CWBool CWAssembleMsgElemRadioOperationalState(const void *ctx, int radioID, CWPr
 	CW_CREATE_PROTOCOL_MESSAGE(ctx, *msgPtr, len, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
 
 	for (i = 0; i < infos.radiosCount; i++)
-		CWProtocolStoreMessage(msgPtr, &(msgs[i]));
+		CWProtocolStoreMessage(msgPtr, msgs + i);
 
 	CW_FREE_OBJECT(msgs);
 	CW_FREE_OBJECT(infos.radios);
