@@ -764,15 +764,13 @@ CWBool CWParseDiscoveryResponseMessage(unsigned char *msg, int len, int *seqNumP
 			ACInfoPtr->IPv6AddressesCount++;
 			break;
                 case CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_BW_CW_TYPE: {
-                        unsigned int vendorId = CWProtocolRetrieve32(&completeMsg);
-                        len -= 4;
+			unsigned int vendorId = CWProtocolRetrieve32(&completeMsg);
+			unsigned short int vendorElemType = CWProtocolRetrieve16(&completeMsg);
+			len -= 6;
 
-                        CWDebugLog("Parsing Vendor Message Element, Vendor: %u", vendorId);
+			CWDebugLog("Parsing Vendor Message Element, Vendor: %u, Element: %u", vendorId, vendorElemType);
                         switch (vendorId) {
                         case CW_IANA_ENTERPRISE_NUMBER_VENDOR_TRAVELPING: {
-                                unsigned short int vendorElemType = CWProtocolRetrieve16(&completeMsg);
-                                len -= 2;
-
                                 CWDebugLog("Parsing TP Vendor Message Element: %u", vendorElemType);
                                 switch (vendorElemType) {
                                 case CW_MSG_ELEMENT_TRAVELPING_AC_ADDRESS_LIST_WITH_PRIORITY:

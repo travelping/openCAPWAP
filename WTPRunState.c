@@ -1622,7 +1622,6 @@ CWBool CWParseEchoResponse(unsigned char *msg, int len)
 		unsigned short int elemLen = 0;	  /* = CWProtocolRetrieve16(&completeMsg); */
 
 		CWParseFormatMsgElem(&completeMsg, &elemType, &elemLen);
-
 		CWLog("Parsing Message Element: %u, elemLen: %u", elemType, elemLen);
 
 		switch (elemType) {
@@ -1634,11 +1633,8 @@ CWBool CWParseEchoResponse(unsigned char *msg, int len)
 			CWDebugLog("Parsing Vendor Message Element, Vendor: %u, Element: %u", vendorId, vendorElemType);
 			switch (vendorId) {
 			case CW_IANA_ENTERPRISE_NUMBER_VENDOR_TRAVELPING: {
-				elemLen -= 2;
-
 				CWDebugLog("Parsing TP Vendor Message Element: %u", vendorElemType);
 				switch (vendorElemType) {
-
 				case CW_MSG_ELEMENT_TRAVELPING_WTP_TIMESTAMP: {
 					struct timeval tv, now;
 
