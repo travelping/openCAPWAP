@@ -88,8 +88,8 @@ CWBool CWAssembleChangeStateEventRequest(CWProtocolMessage ** messagesPtr,
 	CWLog("Assembling Change State Event Request...");
 
 	/* Assemble Message Elements */
-	if (!(CWAssembleMsgElemRadioOperationalState(-1, &(msgElems[++k]))) ||
-	    !(CWAssembleMsgElemResultCode(&(msgElems[++k]), resultCode))) {
+	if (!(CWAssembleMsgElemRadioOperationalState(msgElems, -1, &(msgElems[++k]))) ||
+	    !(CWAssembleMsgElemResultCode(msgElems, &(msgElems[++k]), resultCode))) {
 
 		int i;
 

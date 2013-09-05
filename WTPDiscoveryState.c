@@ -375,15 +375,14 @@ CWBool CWReceiveDiscoveryResponse()
 	if (!AC)
 		return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "got discovery response from invalid address");
 
-	if (!(ACInfoPtr = ralloc(NULL, CWACInfoValues)))
+	if (!(ACInfoPtr = rzalloc(NULL, CWACInfoValues)))
 		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	CW_COPY_NET_ADDR_PTR(&(ACInfoPtr->incomingAddress), &(addr));
 
 	/* check if it is a valid Discovery Response */
 	if (!CWErr(CWParseDiscoveryResponseMessage(buf, readBytes, &seqNum, ACInfoPtr))) {
-
-		CW_FREE_OBJECT(ACInfoPtr);
+		ralloc_free(ACInfoPtr);
 		return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Received something different from a"
 				    " Discovery Response while in Discovery State");
 
@@ -648,17 +647,13 @@ CWBool CWAssembleDiscoveryRequest(CWProtocolMessage ** messagesPtr, int seqNum)
 
 	/* Assemble Message Elements */
 
-	if ((!(CWAssembleMsgElemDiscoveryType(&(msgElems[++k])))) ||
-	    (!(CWAssembleMsgElemWTPBoardData(&(msgElems[++k])))) ||
-	    (!(CWAssembleMsgElemWTPDescriptor(&(msgElems[++k])))) ||
-	    (!(CWAssembleMsgElemWTPFrameTunnelMode(&(msgElems[++k])))) ||
-	    (!(CWAssembleMsgElemWTPMACType(&(msgElems[++k])))) ||
-	    (!(CWAssembleMsgElemWTPRadioInformation(&(msgElems[++k]))))
+	if ((!(CWAssembleMsgElemDiscoveryType(msgElems, &(msgElems[++k])))) ||
+	    (!(CWAssembleMsgElemWTPBoardData(msgElems, &(msgElems[++k])))) ||
+	    (!(CWAssembleMsgElemWTPDescriptor(msgElems, &(msgElems[++k])))) ||
+	    (!(CWAssembleMsgElemWTPFrameTunnelMode(msgElems, &(msgElems[++k])))) ||
+	    (!(CWAssembleMsgElemWTPMACType(msgElems, &(msgElems[++k])))) ||
+	    (!(CWAssembleMsgElemWTPRadioInformation(msgElems, &(msgElems[++k]))))
 	    ) {
-		int i;
-		for (i = 0; i <= k; i++) {
-			CW_FREE_PROTOCOL_MESSAGE(msgElems[i]);
-		}
 		CW_FREE_OBJECT(msgElems);
 		/* error will be handled by the caller */
 		return CW_FALSE;
@@ -680,7 +675,7 @@ CWBool CWParseDiscoveryResponseMessage(unsigned char *msg, int len, int *seqNumP
 
 	CWControlHeaderValues controlVal;
 	CWProtocolTransportHeaderValues transportVal;
-	int offsetTillMessages, i, j;
+	int offsetTillMessages;
 	char tmp_ABGNTypes;
 	CWProtocolMessage completeMsg;
 
@@ -725,7 +720,7 @@ CWBool CWParseDiscoveryResponseMessage(unsigned char *msg, int len, int *seqNumP
 		switch (type) {
 		case CW_MSG_ELEMENT_AC_DESCRIPTOR_CW_TYPE:
 			/* will be handled by the caller */
-			if (!(CWParseACDescriptor(&completeMsg, len, ACInfoPtr)))
+			if (!(CWParseACDescriptor(ACInfoPtr, &completeMsg, len, ACInfoPtr)))
 				return CW_FALSE;
 			break;
 		case CW_MSG_ELEMENT_IEEE80211_WTP_RADIO_INFORMATION_CW_TYPE:
@@ -735,24 +730,38 @@ CWBool CWParseDiscoveryResponseMessage(unsigned char *msg, int len, int *seqNumP
 			break;
 		case CW_MSG_ELEMENT_AC_NAME_CW_TYPE:
 			/* will be handled by the caller */
-			if (!(CWParseACName(&completeMsg, len, &(ACInfoPtr->name))))
+			if (!(CWParseACName(ACInfoPtr, &completeMsg, len, &(ACInfoPtr->name))))
 				return CW_FALSE;
 			break;
 		case CW_MSG_ELEMENT_CW_CONTROL_IPV4_ADDRESS_CW_TYPE:
-			/*
-			 * just count how many interfacess we have,
-			 * so we can allocate the array
-			 */
+			if ((ACInfoPtr->IPv4AddressesCount % CW_BLOCK_ALLOC) == 0) {
+				ACInfoPtr->IPv4Addresses =
+					reralloc(ACInfoPtr, ACInfoPtr->IPv4Addresses, CWProtocolIPv4NetworkInterface,
+						 ACInfoPtr->IPv4AddressesCount + CW_BLOCK_ALLOC);
+			}
+			if (!ACInfoPtr->IPv4Addresses)
+				return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+
+			if (!(CWParseCWControlIPv4Addresses(&completeMsg, len,
+							    &(ACInfoPtr->IPv4Addresses[ACInfoPtr->IPv4AddressesCount]))))
+				return CW_FALSE;
+
 			ACInfoPtr->IPv4AddressesCount++;
-			completeMsg.offset += len;
 			break;
 		case CW_MSG_ELEMENT_CW_CONTROL_IPV6_ADDRESS_CW_TYPE:
-			/*
-			 * just count how many interfacess we have,
-			 * so we can allocate the array
-			 */
+			if ((ACInfoPtr->IPv6AddressesCount % CW_BLOCK_ALLOC) == 0) {
+				ACInfoPtr->IPv6Addresses =
+					reralloc(ACInfoPtr, ACInfoPtr->IPv6Addresses, CWProtocolIPv6NetworkInterface,
+						 ACInfoPtr->IPv6AddressesCount + CW_BLOCK_ALLOC);
+			}
+			if (!ACInfoPtr->IPv6Addresses)
+				return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+
+			if (!(CWParseCWControlIPv6Addresses(&completeMsg, len,
+							    &(ACInfoPtr->IPv6Addresses[ACInfoPtr->IPv6AddressesCount]))))
+				return CW_FALSE;
+
 			ACInfoPtr->IPv6AddressesCount++;
-			completeMsg.offset += len;
 			break;
                 case CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_BW_CW_TYPE: {
                         unsigned int vendorId = CWProtocolRetrieve32(&completeMsg);
@@ -808,45 +817,5 @@ CWBool CWParseDiscoveryResponseMessage(unsigned char *msg, int len, int *seqNumP
 	if (completeMsg.offset != len)
 		return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Garbage at the End of the Message");
 
-	/* actually read each interface info */
-	if (!(ACInfoPtr->IPv4Addresses = ralloc_array(NULL, CWProtocolIPv4NetworkInterface,
-						      ACInfoPtr->IPv4AddressesCount)))
-		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-
-	if (ACInfoPtr->IPv6AddressesCount > 0) {
-		if (!(ACInfoPtr->IPv6Addresses = ralloc_array(NULL, CWProtocolIPv6NetworkInterface,
-							      ACInfoPtr->IPv6AddressesCount)))
-			return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	}
-
-	i = 0, j = 0;
-
-	completeMsg.offset = offsetTillMessages;
-	while ((completeMsg.offset - offsetTillMessages) < controlVal.msgElemsLen) {
-
-		unsigned short int type = 0;	/* = CWProtocolRetrieve32(&completeMsg); */
-		unsigned short int len = 0;	/* = CWProtocolRetrieve16(&completeMsg); */
-
-		CWParseFormatMsgElem(&completeMsg, &type, &len);
-
-		switch (type) {
-		case CW_MSG_ELEMENT_CW_CONTROL_IPV4_ADDRESS_CW_TYPE:
-			/* will be handled by the caller */
-			if (!(CWParseCWControlIPv4Addresses(&completeMsg, len, &(ACInfoPtr->IPv4Addresses[i]))))
-				return CW_FALSE;
-			i++;
-			break;
-		case CW_MSG_ELEMENT_CW_CONTROL_IPV6_ADDRESS_CW_TYPE:
-			/* will be handled by the caller */
-			if (!(CWParseCWControlIPv6Addresses(&completeMsg, len, &(ACInfoPtr->IPv6Addresses[j]))))
-				return CW_FALSE;
-			j++;
-			break;
-
-		default:
-			completeMsg.offset += len;
-			break;
-		}
-	}
 	return CW_TRUE;
 }

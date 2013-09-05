@@ -101,7 +101,7 @@ CWBool CWAssembleDataMessage(CWProtocolMessage ** completeMsgPtr, int *fragments
 		if (!(*completeMsgPtr = ralloc(NULL, CWProtocolMessage)))
 		     return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
-		CW_CREATE_PROTOCOL_MESSAGE(((*completeMsgPtr)[0]), transportHdr.offset + frame->offset,
+		CW_CREATE_PROTOCOL_MESSAGE(NULL, ((*completeMsgPtr)[0]), transportHdr.offset + frame->offset,
 					   return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 		    );
 
@@ -155,7 +155,7 @@ CWBool CWAssembleDataMessage(CWProtocolMessage ** completeMsgPtr, int *fragments
 				}
 			}
 
-			CW_CREATE_PROTOCOL_MESSAGE(((*completeMsgPtr)[i]), transportHdr.offset + fragSize,
+			CW_CREATE_PROTOCOL_MESSAGE(NULL, ((*completeMsgPtr)[i]), transportHdr.offset + fragSize,
 						   return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 			    );
 			CWProtocolStoreMessage(&((*completeMsgPtr)[i]), &transportHdr);

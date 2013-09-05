@@ -127,23 +127,23 @@ CWBool CWParseChangeStateEventRequestMessage(unsigned char *msg, int len, int *s
 					     CWProtocolChangeStateEventRequestValues * valuesPtr);
 CWBool CWAssembleChangeStateEventResponse(CWProtocolMessage ** messagesPtr, int *fragmentsNumPtr, int PMTU, int seqNum);
 
-CWBool CWAssembleMsgElemACDescriptor(CWProtocolMessage * msgPtr);	// 1
-CWBool CWAssembleMsgElemACIPv4List(CWProtocolMessage * msgPtr);	// 2
-CWBool CWAssembleMsgElemACIPv6List(CWProtocolMessage * msgPtr);	// 3
-CWBool CWAssembleMsgElemACName(CWProtocolMessage * msgPtr);	// 4
-CWBool CWAssembleMsgElemAddStation(int radioID, CWProtocolMessage * msgPtr, unsigned char *StationMacAddr);	// 8
-CWBool CWAssembleMsgElemDeleteStation(int radioID, CWProtocolMessage * msgPtr, unsigned char *StationMacAddr);	// 8
-CWBool CWAssembleMsgElemCWControlIPv4Addresses(CWProtocolMessage * msgPtr);	//10
-CWBool CWAssembleMsgElemCWControlIPv6Addresses(CWProtocolMessage * msgPtr);	//11
-CWBool CWAssembleMsgElemCWTimer(CWProtocolMessage * msgPtr);	//12
-CWBool CWAssembleMsgElemDecryptErrorReportPeriod(CWProtocolMessage * msgPtr);	//16
-CWBool CWAssembleMsgElemIdleTimeout(CWProtocolMessage * msgPtr);	//23
-CWBool CWAssembleMsgElemWTPFallback(CWProtocolMessage * msgPtr);	//37
+CWBool CWAssembleMsgElemACDescriptor(const void *ctx, CWProtocolMessage * msgPtr);	// 1
+CWBool CWAssembleMsgElemACIPv4List(const void *ctx, CWProtocolMessage * msgPtr);	// 2
+CWBool CWAssembleMsgElemACIPv6List(const void *ctx, CWProtocolMessage * msgPtr);	// 3
+CWBool CWAssembleMsgElemACName(const void *ctx, CWProtocolMessage * msgPtr);	// 4
+CWBool CWAssembleMsgElemAddStation(const void *ctx, int radioID, CWProtocolMessage * msgPtr, unsigned char *StationMacAddr);	// 8
+CWBool CWAssembleMsgElemDeleteStation(const void *ctx, int radioID, CWProtocolMessage * msgPtr, unsigned char *StationMacAddr);	// 8
+CWBool CWAssembleMsgElemCWControlIPv4Addresses(const void *ctx, CWProtocolMessage * msgPtr);	//10
+CWBool CWAssembleMsgElemCWControlIPv6Addresses(const void *ctx, CWProtocolMessage * msgPtr);	//11
+CWBool CWAssembleMsgElemCWTimer(const void *ctx, CWProtocolMessage * msgPtr);	//12
+CWBool CWAssembleMsgElemDecryptErrorReportPeriod(const void *ctx, CWProtocolMessage * msgPtr);	//16
+CWBool CWAssembleMsgElemIdleTimeout(const void *ctx, CWProtocolMessage * msgPtr);	//23
+CWBool CWAssembleMsgElemWTPFallback(const void *ctx, CWProtocolMessage * msgPtr);	//37
 CWBool CWAssembleWLANConfigurationRequest(CWProtocolMessage ** messagesPtr, int *fragmentsNumPtr, int PMTU, int seqNum,
 					  unsigned char *recv_packet, int Operation, int len_packet);
-CWBool CWAssembleMsgElemACWTPRadioInformation(CWProtocolMessage * msgPtr);
-CWBool CWAssembleMsgElemAddWLAN(int radioID, CWProtocolMessage * msgPtr, unsigned char *recv_packet, int len_packet);
-CWBool CWAssembleMsgElemDeleteWLAN(int radioID, CWProtocolMessage * msgPtr, unsigned char *recv_packet, int len_packet);
+CWBool CWAssembleMsgElemACWTPRadioInformation(const void *ctx, CWProtocolMessage * msgPtr);
+CWBool CWAssembleMsgElemAddWLAN(const void *ctx, int radioID, CWProtocolMessage * msgPtr, unsigned char *recv_packet, int len_packet);
+CWBool CWAssembleMsgElemDeleteWLAN(const void *ctx, int radioID, CWProtocolMessage * msgPtr, unsigned char *recv_packet, int len_packet);
 
 //---------------------------------------------------------/
 
@@ -195,7 +195,7 @@ CWBool CWGetWTPRadiosOperationalState(int radioID, CWRadiosOperationalInfo * val
 CWBool CWACSupportIPv6();
 void CWDestroyDiscoveryRequestValues(CWDiscoveryRequestValues * valPtr);
 
-CWBool CWProtocolAssembleConfigurationUpdateRequest(CWProtocolMessage ** msgElems, int *msgElemCountPtr,
-						    int MsgElementType);
+CWBool CWProtocolAssembleConfigurationUpdateRequest(CWProtocolMessage ** msgElems,
+						    int *msgElemCountPtr, int MsgElementType);
 
 #endif

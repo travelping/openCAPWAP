@@ -34,7 +34,7 @@
 #include <unistd.h>
 #include <signal.h>
 
-CWBool CWAssembleWTPVendorPayloadUCI(CWProtocolMessage * msgPtr)
+CWBool CWAssembleWTPVendorPayloadUCI(const void *ctx, CWProtocolMessage * msgPtr)
 {
 	int *iPtr;
 	unsigned short msgType;
@@ -56,24 +56,22 @@ CWBool CWAssembleWTPVendorPayloadUCI(CWProtocolMessage * msgPtr)
 		msgType = CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_UCI;
 		uciPtr = (CWVendorUciValues *) valuesPtr->payload;
 		if (uciPtr->commandArgs != NULL) {
-			/* create message */
-			CW_CREATE_PROTOCOL_MESSAGE(*msgPtr,
-						   sizeof(short) + sizeof(char) + sizeof(int) +
-						   (strlen(uciPtr->commandArgs) * sizeof(char)),
-						   return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-			    );
+			CWInitMsgElem(ctx, msgPtr,
+				      sizeof(short) + sizeof(char) + sizeof(int) +
+				      (strlen(uciPtr->commandArgs) * sizeof(char)),
+				      CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_CW_TYPE);
 			CWProtocolStore16(msgPtr, (unsigned short)msgType);
 			CWProtocolStore8(msgPtr, (unsigned char)uciPtr->command);
 			CWProtocolStore32(msgPtr, (unsigned int)strlen(uciPtr->commandArgs));
 			CWProtocolStoreStr(msgPtr, uciPtr->commandArgs);
+			CWFinalizeMsgElem(msgPtr);
 		} else {
-			/* create message */
-			CW_CREATE_PROTOCOL_MESSAGE(*msgPtr, sizeof(short) + sizeof(char) + sizeof(int),
-						   return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-			    );
+			CWInitMsgElem(ctx, msgPtr, sizeof(short) + sizeof(char) + sizeof(int),
+				      CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_CW_TYPE);
 			CWProtocolStore16(msgPtr, (unsigned short)msgType);
 			CWProtocolStore8(msgPtr, (unsigned char)uciPtr->command);
 			CWProtocolStore32(msgPtr, 0);
+			CWFinalizeMsgElem(msgPtr);
 		}
 		break;
 	default:
@@ -82,13 +80,14 @@ CWBool CWAssembleWTPVendorPayloadUCI(CWProtocolMessage * msgPtr)
 	}
 	CWLog("Assembling Protocol Configuration Update Request [VENDOR CASE]: Message Assembled.");
 
-	return CWAssembleMsgElem(msgPtr, CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_CW_TYPE);
+	return CW_TRUE;
 }
 
-CWBool CWAssembleWTPVendorPayloadWUM(CWProtocolMessage * msgPtr)
+CWBool CWAssembleWTPVendorPayloadWUM(const void *ctx, CWProtocolMessage * msgPtr)
 {
 	int *iPtr;
 	unsigned short msgType;
+	unsigned int payloadSize = 0;
 	CWProtocolVendorSpecificValues *valuesPtr;
 	CWVendorWumValues *wumPtr;
 
@@ -114,27 +113,20 @@ CWBool CWAssembleWTPVendorPayloadWUM(CWProtocolMessage * msgPtr)
 		case WTP_VERSION_REQUEST:
 		case WTP_COMMIT_UPDATE:
 		case WTP_CANCEL_UPDATE_REQUEST:
-			CW_CREATE_PROTOCOL_MESSAGE(*msgPtr, sizeof(short) + sizeof(char),
-						   return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-			    );
+			payloadSize = sizeof(short) + sizeof(char);
 			break;
 		case WTP_UPDATE_REQUEST:
-			CW_CREATE_PROTOCOL_MESSAGE(*msgPtr, sizeof(short) + 4 * sizeof(char) + sizeof(unsigned int),
-						   return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-			    );
+			payloadSize = sizeof(short) + 4 * sizeof(char) + sizeof(unsigned int);
 			break;
 		case WTP_CUP_FRAGMENT:
-			CW_CREATE_PROTOCOL_MESSAGE(*msgPtr,
-						   sizeof(short) + sizeof(char) + 2 * sizeof(int) +
-						   wumPtr->_cup_fragment_size_,
-						   return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-			    );
+			payloadSize = sizeof(short) + sizeof(char) + 2 * sizeof(int) + wumPtr->_cup_fragment_size_;
 			break;
 		default:
 			CWLog("Error! unknown WUM message type!!!");
 			return CW_FALSE;
 		}
 
+		CWInitMsgElem(ctx, msgPtr, payloadSize, CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_CW_TYPE);
 		CWProtocolStore16(msgPtr, (unsigned short)msgType);
 		CWProtocolStore8(msgPtr, (unsigned char)wumPtr->type);
 		if (wumPtr->type == WTP_UPDATE_REQUEST) {
@@ -148,12 +140,13 @@ CWBool CWAssembleWTPVendorPayloadWUM(CWProtocolMessage * msgPtr)
 			CWProtocolStoreRawBytes(msgPtr, wumPtr->_cup_, wumPtr->_cup_fragment_size_);
 			CW_FREE_OBJECT(wumPtr->_cup_);
 		}
+		CWFinalizeMsgElem(msgPtr);
 		break;
 	default:
 		return CW_FALSE;
 		break;
 	}
-	CWLog("Assembling Protocol Configuration Update Request [VENDOR CASE]: Message Assembled.");
 
-	return CWAssembleMsgElem(msgPtr, CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_CW_TYPE);
+	CWLog("Assembling Protocol Configuration Update Request [VENDOR CASE]: Message Assembled.");
+	return CW_TRUE;
 }

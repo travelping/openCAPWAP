@@ -1,5 +1,5 @@
 /*******************************************************************************************
- * Copyright (c) 2009 Laboratorio di Sistemi di Elaborazione e Bioingegneria Informatica   *
+ * copyright (c) 2009 Laboratorio di Sistemi di Elaborazione e Bioingegneria Informatica   *
  *                      Universita' Campus BioMedico - Italy                               *
  *                                                                                         *
  * This program is free software; you can redistribute it and/or modify it under the terms *
@@ -73,7 +73,7 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveFreqStats(void *arg)
 			if (!(data = ralloc(NULL, CWProtocolMessage)))
 				return 0;
 
-			CW_CREATE_PROTOCOL_MESSAGE(*data, rlen, return 0;
+			CW_CREATE_PROTOCOL_MESSAGE(data, *data, rlen, return 0;
 			    );
 
 			memcpy(data->msg, buffer, rlen);
@@ -119,13 +119,7 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveFreqStats(void *arg)
 			}
 
 			/* Free used Structures */
-
-			for (k = 0; k < fragmentsNum; k++) {
-				CW_FREE_PROTOCOL_MESSAGE(completeMsgPtr[k]);
-			}
-
 			CW_FREE_OBJECT(completeMsgPtr);
-			CW_FREE_PROTOCOL_MESSAGE(*data);
 			CW_FREE_OBJECT(data);
 			CW_FREE_OBJECT(bindingValuesPtr);
 		} else {

@@ -24,13 +24,13 @@
 
 #include "WTPStatsReceive.h"
 
-int create_data_Frame(CWProtocolMessage ** frame, char *buffer, int len)
+static int create_data_Frame(const void *ctx, CWProtocolMessage ** frame, char *buffer, int len)
 {
 	if (!(*frame = ralloc(NULL, CWProtocolMessage)))
 		return 0;
 
 	CWProtocolMessage *auxPtr = *frame;
-	CW_CREATE_PROTOCOL_MESSAGE(*auxPtr, len, return 0;
+	CW_CREATE_PROTOCOL_MESSAGE(ctx, *auxPtr, len, return 0;
 	    );
 	memcpy(auxPtr->msg, buffer, len);
 	auxPtr->offset = len;
@@ -82,7 +82,7 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveStats(void *arg)
 		} else {
 			completeMsgPtr = NULL;
 
-			if (!create_data_Frame(&data, buffer, rlen)) {
+			if (!create_data_Frame(NULL, &data, buffer, rlen)) {
 				CWDebugLog("Error extracting a data stats frame");
 				CWExitThread();
 			};
@@ -105,10 +105,6 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveStats(void *arg)
 						break;
 					}
 				}
-			}
-
-			for (k = 0; k < fragmentsNum; k++) {
-				CW_FREE_PROTOCOL_MESSAGE(completeMsgPtr[k]);
 			}
 
 			CW_FREE_OBJECT(completeMsgPtr);

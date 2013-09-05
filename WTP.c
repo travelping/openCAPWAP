@@ -335,22 +335,15 @@ CWBool CWWTPSendAcknowledgedPacket(int seqNum,
 	return CWErrorRaise(CW_ERROR_NEED_RESOURCE, "Peer Dead");
 
  cw_success:
-	for (i = 0; i < fragmentsNum; i++) {
-		CW_FREE_PROTOCOL_MESSAGE(messages[i]);
-	}
-
 	CW_FREE_OBJECT(messages);
 	CW_FREE_PROTOCOL_MESSAGE(msg);
 
 	return CW_TRUE;
 
  cw_failure:
-	if (messages != NULL) {
-		for (i = 0; i < fragmentsNum; i++) {
-			CW_FREE_PROTOCOL_MESSAGE(messages[i]);
-		}
+	if (messages != NULL)
 		CW_FREE_OBJECT(messages);
-	}
+
 	CWDebugLog("Failure");
 	return CW_FALSE;
 }

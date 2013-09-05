@@ -100,18 +100,14 @@ CWBool CWAssembleConfigureRequest(CWProtocolMessage ** messagesPtr,
 	CWDebugLog("Assembling Configure Request...");
 
 	/* Assemble Message Elements */
-	if ((!(CWAssembleMsgElemACName(&(msgElems[++k])))) ||
-	    (!(CWAssembleMsgElemACNameWithIndex(&(msgElems[++k])))) ||
-	    (!(CWAssembleMsgElemRadioAdminState(&(msgElems[++k])))) ||
-	    (!(CWAssembleMsgElemStatisticsTimer(&(msgElems[++k])))) ||
-	    (!(CWAssembleMsgElemWTPRebootStatistics(&(msgElems[++k])))) ||
-	    (!(CWAssembleMsgElemWTPRadioInformation(&(msgElems[++k])))) ||
-	    (!(CWAssembleMsgElemSupportedRates(&(msgElems[++k])))) ||
-	    (!(CWAssembleMsgElemMultiDomainCapability(&(msgElems[++k]))))) {
-		int i;
-		for (i = 0; i <= k; i++) {
-			CW_FREE_PROTOCOL_MESSAGE(msgElems[i]);
-		}
+	if ((!(CWAssembleMsgElemACName(msgElems, &(msgElems[++k])))) ||
+	    (!(CWAssembleMsgElemACNameWithIndex(msgElems, &(msgElems[++k])))) ||
+	    (!(CWAssembleMsgElemRadioAdminState(msgElems, &(msgElems[++k])))) ||
+	    (!(CWAssembleMsgElemStatisticsTimer(msgElems, &(msgElems[++k])))) ||
+	    (!(CWAssembleMsgElemWTPRebootStatistics(msgElems, &(msgElems[++k])))) ||
+	    (!(CWAssembleMsgElemWTPRadioInformation(msgElems, &(msgElems[++k])))) ||
+	    (!(CWAssembleMsgElemSupportedRates(msgElems, &(msgElems[++k])))) ||
+	    (!(CWAssembleMsgElemMultiDomainCapability(msgElems, &(msgElems[++k]))))) {
 		CW_FREE_OBJECT(msgElems);
 		/* error will be handled by the caller */
 		return CW_FALSE;

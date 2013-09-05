@@ -66,26 +66,26 @@ int extractFrameInfo(char *buffer, char *RSSI, char *SNR, int *dataRate)
 	return 1;
 }
 
-int extractFrame(CWProtocolMessage ** frame, unsigned char *buffer, int len)
+int extractFrame(const void *ctx, CWProtocolMessage ** frame, unsigned char *buffer, int len)
 {
 	if (!(*frame = ralloc(NULL, CWProtocolMessage)))
 		return 0;
 
 	CWProtocolMessage *auxPtr = *frame;
-	CW_CREATE_PROTOCOL_MESSAGE(*auxPtr, len - PRISMH_LEN, return 0;
+	CW_CREATE_PROTOCOL_MESSAGE(ctx, *auxPtr, len - PRISMH_LEN, return 0;
 	    );
 	memcpy(auxPtr->msg, buffer + PRISMH_LEN, len - PRISMH_LEN);
 	auxPtr->offset = len - PRISMH_LEN;
 	return 1;
 }
 
-int extract802_11_Frame(CWProtocolMessage ** frame, unsigned char *buffer, int len)
+int extract802_11_Frame(const void *ctx, CWProtocolMessage ** frame, unsigned char *buffer, int len)
 {
 	if (!(*frame = ralloc(NULL, CWProtocolMessage)))
 		return 0;
 
 	CWProtocolMessage *auxPtr = *frame;
-	CW_CREATE_PROTOCOL_MESSAGE(*auxPtr, len, return 0;
+	CW_CREATE_PROTOCOL_MESSAGE(ctx, *auxPtr, len, return 0;
 	    );
 	memcpy(auxPtr->msg, buffer, len);
 	auxPtr->offset = len;
@@ -233,7 +233,7 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveFrame(void *arg)
 		if (gWTPTunnelMode == CW_TUNNEL_MODE_802_DOT_11_TUNNEL) {
 			encaps_len = from_8023_to_80211(buffer, n, buf80211, macAddr);
 
-			if (!extract802_11_Frame(&listElement->frame, buf80211, encaps_len)) {
+			if (!extract802_11_Frame(listElement, &listElement->frame, buf80211, encaps_len)) {
 				CWDebugLog("THR FRAME: Error extracting a frame");
 				EXIT_FRAME_THREAD(gRawSock);
 			}
@@ -242,7 +242,7 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveFrame(void *arg)
 
 			CWDebugLog("Recv 802.11 data(len:%d) from %s", encaps_len, gRadioInterfaceName_0);
 		} else {
-			if (!extract802_11_Frame(&listElement->frame, buffer, n)) {
+			if (!extract802_11_Frame(listElement, &listElement->frame, buffer, n)) {
 				CWDebugLog("THR FRAME: Error extracting a frame");
 				EXIT_FRAME_THREAD(gRawSock);
 			}

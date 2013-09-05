@@ -343,7 +343,7 @@ CWBool CWGetDecryptErrorReport(int radioID, CWDecryptErrorReportInfo * valPtr)
 			    CWCountElementInList(gRadiosInfo.radiosInfo[i].decryptErrorMACAddressList);
 			(valPtr->radios[i]).decryptErrorMACAddressList = NULL;
 			if (!((valPtr->radios[i]).decryptErrorMACAddressList =
-			      ralloc_array(NULL, CWMACAddress, valPtr->radios[i].numEntries)))
+			      ralloc_array(valPtr->radios, CWMACAddress, valPtr->radios[i].numEntries)))
 				return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 			int j;
@@ -368,7 +368,7 @@ CWBool CWGetDecryptErrorReport(int radioID, CWDecryptErrorReportInfo * valPtr)
 				(valPtr->radios)[0].numEntries =
 				    CWCountElementInList(gRadiosInfo.radiosInfo[i].decryptErrorMACAddressList);
 				(valPtr->radios[0]).decryptErrorMACAddressList = NULL;
-				if (!((valPtr->radios[0]).decryptErrorMACAddressList = ralloc_array(NULL,
+				if (!((valPtr->radios[0]).decryptErrorMACAddressList = ralloc_array(valPtr->radios,
 												    CWMACAddress,
 												    (valPtr->radios[0]).numEntries)))
 					return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
@@ -413,11 +413,11 @@ CWBool CWWTPGetACNameWithIndex(CWACNamesWithIndex * ACsInfo)
 		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	ACsInfo->ACNameIndex[0].index = 0;	// first radio
-	if (!(ACsInfo->ACNameIndex[0].ACName = ralloc_strdup(NULL, "ACPrimary")))
+	if (!(ACsInfo->ACNameIndex[0].ACName = ralloc_strdup(ACsInfo->ACNameIndex, "ACPrimary")))
 		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	ACsInfo->ACNameIndex[1].index = 1;	// first radio
-	if (!(ACsInfo->ACNameIndex[1].ACName = ralloc_strdup(NULL, "ACSecondary")))
+	if (!(ACsInfo->ACNameIndex[1].ACName = ralloc_strdup(ACsInfo->ACNameIndex, "ACSecondary")))
 		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	return CW_TRUE;

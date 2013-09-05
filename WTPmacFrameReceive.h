@@ -99,7 +99,7 @@
 #define RESERVED8_SUBTYPE       8
 #define RESERVED15_SUBTYPE      15
 
-int extract802_11_Frame(CWProtocolMessage ** frame, unsigned char *buffer, int len);
+int extract802_11_Frame(const void *ctx, CWProtocolMessage ** frame, unsigned char *buffer, int len);
 int CWWTPSendFrame(unsigned char *buf, int len);
 
 #endif

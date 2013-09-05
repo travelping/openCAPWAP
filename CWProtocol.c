@@ -40,22 +40,22 @@ unsigned char gRADIO_MAC[6];			// note: this include optional Wireless field
 void CWProtocolStoreStr(CWProtocolMessage * msgPtr, char *str)
 {
 	int len = strlen(str);
-	CW_COPY_MEMORY(&((msgPtr->msg)[(msgPtr->offset)]), str, len);
-	(msgPtr->offset) += len;
+	CW_COPY_MEMORY(msgPtr->msg + msgPtr->offset, str, len);
+	msgPtr->offset += len;
 }
 
 // stores another message in the message, increments the current offset in bytes.
 void CWProtocolStoreMessage(CWProtocolMessage * msgPtr, CWProtocolMessage * msgToStorePtr)
 {
-	CW_COPY_MEMORY(&((msgPtr->msg)[(msgPtr->offset)]), msgToStorePtr->msg, msgToStorePtr->offset);
-	(msgPtr->offset) += msgToStorePtr->offset;
+	CW_COPY_MEMORY(msgPtr->msg + msgPtr->offset, msgToStorePtr->msg, msgToStorePtr->offset);
+	msgPtr->offset += msgToStorePtr->offset;
 }
 
 // stores len bytes in the message, increments the current offset in bytes.
 void CWProtocolStoreRawBytes(CWProtocolMessage * msgPtr, unsigned char *bytes, int len)
 {
-	CW_COPY_MEMORY(&((msgPtr->msg)[(msgPtr->offset)]), bytes, len);
-	(msgPtr->offset) += len;
+	CW_COPY_MEMORY(msgPtr->msg + msgPtr->offset, bytes, len);
+	msgPtr->offset += len;
 }
 
 // retrieves a string (not null-terminated) from the message, increments the current offset in bytes.
@@ -96,14 +96,14 @@ void CWProtocolDestroyMsgElemData(void *f)
 }
 
 // Assemble a Message Element creating the appropriate header and storing the message.
-CWBool CWAssembleMsgElem(CWProtocolMessage * msgPtr, unsigned int type)
+CWBool CWAssembleMsgElem(const void *ctx, CWProtocolMessage * msgPtr, unsigned int type)
 {
 	CWProtocolMessage completeMsg;
 
 	if (msgPtr == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
-	CW_CREATE_PROTOCOL_MESSAGE(completeMsg, 6 + (msgPtr->offset), return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	CW_CREATE_PROTOCOL_MESSAGE(ctx, completeMsg, 6 + (msgPtr->offset), return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
 	// store header
@@ -141,11 +141,11 @@ CWBool CWAssembleTransportHeader(CWProtocolMessage * transportHdrPtr, CWProtocol
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
 	if (valuesPtr->bindingValuesPtr != NULL) {
-		CW_CREATE_PROTOCOL_MESSAGE(*transportHdrPtr, gMaxCAPWAPHeaderSizeBinding + radio_mac_present,
+		CW_CREATE_PROTOCOL_MESSAGE(NULL, *transportHdrPtr, gMaxCAPWAPHeaderSizeBinding + radio_mac_present,
 					   return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 		    );
 	} else {
-		CW_CREATE_PROTOCOL_MESSAGE(*transportHdrPtr, 8 + radio_mac_present,
+		CW_CREATE_PROTOCOL_MESSAGE(NULL, *transportHdrPtr, 8 + radio_mac_present,
 					   return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 		    );		// meaningful bytes of the header (no wirless header and MAC address)
 	}
@@ -236,11 +236,11 @@ CWBool CWAssembleTransportHeaderKeepAliveData(CWProtocolMessage * transportHdrPt
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
 	if (valuesPtr->bindingValuesPtr != NULL) {
-		CW_CREATE_PROTOCOL_MESSAGE(*transportHdrPtr, gMaxCAPWAPHeaderSizeBinding,
+		CW_CREATE_PROTOCOL_MESSAGE(NULL, *transportHdrPtr, gMaxCAPWAPHeaderSizeBinding,
 					   return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 		    );
 	} else {
-		CW_CREATE_PROTOCOL_MESSAGE(*transportHdrPtr, 8, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+		CW_CREATE_PROTOCOL_MESSAGE(NULL, *transportHdrPtr, 8, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 		    );		// meaningful bytes of the header (no wirless header and MAC address)
 	}
 	CWSetField32(val, CW_TRANSPORT_HEADER_VERSION_START, CW_TRANSPORT_HEADER_VERSION_LEN, CW_PROTOCOL_VERSION);	// current version of CAPWAP
@@ -306,7 +306,7 @@ CWBool CWAssembleControlHeader(CWProtocolMessage * controlHdrPtr, CWControlHeade
 	if (controlHdrPtr == NULL || valPtr == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
-	CW_CREATE_PROTOCOL_MESSAGE(*controlHdrPtr, 8,	// meaningful bytes of the header
+	CW_CREATE_PROTOCOL_MESSAGE(NULL, *controlHdrPtr, 8,	// meaningful bytes of the header
 				   return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
@@ -321,7 +321,7 @@ CWBool CWAssembleControlHeader(CWProtocolMessage * controlHdrPtr, CWControlHeade
 
 /*Update 2009:
     Attach a payload with a result code to the message */
-CWBool CWAssembleVendorMsgElemResultCodeWithPayload(CWProtocolMessage * msgPtr, CWProtocolResultCode code,
+CWBool CWAssembleVendorMsgElemResultCodeWithPayload(const void *ctx, CWProtocolMessage * msgPtr, CWProtocolResultCode code,
 						    CWProtocolVendorSpecificValues * payload)
 {
 	if (msgPtr == NULL)
@@ -346,10 +346,7 @@ CWBool CWAssembleVendorMsgElemResultCodeWithPayload(CWProtocolMessage * msgPtr, 
 		break;
 	}
 
-	// create message
-	CW_CREATE_PROTOCOL_MESSAGE(*msgPtr, (sizeof(unsigned short) * 2) + (sizeof(unsigned int) * 2) + payloadSize,
-				   return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	CWInitMsgElem(ctx, msgPtr, 4 + 8 + payloadSize, CW_MSG_ELEMENT_RESULT_CODE_CW_TYPE);
 
 	CWProtocolStore32(msgPtr, code);
 //  CWDebugLog("Result Code: %d", code);
@@ -385,22 +382,21 @@ CWBool CWAssembleVendorMsgElemResultCodeWithPayload(CWProtocolMessage * msgPtr, 
 		break;
 	}
 
-	return CWAssembleMsgElem(msgPtr, CW_MSG_ELEMENT_RESULT_CODE_CW_TYPE_WITH_PAYLOAD);
+	CWFinalizeMsgElem(msgPtr);
+
+	return CW_TRUE;
 }
 
-CWBool CWAssembleMsgElemResultCode(CWProtocolMessage * msgPtr, CWProtocolResultCode code)
+CWBool CWAssembleMsgElemResultCode(const void *ctx, CWProtocolMessage * msgPtr, CWProtocolResultCode code)
 {
 	if (msgPtr == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
-	// create message
-	CW_CREATE_PROTOCOL_MESSAGE(*msgPtr, 4, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
-
+	CWInitMsgElem(ctx, msgPtr, 4, CW_MSG_ELEMENT_RESULT_CODE_CW_TYPE);
 	CWProtocolStore32(msgPtr, code);
-//  CWDebugLog("Result Code: %d", code);
+	CWFinalizeMsgElem(msgPtr);
 
-	return CWAssembleMsgElem(msgPtr, CW_MSG_ELEMENT_RESULT_CODE_CW_TYPE);
+	return CW_TRUE;
 }
 
 // Assemble a CAPWAP Control Packet, with the given Message Elements, Sequence Number and Message Type. Create Transport and Control Headers.
@@ -433,38 +429,24 @@ CWBool CWAssembleMessage(CWProtocolMessage ** completeMsgPtr, int *fragmentsNumP
 
 	if (!(CWAssembleControlHeader(&controlHdr, &controlVal))) {
 		CW_FREE_PROTOCOL_MESSAGE(controlHdr);
-		for (i = 0; i < msgElemNum; i++) {
-			CW_FREE_PROTOCOL_MESSAGE(msgElems[i]);
-		}
 		CW_FREE_OBJECT(msgElems);
-		for (i = 0; i < msgElemBindingNum; i++) {
-			CW_FREE_PROTOCOL_MESSAGE(msgElemsBinding[i]);
-		}
 		CW_FREE_OBJECT(msgElemsBinding);
 		return CW_FALSE;	// will be handled by the caller
 	}
 	// assemble the message putting all the data consecutively
-	CW_CREATE_PROTOCOL_MESSAGE(msg, controlHdr.offset + msgElemsLen,
+	CW_CREATE_PROTOCOL_MESSAGE(NULL, msg, controlHdr.offset + msgElemsLen,
 				   return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 	    );
 
 	CWProtocolStoreMessage(&msg, &controlHdr);
-	for (i = 0; i < msgElemNum; i++) {	// store in the request all the Message Elements
+	for (i = 0; i < msgElemNum; i++)                                     // store in the request all the Message Elements
 		CWProtocolStoreMessage(&msg, &(msgElems[i]));
-	}
-	for (i = 0; i < msgElemBindingNum; i++) {	// store in the request all the Message Elements
-		CWProtocolStoreMessage(&msg, &(msgElemsBinding[i]));
-	}
 
-	//Free memory not needed anymore
+	for (i = 0; i < msgElemBindingNum; i++)                              // store in the request all the Message Elements
+		CWProtocolStoreMessage(&msg, &(msgElemsBinding[i]));
+
 	CW_FREE_PROTOCOL_MESSAGE(controlHdr);
-	for (i = 0; i < msgElemNum; i++) {
-		CW_FREE_PROTOCOL_MESSAGE(msgElems[i]);
-	}
 	CW_FREE_OBJECT(msgElems);
-	for (i = 0; i < msgElemBindingNum; i++) {
-		CW_FREE_PROTOCOL_MESSAGE(msgElemsBinding[i]);
-	}
 	CW_FREE_OBJECT(msgElemsBinding);
 
 //  CWDebugLog("PMTU: %d", PMTU);
@@ -507,7 +489,7 @@ CWBool CWAssembleMessage(CWProtocolMessage ** completeMsgPtr, int *fragmentsNumP
 			return CW_FALSE;	// will be handled by the caller
 		}
 		// assemble the message putting all the data consecutively
-		CW_CREATE_PROTOCOL_MESSAGE(((*completeMsgPtr)[0]), transportHdr.offset + msg.offset,
+		CW_CREATE_PROTOCOL_MESSAGE(*completeMsgPtr, ((*completeMsgPtr)[0]), transportHdr.offset + msg.offset,
 					   return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 		    );
 
@@ -554,7 +536,7 @@ CWBool CWAssembleMessage(CWProtocolMessage ** completeMsgPtr, int *fragmentsNumP
 				return CW_FALSE;	// will be handled by the caller
 			}
 
-			CW_CREATE_PROTOCOL_MESSAGE(((*completeMsgPtr)[i]), transportHdr.offset + fragSize,
+			CW_CREATE_PROTOCOL_MESSAGE(*completeMsgPtr, ((*completeMsgPtr)[i]), transportHdr.offset + fragSize,
 						   return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 			    );
 
@@ -614,7 +596,7 @@ CWBool CWProtocolParseFragment(unsigned char *buf, int readBytes,
 		   return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Received Fragment with Different ID"); // discard this packet
 		   }
 		 */
-		CW_CREATE_PROTOCOL_MESSAGE(*reassembledMsg, (readBytes - msg.offset),
+		CW_CREATE_PROTOCOL_MESSAGE(NULL, *reassembledMsg, (readBytes - msg.offset),
 					   return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 		    );
 
@@ -709,7 +691,7 @@ CWBool CWProtocolParseFragment(unsigned char *buf, int readBytes,
 			CWLog("_______________________");
 			CWDebugLog("Received All Fragments");
 
-			CW_CREATE_PROTOCOL_MESSAGE(*reassembledMsg, (totalSize),
+			CW_CREATE_PROTOCOL_MESSAGE(NULL, *reassembledMsg, (totalSize),
 						   return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 			    );
 
@@ -926,7 +908,7 @@ CWBool CWAssembleUnrecognizedMessageResponse(CWProtocolMessage ** messagesPtr, i
 	if (!(msgElems = ralloc(NULL, CWProtocolMessage)))
 		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
-	if (!(CWAssembleMsgElemResultCode(msgElems, CW_PROTOCOL_FAILURE_UNRECOGNIZED_REQ))) {
+	if (!(CWAssembleMsgElemResultCode(msgElems, msgElems, CW_PROTOCOL_FAILURE_UNRECOGNIZED_REQ))) {
 		CW_FREE_OBJECT(msgElems);
 		return CW_FALSE;
 	}
@@ -942,25 +924,23 @@ CWBool CWAssembleUnrecognizedMessageResponse(CWProtocolMessage ** messagesPtr, i
 	return CW_TRUE;
 }
 
-CWBool CWAssembleMsgElemSessionID(CWProtocolMessage * msgPtr, unsigned char *sessionID)
+CWBool CWAssembleMsgElemSessionID(const void *ctx, CWProtocolMessage * msgPtr, unsigned char *sessionID)
 {
 	if (msgPtr == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
-	// create message
-	CW_CREATE_PROTOCOL_MESSAGE(*msgPtr, 16, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
-
+	CWInitMsgElem(ctx, msgPtr, 16, CW_MSG_ELEMENT_SESSION_ID_CW_TYPE);
 	CWProtocolStoreRawBytes(msgPtr, sessionID, 16);
+	CWFinalizeMsgElem(msgPtr);
 
-	return CWAssembleMsgElem(msgPtr, CW_MSG_ELEMENT_SESSION_ID_CW_TYPE);
+	return CW_TRUE;
 }
 
-CWBool CWParseACName(CWProtocolMessage * msgPtr, int len, char **valPtr)
+CWBool CWParseACName(const void *ctx, CWProtocolMessage * msgPtr, int len, char **valPtr)
 {
 	CWParseMessageElementStart();
 
-	*valPtr = CWProtocolRetrieveStr(NULL, msgPtr, len);
+	*valPtr = CWProtocolRetrieveStr(ctx, msgPtr, len);
 	if (valPtr == NULL)
 		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 //  CWDebugLog("AC Name:%s", *valPtr);
@@ -1023,15 +1003,6 @@ void CWWTPResetRadioStatistics(WTPRadioStatisticsInfo * radioStatistics)
 	radioStatistics->channelChangeCount = 0;
 	radioStatistics->bandChangeCount = 0;
 	radioStatistics->currentNoiseFloor = 0;
-}
-
-void CWFreeMessageFragments(CWProtocolMessage * messages, int fragmentsNum)
-{
-	int i;
-
-	for (i = 0; i < fragmentsNum; i++) {
-		CW_FREE_PROTOCOL_MESSAGE(messages[i]);
-	}
 }
 
 unsigned char *CWParseSessionID(CWProtocolMessage * msgPtr, int len)

@@ -197,21 +197,17 @@ CWBool CWAssembleJoinRequest(CWProtocolMessage ** messagesPtr,
 	CWLog("Sending Join Request...");
 
 	/* Assemble Message Elements */
-	msgOK = CWAssembleMsgElemLocationData(&(msgElems[++k])) &&
-		CWAssembleMsgElemWTPBoardData(&(msgElems[++k])) &&
-		CWAssembleMsgElemWTPDescriptor(&(msgElems[++k])) &&
-		CWAssembleMsgElemWTPIPv4Address(&(msgElems[++k])) &&
-		CWAssembleMsgElemWTPName(&(msgElems[++k])) &&
-		CWAssembleMsgElemSessionID(&(msgElems[++k]), &gWTPSessionID[0]) &&
-		CWAssembleMsgElemWTPFrameTunnelMode(&(msgElems[++k])) &&
-		CWAssembleMsgElemWTPMACType(&(msgElems[++k])) &&
-		CWAssembleMsgElemWTPRadioInformation(&(msgElems[++k]));
+	msgOK = CWAssembleMsgElemLocationData(msgElems, &(msgElems[++k])) &&
+		CWAssembleMsgElemWTPBoardData(msgElems, &(msgElems[++k])) &&
+		CWAssembleMsgElemWTPDescriptor(msgElems, &(msgElems[++k])) &&
+		CWAssembleMsgElemWTPIPv4Address(msgElems, &(msgElems[++k])) &&
+		CWAssembleMsgElemWTPName(msgElems, &(msgElems[++k])) &&
+		CWAssembleMsgElemSessionID(msgElems, &(msgElems[++k]), &gWTPSessionID[0]) &&
+		CWAssembleMsgElemWTPFrameTunnelMode(msgElems, &(msgElems[++k])) &&
+		CWAssembleMsgElemWTPMACType(msgElems, &(msgElems[++k])) &&
+		CWAssembleMsgElemWTPRadioInformation(msgElems, &(msgElems[++k]));
 
 	if (!msgOK) {
-		int i;
-		for (i = 0; i <= k; i++) {
-			CW_FREE_PROTOCOL_MESSAGE(msgElems[i]);
-		}
 		CW_FREE_OBJECT(msgElems);
 		/* error will be handled by the caller */
 		return CW_FALSE;
@@ -282,7 +278,7 @@ CWBool CWParseJoinResponseMessage(unsigned char *msg, int len, int seqNum, CWPro
 		switch (type) {
 		case CW_MSG_ELEMENT_AC_DESCRIPTOR_CW_TYPE:
 			/* will be handled by the caller */
-			if (!(CWParseACDescriptor(&completeMsg, len, &(valuesPtr->ACInfoPtr))))
+			if (!(CWParseACDescriptor(valuesPtr, &completeMsg, len, &(valuesPtr->ACInfoPtr))))
 				return CW_FALSE;
 			break;
 		case CW_MSG_ELEMENT_IEEE80211_WTP_RADIO_INFORMATION_CW_TYPE:
@@ -304,7 +300,7 @@ CWBool CWParseJoinResponseMessage(unsigned char *msg, int len, int seqNum, CWPro
 			break;
 		case CW_MSG_ELEMENT_AC_NAME_CW_TYPE:
 			/* will be handled by the caller */
-			if (!(CWParseACName(&completeMsg, len, &(valuesPtr->ACInfoPtr.name))))
+			if (!(CWParseACName(valuesPtr, &completeMsg, len, &(valuesPtr->ACInfoPtr.name))))
 				return CW_FALSE;
 			break;
 		case CW_MSG_ELEMENT_CW_CONTROL_IPV4_ADDRESS_CW_TYPE:

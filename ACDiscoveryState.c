@@ -53,17 +53,13 @@ CWBool CWAssembleDiscoveryResponse(CWProtocolMessage ** messagesPtr, int seqNum)
 	    );
 
 	/* Assemble Message Elements */
-	if ((!(CWAssembleMsgElemACDescriptor(&(msgElems[++k])))) ||
-	    (!(CWAssembleMsgElemACName(&(msgElems[++k])))) ||
-	    (!(CWAssembleMsgElemCWControlIPv4Addresses(&(msgElems[++k])))) ||
-	    (!(CWAssembleMsgElemACWTPRadioInformation(&(msgElems[++k]))))
-	    /*(CWACSupportIPv6() && (!(CWAssembleMsgElemCWControlIPv6Addresses(&(msgElems[++k]))))) */
+	if ((!(CWAssembleMsgElemACDescriptor(msgElems, &(msgElems[++k])))) ||
+	    (!(CWAssembleMsgElemACName(msgElems, &(msgElems[++k])))) ||
+	    (!(CWAssembleMsgElemCWControlIPv4Addresses(msgElems, &(msgElems[++k])))) ||
+	    (!(CWAssembleMsgElemACWTPRadioInformation(msgElems, &(msgElems[++k]))))
+	    /*(CWACSupportIPv6() && (!(CWAssembleMsgElemCWControlIPv6Addresses(msgElems, &(msgElems[++k]))))) */
 	    ) {
 		CWErrorHandleLast();
-		int i;
-		for (i = 0; i <= k; i++) {
-			CW_FREE_PROTOCOL_MESSAGE(msgElems[i]);
-		}
 		CW_FREE_OBJECT(msgElems);
 		return CW_FALSE;	// error will be handled by the caller
 	}

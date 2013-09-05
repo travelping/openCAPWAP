@@ -33,7 +33,7 @@ int extractFrame(CWProtocolMessage ** frame, unsigned char *buffer, int len)	//l
 		return 0;
 
 	CWProtocolMessage *auxPtr = *frame;
-	CW_CREATE_PROTOCOL_MESSAGE(*auxPtr, len, return 0;
+	CW_CREATE_PROTOCOL_MESSAGE(ctx, *auxPtr, len, return 0;
 	    );
 	memcpy(auxPtr->msg, buffer, len);
 	auxPtr->offset = len;

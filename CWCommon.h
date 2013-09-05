@@ -61,6 +61,7 @@
 CW_COMPILE_TIME_ASSERT(int_size, sizeof(int) == 4);
 CW_COMPILE_TIME_ASSERT(char_size, sizeof(char) == 1);
 
+#define     CW_BLOCK_ALLOC 16
 #define     CW_BUFFER_SIZE                  65536
 #define     CW_ZERO_MEMORY                  bzero
 #define     CW_COPY_MEMORY(dst, src, len)           bcopy(src, dst, len)

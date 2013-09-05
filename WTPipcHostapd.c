@@ -368,14 +368,14 @@ CW_THREAD_RETURN_TYPE CWWTPThread_read_data_from_hostapd(void *arg)
 			if (!wtpInRunState)
 				continue;
 
-			if (!extract802_11_Frame(&frame, buffer + sig_byte, len - sig_byte)) {
-				CWLog("THR FRAME: Error extracting a frame");
-				EXIT_FRAME_THREAD(sock);
-			}
-
 			CWDebugLog("Send 802.11 management(len:%d) to AC", len - 1);
 			if (!(listElement = ralloc(NULL, CWBindingDataListElement)))
 				EXIT_FRAME_THREAD(sock);
+
+			if (!extract802_11_Frame(listElement, &frame, buffer + sig_byte, len - sig_byte)) {
+				CWLog("THR FRAME: Error extracting a frame");
+				EXIT_FRAME_THREAD(sock);
+			}
 
 			listElement->frame = frame;
 			listElement->bindingValues = NULL;

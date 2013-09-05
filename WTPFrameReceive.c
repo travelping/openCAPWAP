@@ -72,7 +72,7 @@ int extractFrame(CWProtocolMessage ** frame, unsigned char *buffer, int len)	//l
 		return 0;
 
 	CWProtocolMessage *auxPtr = *frame;
-	CW_CREATE_PROTOCOL_MESSAGE(*auxPtr, len - PRISMH_LEN, return 0;
+	CW_CREATE_PROTOCOL_MESSAGE(ctx, *auxPtr, len - PRISMH_LEN, return 0;
 	    );
 	memcpy(auxPtr->msg, buffer + PRISMH_LEN, len - PRISMH_LEN);
 	auxPtr->offset = len - PRISMH_LEN;
@@ -85,7 +85,7 @@ int extract802_3_Frame(CWProtocolMessage ** frame, unsigned char *buffer, int le
 		return 0;
 
 	CWProtocolMessage *auxPtr = *frame;
-	CW_CREATE_PROTOCOL_MESSAGE(*auxPtr, len, return 0;
+	CW_CREATE_PROTOCOL_MESSAGE(ctx, *auxPtr, len, return 0;
 	    );
 	memcpy(auxPtr->msg, buffer, len);
 	auxPtr->offset = len;

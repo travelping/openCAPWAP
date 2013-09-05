@@ -622,7 +622,7 @@ CWBool CWNetworkUnsafeMultiHomed(CWMultiHomedSocket * sockPtr,
 				if (!(frame = ralloc(NULL, CWProtocolMessage)))
 					return 0;
 
-				CW_CREATE_PROTOCOL_MESSAGE(*frame, readByest80211, return 0;
+				CW_CREATE_PROTOCOL_MESSAGE(frame, *frame, readByest80211, return 0;
 				    );
 				memcpy(frame->msg, buf80211, readByest80211);
 				frame->offset = readByest80211;
@@ -632,11 +632,7 @@ CWBool CWNetworkUnsafeMultiHomed(CWMultiHomedSocket * sockPtr,
 							   &fragmentsNum,
 							   gWTPs[i].pathMTU, frame, NULL, CW_PACKET_PLAIN, 0)) {
 
-					for (k = 0; k < fragmentsNum; k++) {
-						CW_FREE_PROTOCOL_MESSAGE(completeMsgPtr[k]);
-					}
 					CW_FREE_OBJECT(completeMsgPtr);
-					CW_FREE_PROTOCOL_MESSAGE(*frame);
 					CW_FREE_OBJECT(frame);
 					continue;
 				}
@@ -666,12 +662,8 @@ CWBool CWNetworkUnsafeMultiHomed(CWMultiHomedSocket * sockPtr,
 						break;
 					}
 				}
-				for (k = 0; k < fragmentsNum; k++) {
-					CW_FREE_PROTOCOL_MESSAGE(completeMsgPtr[k]);
-				}
 
 				CW_FREE_OBJECT(completeMsgPtr);
-				CW_FREE_PROTOCOL_MESSAGE(*(frame));
 				CW_FREE_OBJECT(frame);
 
 			}

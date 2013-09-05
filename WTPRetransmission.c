@@ -40,12 +40,7 @@ void CWResetPendingMsgBox(CWPendingRequestMessage * pendingRequestMsgs)
 
 	timer_rem(pendingRequestMsgs->timer, NULL);
 
-	int i;
-	for (i = 0; i < (pendingRequestMsgs->fragmentsNum); i++) {
-		CW_FREE_PROTOCOL_MESSAGE((pendingRequestMsgs->msgElems)[i]);
-	}
 	CW_FREE_OBJECT(pendingRequestMsgs->msgElems);
-
 	pendingRequestMsgs->fragmentsNum = 0;
 
 	return;

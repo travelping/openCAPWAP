@@ -108,7 +108,6 @@ __inline__ CWBool CWACSendAcknowledgedPacket(int WTPIndex, int msgType, int seqN
 void CWACStopRetransmission(int WTPIndex)
 {
 	if (gWTPs[WTPIndex].isRetransmitting) {
-		int i;
 		CWDebugLog("Stop Retransmission");
 		gWTPs[WTPIndex].isRetransmitting = CW_FALSE;
 		CWThreadSetSignals(SIG_BLOCK, 1, CW_SOFT_TIMER_EXPIRED_SIGNAL);
@@ -118,10 +117,6 @@ void CWACStopRetransmission(int WTPIndex)
 		CWThreadSetSignals(SIG_UNBLOCK, 1, CW_SOFT_TIMER_EXPIRED_SIGNAL);
 		gWTPs[WTPIndex].responseType = UNUSED_MSG_TYPE;
 		gWTPs[WTPIndex].responseSeqNum = 0;
-
-		for (i = 0; i < gWTPs[WTPIndex].messagesCount; i++) {
-			CW_FREE_PROTOCOL_MESSAGE(gWTPs[WTPIndex].messages[i]);
-		}
 
 		CW_FREE_OBJECT(gWTPs[WTPIndex].messages);
 //      CWDebugLog("~~~~~~ End of Stop Retransmission");

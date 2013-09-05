@@ -650,14 +650,12 @@ CWBool CWWTPManageGenericRunMessage(CWProtocolMessage * msgPtr)
 #endif
 				{
 					CWLog("Error sending message");
-					CWFreeMessageFragments(messages, fragmentsNum);
 					CW_FREE_OBJECT(messages);
 					return CW_FALSE;
 				}
 			}
 
 			CWLog("Message Sent\n");
-			CWFreeMessageFragments(messages, fragmentsNum);
 			CW_FREE_OBJECT(messages);
 
 			/*
@@ -712,13 +710,7 @@ void CWWTPHeartBeatTimerExpiredHandler(void *arg)
 	seqNum = CWGetSeqNum();
 
 	if (!CWAssembleEchoRequest(&messages, &fragmentsNum, gWTPPathMTU, seqNum, msgElemList)) {
-		int i;
-
 		CWDebugLog("Failure Assembling Echo Request");
-		if (messages)
-			for (i = 0; i < fragmentsNum; i++) {
-				CW_FREE_PROTOCOL_MESSAGE(messages[i]);
-			}
 		CW_FREE_OBJECT(messages);
 		return;
 	}
@@ -731,19 +723,11 @@ void CWWTPHeartBeatTimerExpiredHandler(void *arg)
 		if (!CWSecuritySend(gWTPSession, messages[i].msg, messages[i].offset)) {
 #endif
 			CWLog("Failure sending Request");
-			int k;
-			for (k = 0; k < fragmentsNum; k++) {
-				CW_FREE_PROTOCOL_MESSAGE(messages[k]);
-			}
 			CW_FREE_OBJECT(messages);
 			break;
 		}
 	}
 
-	int k;
-	for (k = 0; messages && k < fragmentsNum; k++) {
-		CW_FREE_PROTOCOL_MESSAGE(messages[k]);
-	}
 	CW_FREE_OBJECT(messages);
 
 	if (!CWStartHeartbeatTimer()) {
@@ -769,7 +753,7 @@ void CWWTPKeepAliveDataTimerExpiredHandler(void *arg)
 		return;
 	}
 
-	CWAssembleMsgElemSessionID(&sessionIDmsgElem, &gWTPSessionID[0]);
+	CWAssembleMsgElemSessionID(NULL, &sessionIDmsgElem, &gWTPSessionID[0]);
 
 	/* Send WTP Event Request */
 	if (!CWAssembleDataMessage(&messages, &fragmentsNum, gWTPPathMTU, &sessionIDmsgElem, NULL, CW_PACKET_PLAIN, 1)) {
@@ -785,9 +769,6 @@ void CWWTPKeepAliveDataTimerExpiredHandler(void *arg)
 		}
 	}
 
-	for (k = 0; messages && k < fragmentsNum; k++) {
-		CW_FREE_PROTOCOL_MESSAGE(messages[k]);
-	}
 	CW_FREE_OBJECT(messages);
 	CW_FREE_PROTOCOL_MESSAGE(sessionIDmsgElem);
 }
@@ -900,7 +881,7 @@ CWBool CWAssembleEchoRequest(CWProtocolMessage ** messagesPtr,
         msgElems = CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(msgElemCount, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
             );
 
-	if (!CWAssembleMsgElemVendorTPWTPTimestamp(&(msgElems[0]), &tv) ||
+	if (!CWAssembleMsgElemVendorTPWTPTimestamp(msgElems, &(msgElems[0]), &tv) ||
 	    !CWAssembleMessage(messagesPtr,
 			       fragmentsNumPtr,
 			       PMTU,
@@ -945,11 +926,11 @@ CWBool CWAssembleWTPDataTransferRequest(CWProtocolMessage ** messagesPtr, int *f
 		case CW_MSG_ELEMENT_DATA_TRANSFER_DATA_CW_TYPE:
 			if (!
 			    (CWAssembleMsgElemDataTransferData
-			     (&(msgElems[++k]), ((CWMsgElemData *) current->data)->value)))
+			     (msgElems, &(msgElems[++k]), ((CWMsgElemData *) current->data)->value)))
 				goto cw_assemble_error;
 			break;
 			/*case CW_MSG_ELEMENT_DATA_TRANSFER_MODE_CW_TYPE:
-			   if (!(CWAssembleMsgElemDataTansferMode(&(msgElems[++k]))))
+			   if (!(CWAssembleMsgElemDataTansferMode(msgElems, &(msgElems[++k]))))
 			   goto cw_assemble_error;
 			   break; */
 
@@ -973,14 +954,9 @@ CWBool CWAssembleWTPDataTransferRequest(CWProtocolMessage ** messagesPtr, int *f
 
 	return CW_TRUE;
 
- cw_assemble_error:{
-		int i;
-		for (i = 0; i <= k; i++) {
-			CW_FREE_PROTOCOL_MESSAGE(msgElems[i]);
-		}
-		CW_FREE_OBJECT(msgElems);
-		return CW_FALSE;	// error will be handled by the caller
-	}
+ cw_assemble_error:
+	CW_FREE_OBJECT(msgElems);
+	return CW_FALSE;	// error will be handled by the caller
 }
 
 CWBool CWAssembleWTPEventRequest(CWProtocolMessage ** messagesPtr,
@@ -1018,31 +994,31 @@ CWBool CWAssembleWTPEventRequest(CWProtocolMessage ** messagesPtr,
 		case CW_MSG_ELEMENT_CW_DECRYPT_ER_REPORT_CW_TYPE:
 			if (!
 			    (CWAssembleMsgElemDecryptErrorReport
-			     (&(msgElems[++k]), ((CWMsgElemData *) current->data)->value)))
+			     (msgElems, &(msgElems[++k]), ((CWMsgElemData *) current->data)->value)))
 				goto cw_assemble_error;
 			break;
 		case CW_MSG_ELEMENT_DUPLICATE_IPV4_ADDRESS_CW_TYPE:
-			if (!(CWAssembleMsgElemDuplicateIPv4Address(&(msgElems[++k]))))
+			if (!(CWAssembleMsgElemDuplicateIPv4Address(msgElems, &(msgElems[++k]))))
 				goto cw_assemble_error;
 			break;
 		case CW_MSG_ELEMENT_DUPLICATE_IPV6_ADDRESS_CW_TYPE:
-			if (!(CWAssembleMsgElemDuplicateIPv6Address(&(msgElems[++k]))))
+			if (!(CWAssembleMsgElemDuplicateIPv6Address(msgElems, &(msgElems[++k]))))
 				goto cw_assemble_error;
 			break;
 		case CW_MSG_ELEMENT_WTP_OPERAT_STATISTICS_CW_TYPE:
 			if (!
 			    (CWAssembleMsgElemWTPOperationalStatistics
-			     (&(msgElems[++k]), ((CWMsgElemData *) current->data)->value)))
+			     (msgElems, &(msgElems[++k]), ((CWMsgElemData *) current->data)->value)))
 				goto cw_assemble_error;
 			break;
 		case CW_MSG_ELEMENT_WTP_RADIO_STATISTICS_CW_TYPE:
 			if (!
 			    (CWAssembleMsgElemWTPRadioStatistics
-			     (&(msgElems[++k]), ((CWMsgElemData *) current->data)->value)))
+			     (msgElems, &(msgElems[++k]), ((CWMsgElemData *) current->data)->value)))
 				goto cw_assemble_error;
 			break;
 		case CW_MSG_ELEMENT_WTP_REBOOT_STATISTICS_CW_TYPE:
-			if (!(CWAssembleMsgElemWTPRebootStatistics(&(msgElems[++k]))))
+			if (!(CWAssembleMsgElemWTPRebootStatistics(msgElems, &(msgElems[++k]))))
 				goto cw_assemble_error;
 			break;
 		default:
@@ -1064,14 +1040,9 @@ CWBool CWAssembleWTPEventRequest(CWProtocolMessage ** messagesPtr,
 
 	return CW_TRUE;
 
- cw_assemble_error:{
-		int i;
-		for (i = 0; i <= k; i++) {
-			CW_FREE_PROTOCOL_MESSAGE(msgElems[i]);
-		}
-		CW_FREE_OBJECT(msgElems);
-		return CW_FALSE;	// error will be handled by the caller
-	}
+ cw_assemble_error:
+	CW_FREE_OBJECT(msgElems);
+	return CW_FALSE;	// error will be handled by the caller
 }
 
 /*Update 2009:
@@ -1107,7 +1078,7 @@ CWBool CWAssembleConfigurationUpdateResponse(CWProtocolMessage ** messagesPtr,
 		switch (protoValues->vendorPayloadType) {
 		case CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_UCI:
 		case CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_WUM:
-			if (!(CWAssembleVendorMsgElemResultCodeWithPayload(msgElems, resultCode, protoValues))) {
+			if (!(CWAssembleVendorMsgElemResultCodeWithPayload(msgElems, msgElems, resultCode, protoValues))) {
 				CW_FREE_OBJECT(msgElems);
 				return CW_FALSE;
 			}
@@ -1116,14 +1087,14 @@ CWBool CWAssembleConfigurationUpdateResponse(CWProtocolMessage ** messagesPtr,
 
 		default:
 			/*Result Code only */
-			if (!(CWAssembleMsgElemResultCode(msgElems, resultCode))) {
+			if (!(CWAssembleMsgElemResultCode(msgElems, msgElems, resultCode))) {
 				CW_FREE_OBJECT(msgElems);
 				return CW_FALSE;
 			}
 		}
 	} else {
 		/*Result Code only */
-		if (!(CWAssembleMsgElemResultCode(msgElems, resultCode))) {
+		if (!(CWAssembleMsgElemResultCode(msgElems, msgElems, resultCode))) {
 			CW_FREE_OBJECT(msgElems);
 			return CW_FALSE;
 		}
@@ -1158,7 +1129,7 @@ CWBool CWAssembleClearConfigurationResponse(CWProtocolMessage ** messagesPtr, in
 	if (!(msgElems = ralloc(NULL, CWProtocolMessage)))
 		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
-	if (!(CWAssembleMsgElemResultCode(msgElems, resultCode))) {
+	if (!(CWAssembleMsgElemResultCode(msgElems, msgElems, resultCode))) {
 		CW_FREE_OBJECT(msgElems);
 		return CW_FALSE;
 	}
@@ -1192,7 +1163,7 @@ CWBool CWAssembleStationConfigurationResponse(CWProtocolMessage ** messagesPtr, 
 	if (!(msgElems = ralloc(NULL, CWProtocolMessage)))
 		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
-	if (!(CWAssembleMsgElemResultCode(msgElems, resultCode))) {
+	if (!(CWAssembleMsgElemResultCode(msgElems, msgElems, resultCode))) {
 		CW_FREE_OBJECT(msgElems);
 		return CW_FALSE;
 	}
@@ -1230,11 +1201,11 @@ CWBool CWAssembleWLANConfigurationResponse(CWProtocolMessage ** messagesPtr, int
 	*/
 	msgElems = CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(msgElemCount, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
 
-	if (!(CWAssembleMsgElemResultCode((&(msgElems[++k])), resultCode))) {
+	if (!(CWAssembleMsgElemResultCode(msgElems, (&(msgElems[++k])), resultCode))) {
 		CW_FREE_OBJECT(msgElems);
 		return CW_FALSE;
 	}
-	if (!(CWAssembleMsgElemVendorSpecificPayload((&(msgElems[++k]))))) {
+	if (!(CWAssembleMsgElemVendorSpecificPayload(msgElems, (&(msgElems[++k]))))) {
 		CW_FREE_OBJECT(msgElems);
 		return CW_FALSE;
 	}
@@ -1884,13 +1855,7 @@ void CWConfirmRunStateToACWithEchoRequest()
 	seqNum = CWGetSeqNum();
 
 	if (!CWAssembleEchoRequest(&messages, &fragmentsNum, gWTPPathMTU, seqNum, msgElemList)) {
-		int i;
-
 		CWDebugLog("Failure Assembling Echo Request");
-		if (messages)
-			for (i = 0; i < fragmentsNum; i++) {
-				CW_FREE_PROTOCOL_MESSAGE(messages[i]);
-			}
 		CW_FREE_OBJECT(messages);
 		return;
 	}
@@ -1903,19 +1868,10 @@ void CWConfirmRunStateToACWithEchoRequest()
 		if (!CWSecuritySend(gWTPSession, messages[i].msg, messages[i].offset)) {
 #endif
 			CWLog("Failure sending Request");
-			int k;
-			for (k = 0; k < fragmentsNum; k++) {
-				CW_FREE_PROTOCOL_MESSAGE(messages[k]);
-			}
 			CW_FREE_OBJECT(messages);
 			break;
 		}
 	}
 
-	int k;
-	for (k = 0; messages && k < fragmentsNum; k++) {
-		CW_FREE_PROTOCOL_MESSAGE(messages[k]);
-	}
 	CW_FREE_OBJECT(messages);
-
 }

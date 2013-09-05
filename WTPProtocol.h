@@ -105,31 +105,31 @@ typedef struct {
 
 /*__________________________________________________________*/
 /*  *******************___PROTOTYPES___*******************  */
-CWBool CWAssembleMsgElemACName(CWProtocolMessage * msgPtr);	// 4
-CWBool CWAssembleMsgElemACNameWithIndex(CWProtocolMessage * msgPtr);	// 5
-CWBool CWAssembleMsgElemDataTransferData(CWProtocolMessage * msgPtr, int data_type);	//13
-CWBool CWAssembleMsgElemDiscoveryType(CWProtocolMessage * msgPtr);	//20
-CWBool CWAssembleMsgElemDuplicateIPv4Address(CWProtocolMessage * msgPtr);	//21
-CWBool CWAssembleMsgElemLocationData(CWProtocolMessage * msgPtr);	//27
-CWBool CWAssembleMsgElemStatisticsTimer(CWProtocolMessage * msgPtr);	//33
-CWBool CWAssembleMsgElemWTPBoardData(CWProtocolMessage * msgPtr);	//35
-CWBool CWAssembleMsgElemWTPDescriptor(CWProtocolMessage * msgPtr);	//36
-CWBool CWAssembleMsgElemWTPFrameTunnelMode(CWProtocolMessage * msgPtr);	//38
-CWBool CWAssembleMsgElemWTPIPv4Address(CWProtocolMessage * msgPtr);	//39
-CWBool CWAssembleMsgElemWTPMACType(CWProtocolMessage * msgPtr);	//40
-CWBool CWAssembleMsgElemWTPRadioInformation(CWProtocolMessage * msgPtr);	//1048
-CWBool CWAssembleMsgElemSupportedRates(CWProtocolMessage * msgPtr);	//1040
-CWBool CWAssembleMsgElemMultiDomainCapability(CWProtocolMessage * msgPtr);	//1032
-CWBool CWAssembleMsgElemWTPName(CWProtocolMessage * msgPtr);	//41
-CWBool CWAssembleMsgElemWTPOperationalStatistics(CWProtocolMessage * msgPtr, int radio);	//42
-CWBool CWAssembleMsgElemWTPRadioStatistics(CWProtocolMessage * msgPtr, int radio);	//43
-CWBool CWAssembleMsgElemWTPRebootStatistics(CWProtocolMessage * msgPtr);	//44
-//CWBool CWAssembleMsgElemWTPStaticIPInfo(CWProtocolMessage *msgPtr);           //45
+CWBool CWAssembleMsgElemACName(const void *ctx, CWProtocolMessage * msgPtr);                                    /*  4 */
+CWBool CWAssembleMsgElemACNameWithIndex(const void *ctx, CWProtocolMessage * msgPtr);                           /*  5 */
+CWBool CWAssembleMsgElemDataTransferData(const void *ctx, CWProtocolMessage * msgPtr, int data_type);           /* 13 */
+CWBool CWAssembleMsgElemDiscoveryType(const void *ctx, CWProtocolMessage * msgPtr);                             /* 20 */
+CWBool CWAssembleMsgElemDuplicateIPv4Address(const void *ctx, CWProtocolMessage * msgPtr);                      /* 21 */
+CWBool CWAssembleMsgElemLocationData(const void *ctx, CWProtocolMessage * msgPtr);                              /* 27 */
+CWBool CWAssembleMsgElemStatisticsTimer(const void *ctx, CWProtocolMessage * msgPtr);                           /* 33 */
+CWBool CWAssembleMsgElemWTPBoardData(const void *ctx, CWProtocolMessage * msgPtr);                              /* 35 */
+CWBool CWAssembleMsgElemWTPDescriptor(const void *ctx, CWProtocolMessage * msgPtr);                             /* 36 */
+CWBool CWAssembleMsgElemWTPFrameTunnelMode(const void *ctx, CWProtocolMessage * msgPtr);                        /* 38 */
+CWBool CWAssembleMsgElemWTPIPv4Address(const void *ctx, CWProtocolMessage * msgPtr);                            /* 39 */
+CWBool CWAssembleMsgElemWTPMACType(const void *ctx, CWProtocolMessage * msgPtr);                                /* 40 */
+CWBool CWAssembleMsgElemWTPRadioInformation(const void *ctx, CWProtocolMessage * msgPtr);                       /* 1048 */
+CWBool CWAssembleMsgElemSupportedRates(const void *ctx, CWProtocolMessage * msgPtr);                            /* 1040 */
+CWBool CWAssembleMsgElemMultiDomainCapability(const void *ctx, CWProtocolMessage * msgPtr);                     /* 1032 */
+CWBool CWAssembleMsgElemWTPName(const void *ctx, CWProtocolMessage * msgPtr);                                   /* 41 */
+CWBool CWAssembleMsgElemWTPOperationalStatistics(const void *ctx, CWProtocolMessage * msgPtr, int radio);       /* 42 */
+CWBool CWAssembleMsgElemWTPRadioStatistics(const void *ctx, CWProtocolMessage * msgPtr, int radio);             /* 43 */
+CWBool CWAssembleMsgElemWTPRebootStatistics(const void *ctx, CWProtocolMessage * msgPtr);                       /* 44 */
+// CWBool CWAssembleMsgElemWTPStaticIPInfo(const void *ctx, CWProtocolMessage *msgPtr);                         /* 45 */
 
-//CWBool CWAssembleMsgElemWTPRadioInformation(CWProtocolMessage *msgPtr);
+// CWBool CWAssembleMsgElemWTPRadioInformation(const void *ctx, CWProtocolMessage *msgPtr);
 
 //---------------------------------------------------------/
-CWBool CWParseACDescriptor(CWProtocolMessage * msgPtr, int len, CWACInfoValues * valPtr);	// 1
+CWBool CWParseACDescriptor(const void *ctx, CWProtocolMessage * msgPtr, int len, CWACInfoValues * valPtr);	// 1
 CWBool CWParseACIPv4List(CWProtocolMessage * msgPtr, int len, ACIPv4ListValues * valPtr);	// 2
 CWBool CWParseACIPv6List(CWProtocolMessage * msgPtr, int len, ACIPv6ListValues * valPtr);	// 3
 CWBool CWParseAddStation(CWProtocolMessage * msgPtr, int len);	// 8
@@ -144,7 +144,7 @@ CWBool CWParseWTPRadioInformation_FromAC(CWProtocolMessage * msgPtr, int len, ch
 
 //si trova in CWProtocol.h
 //CWBool CWParseACName(CWProtocolMessage *msgPtr, int len, char **valPtr);                      // 4
-CWBool CWAssembleMsgElemVendorTPWTPTimestamp(CWProtocolMessage * msgPtr, struct timeval *tv);
+CWBool CWAssembleMsgElemVendorTPWTPTimestamp(const void *ctx, CWProtocolMessage * msgPtr, struct timeval *tv);
 
 //---------------------------------------------------------/
 void CWWTPResetRebootStatistics(WTPRebootStatisticsInfo * rebootStatistics);
@@ -168,9 +168,9 @@ int CWWTPGetACIndex();
 char *CWWTPGetACName();
 int CWWTPGetFrameTunnelMode();
 CWBool CWGetWTPRadiosOperationalState(int radioID, CWRadiosOperationalInfo * valPtr);
-CWBool CWAssembleMsgElemDecryptErrorReport(CWProtocolMessage * msgPtr, int radioID);
-CWBool CWAssembleMsgElemDuplicateIPv6Address(CWProtocolMessage * msgPtr);
-CWBool CWAssembleMsgElemVendorSpecificPayload(CWProtocolMessage * msgPtr);
+CWBool CWAssembleMsgElemDecryptErrorReport(const void *ctx, CWProtocolMessage * msgPtr, int radioID);
+CWBool CWAssembleMsgElemDuplicateIPv6Address(const void *ctx, CWProtocolMessage * msgPtr);
+CWBool CWAssembleMsgElemVendorSpecificPayload(const void *ctx, CWProtocolMessage * msgPtr);
 
 CWBool CWParseAddWLAN(CWProtocolMessage * msgPtr, int len);
 CWBool CWParseDeleteWLAN(CWProtocolMessage * msgPtr, int len);

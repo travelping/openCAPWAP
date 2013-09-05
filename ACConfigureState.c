@@ -154,7 +154,7 @@ CWBool CWParseConfigureRequestMessage(unsigned char *msg, int len,
 
 		switch (elemType) {
 		case CW_MSG_ELEMENT_AC_NAME_CW_TYPE:
-			if (!(CWParseACName(&completeMsg, elemLen, &(valuesPtr->ACName))))
+			if (!(CWParseACName(valuesPtr, &completeMsg, elemLen, &(valuesPtr->ACName))))
 				/* will be handled by the caller */
 				return CW_FALSE;
 			break;
@@ -265,26 +265,18 @@ CWBool CWAssembleConfigureResponse(CWProtocolMessage ** messagesPtr, int *fragme
 	    );
 
 	/* Assemble Message Elements */
-	if ((!(CWAssembleMsgElemACIPv4List(&(msgElems[++k])))) ||
-	    (!(CWAssembleMsgElemACIPv6List(&(msgElems[++k])))) || (!(CWAssembleMsgElemCWTimer(&(msgElems[++k])))) ||
-	    /*(!(CWAssembleMsgElemRadioOperationalState(-1, &(msgElems[++k])))) || */
-	    (!(CWAssembleMsgElemDecryptErrorReportPeriod(&(msgElems[++k])))) ||
-	    (!(CWAssembleMsgElemIdleTimeout(&(msgElems[++k])))) || (!(CWAssembleMsgElemWTPFallback(&(msgElems[++k]))))
+	if ((!(CWAssembleMsgElemACIPv4List(msgElems, &(msgElems[++k])))) ||
+	    (!(CWAssembleMsgElemACIPv6List(msgElems, &(msgElems[++k])))) || (!(CWAssembleMsgElemCWTimer(msgElems, &(msgElems[++k])))) ||
+	    /*(!(CWAssembleMsgElemRadioOperationalState(msgElems, -1, &(msgElems[++k])))) || */
+	    (!(CWAssembleMsgElemDecryptErrorReportPeriod(msgElems, &(msgElems[++k])))) ||
+	    (!(CWAssembleMsgElemIdleTimeout(msgElems, &(msgElems[++k])))) || (!(CWAssembleMsgElemWTPFallback(msgElems, &(msgElems[++k]))))
 	    ) {
-		int i;
-		for (i = 0; i <= k; i++) {
-			CW_FREE_PROTOCOL_MESSAGE(msgElems[i]);
-		}
 		CW_FREE_OBJECT(msgElems);
 		/* error will be handled by the caller */
 		return CW_FALSE;
 	}
 
 	if (!CWBindingAssembleConfigureResponse(&msgElemsBinding, &msgElemBindingCount)) {
-		int i;
-		for (i = 0; i <= MsgElemCount; i++) {
-			CW_FREE_PROTOCOL_MESSAGE(msgElems[i]);
-		}
 		CW_FREE_OBJECT(msgElems);
 		return CW_FALSE;
 	}

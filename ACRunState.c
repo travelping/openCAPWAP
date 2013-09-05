@@ -173,17 +173,13 @@ CWBool ACEnterRun(int WTPIndex, CWProtocolMessage * msgPtr, CWBool dataFlag)
 
 			CWParseFormatMsgElem(msgPtr, &elemType, &elemLen);
 			valPtr = CWParseSessionID(msgPtr, elemLen);
-			CWAssembleMsgElemSessionID(&sessionIDmsgElem, valPtr);
+			CWAssembleMsgElemSessionID(NULL, &sessionIDmsgElem, valPtr);
 
 			if (!CWAssembleDataMessage(&messages,
 						   &fragmentsNum,
 						   gWTPs[WTPIndex].pathMTU,
 						   &sessionIDmsgElem, NULL, CW_PACKET_PLAIN, 1)) {
 				CWLog("Failure Assembling KeepAlive Request");
-				if (messages)
-					for (i = 0; i < fragmentsNum; i++) {
-						CW_FREE_PROTOCOL_MESSAGE(messages[i]);
-					}
 				CW_FREE_OBJECT(messages);
 				return CW_FALSE;
 			}
@@ -208,19 +204,11 @@ CWBool ACEnterRun(int WTPIndex, CWProtocolMessage * msgPtr, CWBool dataFlag)
 				if (!CWNetworkSendUnsafeUnconnected(dataSocket,
 								    &(address), messages[i].msg, messages[i].offset)) {
 					CWLog("Failure sending  KeepAlive Request");
-					int k;
-					for (k = 0; k < fragmentsNum; k++) {
-						CW_FREE_PROTOCOL_MESSAGE(messages[k]);
-					}
 					CW_FREE_OBJECT(messages);
 					break;
 				}
 			}
 
-			int k;
-			for (k = 0; messages && k < fragmentsNum; k++) {
-				CW_FREE_PROTOCOL_MESSAGE(messages[k]);
-			}
 			CW_FREE_OBJECT(messages);
 
 		} else if (msgPtr->data_msgType == CW_IEEE_802_3_FRAME_TYPE) {
@@ -638,12 +626,9 @@ CWBool ACEnterRun(int WTPIndex, CWProtocolMessage * msgPtr, CWBool dataFlag)
 #else
 			if (!(CWSecuritySend(gWTPs[WTPIndex].session, messages[i].msg, messages[i].offset))) {
 #endif
-				CWFreeMessageFragments(messages, messagesCount);
-				CW_FREE_OBJECT(messages);
 				return CW_FALSE;
 			}
 		}
-		CWFreeMessageFragments(messages, messagesCount);
 		CW_FREE_OBJECT(messages);
 	}
 	gWTPs[WTPIndex].currentState = CW_ENTER_RUN;
@@ -1603,25 +1588,17 @@ CWBool CWAssembleWLANConfigurationRequest(CWProtocolMessage ** messagesPtr, int 
 	// Assemble Message Elements
 
 	if (Operation == CW_MSG_ELEMENT_IEEE80211_ADD_WLAN_CW_TYPE) {
-		if (!(CWAssembleMsgElemAddWLAN(0, &(msgElems[++k]), recv_packet, len_packet))) {	//radioID = 0 -valore predefinito-
+		if (!(CWAssembleMsgElemAddWLAN(msgElems, 0, &(msgElems[++k]), recv_packet, len_packet))) {	//radioID = 0 -valore predefinito-
 
 			CWErrorHandleLast();
-			int i;
-			for (i = 0; i <= k; i++) {
-				CW_FREE_PROTOCOL_MESSAGE(msgElems[i]);
-			}
 			CW_FREE_OBJECT(msgElems);
 			return CW_FALSE;	// error will be handled by the caller
 		}
 
 	} else if (Operation == CW_MSG_ELEMENT_IEEE80211_DELETE_WLAN_CW_TYPE) {
 
-		if (!(CWAssembleMsgElemDeleteWLAN(0, &(msgElems[++k]), recv_packet, len_packet))) {	//radioID = 0 -valore predefinito-
+		if (!(CWAssembleMsgElemDeleteWLAN(msgElems, 0, &(msgElems[++k]), recv_packet, len_packet))) {	//radioID = 0 -valore predefinito-
 			CWErrorHandleLast();
-			int i;
-			for (i = 0; i <= k; i++) {
-				CW_FREE_PROTOCOL_MESSAGE(msgElems[i]);
-			}
 			CW_FREE_OBJECT(msgElems);
 			return CW_FALSE;	// error will be handled by the caller
 		}
@@ -1645,7 +1622,8 @@ CWBool CWAssembleWLANConfigurationRequest(CWProtocolMessage ** messagesPtr, int 
 	return CW_TRUE;
 }
 
-CWBool CWAssembleStationConfigurationRequest(CWProtocolMessage ** messagesPtr, int *fragmentsNumPtr, int PMTU,
+CWBool CWAssembleStationConfigurationRequest(CWProtocolMessage ** messagesPtr,
+					     int *fragmentsNumPtr, int PMTU,
 					     int seqNum, unsigned char *StationMacAddr, int Operation)
 {
 
@@ -1664,23 +1642,15 @@ CWBool CWAssembleStationConfigurationRequest(CWProtocolMessage ** messagesPtr, i
 	    );
 	// Assemble Message Elements
 	if (Operation == CW_MSG_ELEMENT_ADD_STATION_CW_TYPE) {
-		if (!(CWAssembleMsgElemAddStation(0, &(msgElems[++k]), StationMacAddr))) {	//radioID = 0 -valore predefinito-
+		if (!(CWAssembleMsgElemAddStation(msgElems, 0, &(msgElems[++k]), StationMacAddr))) {	//radioID = 0 -valore predefinito-
 			CWErrorHandleLast();
-			int i;
-			for (i = 0; i <= k; i++) {
-				CW_FREE_PROTOCOL_MESSAGE(msgElems[i]);
-			}
 			CW_FREE_OBJECT(msgElems);
 			return CW_FALSE;	// error will be handled by the caller
 		}
 
 	} else if (Operation == CW_MSG_ELEMENT_DELETE_STATION_CW_TYPE) {
-		if (!(CWAssembleMsgElemDeleteStation(0, &(msgElems[++k]), StationMacAddr))) {	//radioID = 0 -valore predefinito-
+		if (!(CWAssembleMsgElemDeleteStation(msgElems, 0, &(msgElems[++k]), StationMacAddr))) {	//radioID = 0 -valore predefinito-
 			CWErrorHandleLast();
-			int i;
-			for (i = 0; i <= k; i++) {
-				CW_FREE_PROTOCOL_MESSAGE(msgElems[i]);
-			}
 			CW_FREE_OBJECT(msgElems);
 			return CW_FALSE;	// error will be handled by the caller
 		}

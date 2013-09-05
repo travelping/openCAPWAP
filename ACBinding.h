@@ -36,8 +36,8 @@ CWBool CWBindingAssembleConfigureResponse(CWProtocolMessage ** msgElems, int *ms
  * The field BindingMsgElement has been added for   *
  * the multiple type of Message Element.            *
  ****************************************************/
-CWBool CWBindingAssembleConfigurationUpdateRequest(CWProtocolMessage ** msgElems, int *msgElemCountPtr,
-						   int BindingMsgElement);
+CWBool CWBindingAssembleConfigurationUpdateRequest(CWProtocolMessage ** msgElems,
+						   int *msgElemCountPtr, int BindingMsgElement);
 CWBool CWBindingSaveConfigurationUpdateResponse(CWProtocolResultCode resultCode, int WTPIndex);
 
 #endif

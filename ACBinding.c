@@ -104,9 +104,8 @@ CWBool CWMergeOFDMValues(int WTPIndex)
 	return CW_TRUE;
 }
 
-CWBool CWAssembleWTPOFDM(CWProtocolMessage * msgPtr, int radioID)
+CWBool CWAssembleWTPOFDM(const void *ctx, CWProtocolMessage * msgPtr, int radioID)
 {
-	const int totalMessageLength = BINDING_MSG_ELEMENT_TYPE_OFDM_CONTROL_LENGTH;
 	int *iPtr;
 	OFDMControlValues *valuesPtr;
 
@@ -115,35 +114,28 @@ CWBool CWAssembleWTPOFDM(CWProtocolMessage * msgPtr, int radioID)
 	if (msgPtr == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
-	if ((iPtr = ((int *)CWThreadGetSpecific(&gIndexSpecific))) == NULL) {
+	if ((iPtr = ((int *)CWThreadGetSpecific(&gIndexSpecific))) == NULL)
 		return CW_FALSE;
-	}
 
-	if (!CWMergeOFDMValues(*iPtr)) {
+	if (!CWMergeOFDMValues(*iPtr))
 		return CW_FALSE;
-	}
 
 	valuesPtr = gWTPs[*iPtr].ofdmValues;
 
-	/* create message */
-	CW_CREATE_PROTOCOL_MESSAGE(*msgPtr, totalMessageLength, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
-
+	CWInitMsgElem(ctx, msgPtr, BINDING_MSG_ELEMENT_TYPE_OFDM_CONTROL_LENGTH, BINDING_MSG_ELEMENT_TYPE_OFDM_CONTROL);
 	CWProtocolStore8(msgPtr, radioID);
 	CWProtocolStore32(msgPtr, valuesPtr->currentChan);
 	CWProtocolStore8(msgPtr, valuesPtr->BandSupport);
 	CWProtocolStore32(msgPtr, valuesPtr->TIThreshold);
+	CWFinalizeMsgElem(msgPtr);
 
 	CWLog("Assembling Binding Configuration Update Request [OFDM CASE]: Message Assembled.");
 
-	return CWAssembleMsgElem(msgPtr, BINDING_MSG_ELEMENT_TYPE_OFDM_CONTROL);
+	return CW_TRUE;
 }
 
-CWBool CWAssembleWTPQoS(CWProtocolMessage * msgPtr, int radioID, int tagPackets)
+CWBool CWAssembleWTPQoS(const void *ctx, CWProtocolMessage * msgPtr, int radioID, int tagPackets)
 {
-	const int headerLength = 2;
-	const int messageBodyLength = 32;
-	const int totalMessageLength = headerLength + messageBodyLength;
 	int i;
 	int *iPtr;
 	WTPQosValues *valuesPtr;
@@ -160,13 +152,9 @@ CWBool CWAssembleWTPQoS(CWProtocolMessage * msgPtr, int radioID, int tagPackets)
 
 	valuesPtr = gWTPs[*iPtr].qosValues;
 
-	// create message
-	CW_CREATE_PROTOCOL_MESSAGE(*msgPtr, totalMessageLength, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
-
+	CWInitMsgElem(ctx, msgPtr, 2 + 8 * NUM_QOS_PROFILES, BINDING_MSG_ELEMENT_TYPE_WTP_QOS);
 	CWProtocolStore8(msgPtr, radioID);
 	CWProtocolStore8(msgPtr, tagPackets);
-
 	for (i = 0; i < NUM_QOS_PROFILES; i++) {
 		CWProtocolStore8(msgPtr, valuesPtr[i].queueDepth);
 		CWProtocolStore16(msgPtr, valuesPtr[i].cwMin);
@@ -175,8 +163,9 @@ CWBool CWAssembleWTPQoS(CWProtocolMessage * msgPtr, int radioID, int tagPackets)
 		CWProtocolStore8(msgPtr, valuesPtr[i].dot1PTag);
 		CWProtocolStore8(msgPtr, valuesPtr[i].DSCPTag);
 	}
+	CWFinalizeMsgElem(msgPtr);
 
-	return CWAssembleMsgElem(msgPtr, BINDING_MSG_ELEMENT_TYPE_WTP_QOS);
+	return CW_TRUE;
 }
 
 CWBool CWBindingAssembleConfigureResponse(CWProtocolMessage ** msgElems, int *msgElemCountPtr)
@@ -214,11 +203,7 @@ CWBool CWBindingAssembleConfigureResponse(CWProtocolMessage ** msgElems, int *ms
 	for (j = 0; j < radioCount; j++) {
 		radioID = radiosInfo.radiosInfo[j].radioID;
 		// Assemble WTP QoS Message Element for each radio
-		if (!(CWAssembleWTPQoS(&(*msgElems[++k]), radioID, tagPackets))) {
-			int i;
-			for (i = 0; i <= k; i++) {
-				CW_FREE_PROTOCOL_MESSAGE(*msgElems[i]);
-			}
+		if (!(CWAssembleWTPQoS(*msgElems, &(*msgElems[++k]), radioID, tagPackets))) {
 			CW_FREE_OBJECT(*msgElems);
 			CWThreadMutexUnlock(&(gWTPs[*iPtr].interfaceMutex));
 			return CW_FALSE;	// error will be handled by the caller
@@ -238,8 +223,8 @@ CWBool CWBindingAssembleConfigureResponse(CWProtocolMessage ** msgElems, int *ms
  *              Added new switch case for ofdm message management *
  ******************************************************************/
 
-CWBool CWBindingAssembleConfigurationUpdateRequest(CWProtocolMessage ** msgElems, int *msgElemCountPtr,
-						   int BindingMsgElement)
+CWBool CWBindingAssembleConfigurationUpdateRequest(CWProtocolMessage ** msgElems,
+						   int *msgElemCountPtr, int BindingMsgElement)
 {
 	CWWTPRadiosInfo radiosInfo;
 	int *iPtr;
@@ -272,11 +257,7 @@ CWBool CWBindingAssembleConfigurationUpdateRequest(CWProtocolMessage ** msgElems
 				radioID = radiosInfo.radiosInfo[j].radioID;
 
 				// Assemble Message Elements
-				if (!(CWAssembleWTPQoS(&(*msgElems[++k]), radioID, tagPackets))) {
-					int i;
-					for (i = 0; i <= k; i++) {
-						CW_FREE_PROTOCOL_MESSAGE(*msgElems[i]);
-					}
+				if (!(CWAssembleWTPQoS(*msgElems, &(*msgElems[++k]), radioID, tagPackets))) {
 					CW_FREE_OBJECT(*msgElems);
 					return CW_FALSE;	// error will be handled by the caller
 				}
@@ -288,11 +269,7 @@ CWBool CWBindingAssembleConfigurationUpdateRequest(CWProtocolMessage ** msgElems
 				radioID = radiosInfo.radiosInfo[j].radioID;
 
 				/* Assemble Message Elements */
-				if (!(CWAssembleWTPOFDM(&(*msgElems[++k]), radioID))) {
-					int i;
-					for (i = 0; i <= k; i++) {
-						CW_FREE_PROTOCOL_MESSAGE(*msgElems[i]);
-					}
+				if (!(CWAssembleWTPOFDM(*msgElems, &(*msgElems[++k]), radioID))) {
 					CW_FREE_OBJECT(*msgElems);
 					return CW_FALSE;	// error will be handled by the caller
 				}

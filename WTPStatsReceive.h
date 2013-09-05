@@ -171,5 +171,4 @@ typedef struct _MM_MONITOR_DATA {
 	struct ath_stats_clone athCurrentStats;
 } MM_MONITOR_DATA;
 
-int create_data_Frame(CWProtocolMessage ** frame, char *buffer, int len);
 #endif

@@ -155,16 +155,12 @@ CWBool CWAssembleJoinResponse(CWProtocolMessage ** messagesPtr,
 
 	CWDebugLog("Assembling Join Response...");
 
-	if ((!(CWAssembleMsgElemACDescriptor(&(msgElems[++k])))) ||
-	    (!(CWAssembleMsgElemACName(&(msgElems[++k])))) ||
-	    (!(CWAssembleMsgElemCWControlIPv4Addresses(&(msgElems[++k])))) ||
-	    (!(CWAssembleMsgElemACWTPRadioInformation(&(msgElems[++k]))))
+	if ((!(CWAssembleMsgElemACDescriptor(msgElems, &(msgElems[++k])))) ||
+	    (!(CWAssembleMsgElemACName(msgElems, &(msgElems[++k])))) ||
+	    (!(CWAssembleMsgElemCWControlIPv4Addresses(msgElems, &(msgElems[++k])))) ||
+	    (!(CWAssembleMsgElemACWTPRadioInformation(msgElems, &(msgElems[++k]))))
 	    ) {
 		CWErrorHandleLast();
-		int i;
-		for (i = 0; i <= k; i++) {
-			CW_FREE_PROTOCOL_MESSAGE(msgElems[i]);
-		}
 		CW_FREE_OBJECT(msgElems);
 		/* error will be handled by the caller */
 		return CW_FALSE;
@@ -176,33 +172,27 @@ CWBool CWAssembleJoinResponse(CWProtocolMessage ** messagesPtr,
 		switch (((CWMsgElemData *) (current->data))->type) {
 
 		case CW_MSG_ELEMENT_AC_IPV4_LIST_CW_TYPE:
-			if (!(CWAssembleMsgElemACIPv4List(&(msgElems[++k]))))
+			if (!(CWAssembleMsgElemACIPv4List(msgElems, &(msgElems[++k]))))
 				goto cw_assemble_error;
 			break;
 		case CW_MSG_ELEMENT_AC_IPV6_LIST_CW_TYPE:
-			if (!(CWAssembleMsgElemACIPv6List(&(msgElems[++k]))))
+			if (!(CWAssembleMsgElemACIPv6List(msgElems, &(msgElems[++k]))))
 				goto cw_assemble_error;
 			break;
 		case CW_MSG_ELEMENT_RESULT_CODE_CW_TYPE:
-			if (!(CWAssembleMsgElemResultCode(&(msgElems[++k]), ((CWMsgElemData *) current->data)->value)))
+			if (!(CWAssembleMsgElemResultCode(msgElems, &(msgElems[++k]), ((CWMsgElemData *) current->data)->value)))
 				goto cw_assemble_error;
 			break;
 			/*
 			   case CW_MSG_ELEMENT_SESSION_ID_CW_TYPE:
-			   if (!(CWAssembleMsgElemSessionID(&(msgElems[++k]), ((CWMsgElemData *) current->data)->value)))
+			   if (!(CWAssembleMsgElemSessionID(msgElems, &(msgElems[++k]), ((CWMsgElemData *) current->data)->value)))
 			   goto cw_assemble_error;
 			   break;
 			 */
-		default:{
-				int j;
-				for (j = 0; j <= k; j++) {
-					CW_FREE_PROTOCOL_MESSAGE(msgElems[j]);
-				}
-				CW_FREE_OBJECT(msgElems);
-				return CWErrorRaise(CW_ERROR_INVALID_FORMAT,
-						    "Unrecognized Message Element for Join Response Message");
-				break;
-			}
+		default:
+			CW_FREE_OBJECT(msgElems);
+			return CWErrorRaise(CW_ERROR_INVALID_FORMAT,
+					    "Unrecognized Message Element for Join Response Message");
 		}
 		current = current->next;
 	}
@@ -219,16 +209,10 @@ CWBool CWAssembleJoinResponse(CWProtocolMessage ** messagesPtr,
 
 	return CW_TRUE;
 
- cw_assemble_error:{
-		int i;
-		for (i = 0; i <= k; i++) {
-			CW_FREE_PROTOCOL_MESSAGE(msgElems[i]);
-		}
-		CW_FREE_OBJECT(msgElems);
-		/* error will be handled by the caller */
-		return CW_FALSE;
-	}
-	return CW_TRUE;
+ cw_assemble_error:
+	CW_FREE_OBJECT(msgElems);
+	/* error will be handled by the caller */
+	return CW_FALSE;
 }
 
 /*

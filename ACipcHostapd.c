@@ -473,7 +473,7 @@ CW_THREAD_RETURN_TYPE CWACipc_with_ac_hostapd(void *arg)
 					if (!(frame = ralloc(NULL, CWProtocolMessage)))
 						return 0;
 
-					CW_CREATE_PROTOCOL_MESSAGE(*frame, len, return 0;
+					CW_CREATE_PROTOCOL_MESSAGE(frame, *frame, len, return 0;
 					    );
 
 					memcpy(frame->msg, buffer + sig_byte, len);
@@ -484,11 +484,7 @@ CW_THREAD_RETURN_TYPE CWACipc_with_ac_hostapd(void *arg)
 					if (!CWAssembleDataMessage
 					    (&completeMsgPtr, &fragmentsNum, gWTPs[tmp_WTPIndex].pathMTU, frame, NULL,
 					     CW_PACKET_PLAIN, 0)) {
-						for (k = 0; k < fragmentsNum; k++) {
-							CW_FREE_PROTOCOL_MESSAGE(completeMsgPtr[k]);
-						}
 						CW_FREE_OBJECT(completeMsgPtr);
-						CW_FREE_PROTOCOL_MESSAGE(*frame);
 						CW_FREE_OBJECT(frame);
 						continue;
 					}
@@ -516,12 +512,8 @@ CW_THREAD_RETURN_TYPE CWACipc_with_ac_hostapd(void *arg)
 							break;
 						}
 					}
-					for (k = 0; k < fragmentsNum; k++) {
-						CW_FREE_PROTOCOL_MESSAGE(completeMsgPtr[k]);
-					}
 
 					CW_FREE_OBJECT(completeMsgPtr);
-					CW_FREE_PROTOCOL_MESSAGE(*(frame));
 					CW_FREE_OBJECT(frame);
 				}
 
