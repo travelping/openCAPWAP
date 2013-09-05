@@ -78,6 +78,13 @@ typedef void *CWTimerArg;
 #define CW_THREAD_ONCE_INIT         PTHREAD_ONCE_INIT
 #define CWThreadCallOnce            pthread_once
 
+#define EXIT_FRAME_THREAD(sock)						\
+	do {								\
+		CWLog("ERROR Handling Frames: application will be closed!"); \
+		close(sock);						\
+		exit(1);						\
+	} while (0)
+
 sem_t *CWThreadGetSemT(CWThreadSem * semPtr);
 
 CWBool CWThreadInitLib(void);

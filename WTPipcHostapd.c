@@ -26,8 +26,6 @@
 #include "WTPipcHostapd.h"
 #include "WTPmacFrameReceive.h"
 
-#define EXIT_FRAME_THREAD(sock) CWLog("ERROR Handling Frames: application will be closed!"); close(sock); exit(1);
-
 //#define LOCALUDP
 //#define NETUDP
 //#define NETSEQ
@@ -353,9 +351,8 @@ CW_THREAD_RETURN_TYPE CWWTPThread_read_data_from_hostapd(void *arg)
 			buffer[5]);
 #endif
 
-		if (len <= 0) {
-			EXIT_FRAME_THREAD(sock)
-		}
+		if (len <= 0)
+			EXIT_FRAME_THREAD(sock);
 
 		if (connected == 0 && buffer[0] != CONNECT) {
 			CWLog("WTP is not in RUN state");

@@ -27,10 +27,6 @@
 
 #include "WTPFrameReceive.h"
 
-#define EXIT_FRAME_THREAD(sock) CWLog("ERROR Handling Frames: application will be closed!");        \
-                close(sock);                                \
-                exit(1);
-
 int getMacAddr(int sock, char *interface, unsigned char *macAddr)
 {
 

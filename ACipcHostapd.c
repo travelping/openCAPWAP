@@ -24,8 +24,6 @@
 #include <netinet/in.h>
 #include "ACipcHostapd.h"
 
-#define EXIT_FRAME_THREAD(sock) CWLog("ERROR Handling Frames: application will be closed!"); close(sock); exit(1);
-
 //#define LOCALUDP
 //#define NETUDP
 //#define USEIPV6

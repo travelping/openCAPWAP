@@ -34,10 +34,6 @@
 #define ETH_HLEN 14
 #define FRAME_80211_LEN 24
 
-#define EXIT_FRAME_THREAD(sock) CWLog("ERROR Handling Frames: application will be closed!");        \
-                close(sock);                                \
-                exit(1);
-
 int getMacAddr(int sock, char *interface, unsigned char *macAddr)
 {
 
