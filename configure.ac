@@ -1,4 +1,4 @@
-AC_INIT([opencapwap], [1.1.5], [info@travelping.com])
+AC_INIT([opencapwap], [1.1.6], [info@travelping.com])
 AM_INIT_AUTOMAKE([1.9 foreign silent-rules])
 AC_CONFIG_MACRO_DIR([m4])
 AC_USE_SYSTEM_EXTENSIONS
