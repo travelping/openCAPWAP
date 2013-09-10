@@ -45,7 +45,7 @@ CWStateTransition CWWTPEnterConfigure()
 {
 
 	int seqNum;
-	CWProtocolConfigureResponseValues values;
+	CWProtocolConfigureResponseValues *values;
 
 	CWLog("\n");
 	CWLog("######### Configure State #########");
@@ -53,12 +53,16 @@ CWStateTransition CWWTPEnterConfigure()
 	/* send Configure Request */
 	seqNum = CWGetSeqNum();
 
+	if (!(values = rzalloc(NULL, CWProtocolConfigureResponseValues)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+
 	if (!CWErr(CWWTPSendAcknowledgedPacket(seqNum,
 					       NULL,
 					       CWAssembleConfigureRequest,
 					       (void *)CWParseConfigureResponseMessage,
-					       (void *)CWSaveConfigureResponseMessage, &values))) {
+					       (void *)CWSaveConfigureResponseMessage, values))) {
 
+		ralloc_free(values);
 		CWNetworkCloseSocket(gWTPSocket);
 #ifndef CW_NO_DTLS
 		CWSecurityDestroySession(&gWTPSession);
@@ -67,6 +71,7 @@ CWStateTransition CWWTPEnterConfigure()
 		return CW_QUIT;
 	}
 
+	ralloc_free(values);
 	return CW_ENTER_DATA_CHECK;
 }
 
@@ -178,11 +183,11 @@ CWBool CWParseConfigureResponseMessage(unsigned char *msg, int len, int seqNum, 
 
 		switch (type) {
 		case CW_MSG_ELEMENT_AC_IPV4_LIST_CW_TYPE:
-			if (!(CWParseACIPv4List(&completeMsg, len, &(valuesPtr->ACIPv4ListInfo))))
+			if (!(CWParseACIPv4List(valuesPtr, &completeMsg, len, &(valuesPtr->ACIPv4ListInfo))))
 				return CW_FALSE;
 			break;
 		case CW_MSG_ELEMENT_AC_IPV6_LIST_CW_TYPE:
-			if (!(CWParseACIPv6List(&completeMsg, len, &(valuesPtr->ACIPv6ListInfo))))
+			if (!(CWParseACIPv6List(valuesPtr, &completeMsg, len, &(valuesPtr->ACIPv6ListInfo))))
 				return CW_FALSE;
 			break;
 		case CW_MSG_ELEMENT_CW_TIMERS_CW_TYPE:

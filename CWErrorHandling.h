@@ -28,6 +28,10 @@
 #ifndef __CAPWAP_CWErrorHandling_HEADER__
 #define __CAPWAP_CWErrorHandling_HEADER__
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 typedef enum {
 	CW_ERROR_SUCCESS = 1,
 	CW_ERROR_OUT_OF_MEMORY,
@@ -52,15 +56,25 @@ typedef struct {
 	char fileName[64];
 } CWErrorHandlingInfo;
 
+#ifdef STRERROR_R_CHAR_P
+#define CWErrorRaiseSystemError(error)			    \
+	do {						    \
+		char buf[256], *b;			    \
+		b = strerror_r(errno, buf, sizeof(buf));    \
+		CWErrorRaise(error, b);			    \
+		return CW_FALSE;			    \
+	} while (0)
+#else
 #define CWErrorRaiseSystemError(error)			    \
 	do {						    \
 		char buf[256];				    \
-		if (strerror_r(errno, buf, 256) != 0)	    \
+		if (strerror_r(errno, buf, sizeof(buf)) != 0)	\
 			CWErrorRaise(error, NULL);	    \
 		else					    \
 			CWErrorRaise(error, buf);	    \
 		return CW_FALSE;			    \
 	} while (0)
+#endif
 
 #define CWErrorRaise(code, msg)     _CWErrorRaise(code, msg, __FILE__, __LINE__)
 #define CWErr(arg)                  ((arg) || _CWErrorHandleLast(__FILE__, __LINE__))

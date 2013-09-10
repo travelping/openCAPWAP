@@ -50,7 +50,7 @@ CWStateTransition CWWTPEnterJoin()
 {
 	CWTimerID waitJoinTimer;
 	int seqNum;
-	CWProtocolJoinResponseValues values;
+	CWProtocolJoinResponseValues *values = NULL;
 
 	CWLog("\n");
 	CWLog("######### Join State #########");
@@ -64,6 +64,10 @@ CWStateTransition CWWTPEnterJoin()
 #endif
 
  cw_restart_join:
+	ralloc_free(values);
+	if (!(values = rzalloc(NULL, CWProtocolJoinResponseValues)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+
 	/* Initialize gACInfoPtr */
 	gACInfoPtr->ACIPv4ListInfo.ACIPv4ListCount = 0;
 	gACInfoPtr->ACIPv4ListInfo.ACIPv4List = NULL;
@@ -138,13 +142,15 @@ CWStateTransition CWWTPEnterJoin()
 					       NULL,
 					       CWAssembleJoinRequest,
 					       (void *)CWParseJoinResponseMessage,
-					       (void *)CWSaveJoinResponseMessage, &values)))
+					       (void *)CWSaveJoinResponseMessage, values)))
 		goto cw_join_err;
 
 	timer_rem(waitJoinTimer, NULL);
 	if (!gSuccessfulHandshake)
 		/* timer expired */
 		goto cw_join_err;
+
+	ralloc_free(values);
 
 	CWLog("Join Completed");
 
@@ -287,11 +293,11 @@ CWBool CWParseJoinResponseMessage(unsigned char *msg, int len, int seqNum, CWPro
 				return CW_FALSE;
 			break;
 		case CW_MSG_ELEMENT_AC_IPV4_LIST_CW_TYPE:
-			if (!(CWParseACIPv4List(&completeMsg, len, &(valuesPtr->ACIPv4ListInfo))))
+			if (!(CWParseACIPv4List(valuesPtr, &completeMsg, len, &(valuesPtr->ACIPv4ListInfo))))
 				return CW_FALSE;
 			break;
 		case CW_MSG_ELEMENT_AC_IPV6_LIST_CW_TYPE:
-			if (!(CWParseACIPv6List(&completeMsg, len, &(valuesPtr->ACIPv6ListInfo))))
+			if (!(CWParseACIPv6List(valuesPtr, &completeMsg, len, &(valuesPtr->ACIPv6ListInfo))))
 				return CW_FALSE;
 			break;
 		case CW_MSG_ELEMENT_RESULT_CODE_CW_TYPE:
@@ -391,37 +397,32 @@ CWBool CWSaveJoinResponseMessage(CWProtocolJoinResponseValues * joinResponse)
 		if (gACInfoPtr == NULL)
 			return CWErrorRaise(CW_ERROR_NEED_RESOURCE, NULL);
 
-		gACInfoPtr->stations = (joinResponse->ACInfoPtr).stations;
-		gACInfoPtr->limit = (joinResponse->ACInfoPtr).limit;
-		gACInfoPtr->activeWTPs = (joinResponse->ACInfoPtr).activeWTPs;
-		gACInfoPtr->maxWTPs = (joinResponse->ACInfoPtr).maxWTPs;
-		gACInfoPtr->security = (joinResponse->ACInfoPtr).security;
-		gACInfoPtr->RMACField = (joinResponse->ACInfoPtr).RMACField;
+		gACInfoPtr->stations = joinResponse->ACInfoPtr.stations;
+		gACInfoPtr->limit = joinResponse->ACInfoPtr.limit;
+		gACInfoPtr->activeWTPs = joinResponse->ACInfoPtr.activeWTPs;
+		gACInfoPtr->maxWTPs = joinResponse->ACInfoPtr.maxWTPs;
+		gACInfoPtr->security = joinResponse->ACInfoPtr.security;
+		gACInfoPtr->RMACField = joinResponse->ACInfoPtr.RMACField;
 
-		/* BUG-ML07
-		 * Before overwriting the field vendorInfos we'd better
-		 * free it (it was allocated during the Discovery State by
-		 * the function CWParseACDescriptor()).
-		 *
-		 * 19/10/2009 - Donato Capitella
-		 */
-		int i;
-		for (i = 0; i < gACInfoPtr->vendorInfos.vendorInfosCount; i++) {
-			CW_FREE_OBJECT(gACInfoPtr->vendorInfos.vendorInfos[i].valuePtr);
-		}
-		CW_FREE_OBJECT(gACInfoPtr->vendorInfos.vendorInfos);
-
-		gACInfoPtr->vendorInfos = (joinResponse->ACInfoPtr).vendorInfos;
+		ralloc_steal(gACInfoPtr, joinResponse->ACInfoPtr.vendorInfos.vendorInfos);
+		ralloc_free(gACInfoPtr->vendorInfos.vendorInfos);
+		gACInfoPtr->vendorInfos.vendorInfos = joinResponse->ACInfoPtr.vendorInfos.vendorInfos;
 
 		if (joinResponse->ACIPv4ListInfo.ACIPv4ListCount > 0) {
+			gACInfoPtr->ACIPv4ListInfo.ACIPv4ListCount =
+				joinResponse->ACIPv4ListInfo.ACIPv4ListCount;
 
-			gACInfoPtr->ACIPv4ListInfo.ACIPv4ListCount = joinResponse->ACIPv4ListInfo.ACIPv4ListCount;
+			ralloc_steal(gACInfoPtr, joinResponse->ACIPv4ListInfo.ACIPv4List);
+			ralloc_free(gACInfoPtr->ACIPv4ListInfo.ACIPv4List);
 			gACInfoPtr->ACIPv4ListInfo.ACIPv4List = joinResponse->ACIPv4ListInfo.ACIPv4List;
 		}
 
 		if (joinResponse->ACIPv6ListInfo.ACIPv6ListCount > 0) {
+			gACInfoPtr->ACIPv6ListInfo.ACIPv6ListCount =
+				joinResponse->ACIPv6ListInfo.ACIPv6ListCount;
 
-			gACInfoPtr->ACIPv6ListInfo.ACIPv6ListCount = joinResponse->ACIPv6ListInfo.ACIPv6ListCount;
+			ralloc_steal(gACInfoPtr, joinResponse->ACIPv6ListInfo.ACIPv6List);
+			ralloc_free(gACInfoPtr->ACIPv6ListInfo.ACIPv6List);
 			gACInfoPtr->ACIPv6ListInfo.ACIPv6List = joinResponse->ACIPv6ListInfo.ACIPv6List;
 		}
 

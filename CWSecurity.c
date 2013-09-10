@@ -65,13 +65,23 @@ int psk_key2bn(const char *psk_key, unsigned char *psk, unsigned int max_psk_len
 		return CW_FALSE;					\
 	} while (0)
 
+#ifdef STRERROR_R_CHAR_P
+#define CWSecurityRaiseSystemError(error)				\
+	do {								\
+		char buf[256], *p;					\
+		p = strerror_r(errno, buf, sizeof(buf));		\
+		CWErrorRaise(error, p);					\
+		return CW_FALSE;					\
+	} while (0)
+#else
 #define CWSecurityRaiseSystemError(error)				\
 	do {								\
 		char buf[256];						\
-		strerror_r(errno, buf, 256);				\
+		strerror_r(errno, buf, sizeof(buf));			\
 		CWErrorRaise(error, buf);				\
 		return CW_FALSE;					\
 	} while (0)
+#endif
 
 #define CWSecurityManageSSLError(arg, session, stuff)			\
 	do {								\

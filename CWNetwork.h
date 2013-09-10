@@ -59,10 +59,19 @@ extern CWNetworkLev3Service gNetworkPreferredFamily;
 		{block}							\
 	} while (0)
 
+#ifdef STRERROR_R_CHAR_P
+#define CWNetworkRaiseSystemError(error) do {			\
+		char buf[256], *p;				\
+								\
+		p = strerror_r(errno, buf, sizeof(buf));	\
+		CWErrorRaise(error, p);				\
+		return CW_FALSE;				\
+	} while(0)
+#else
 #define CWNetworkRaiseSystemError(error) do {			\
 		char buf[256];					\
 								\
-		if (strerror_r(errno, buf, 256) < 0) {		\
+		if (strerror_r(errno, buf, sizeof(buf)) < 0) {	\
 			CWErrorRaise(error, NULL);		\
 			return CW_FALSE;			\
 		}						\
@@ -70,7 +79,7 @@ extern CWNetworkLev3Service gNetworkPreferredFamily;
 		CWErrorRaise(error, buf);			\
 		return CW_FALSE;				\
 	} while(0)
-
+#endif
 #define CWNetworkCloseSocket(x)					\
 	do {							\
 		if (x != -1) {					\

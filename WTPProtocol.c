@@ -847,7 +847,7 @@ CWBool CWParseACDescriptor(const void *ctx, CWProtocolMessage * msgPtr, int len,
 	CWParseMessageElementEnd();
 }
 
-CWBool CWParseACIPv4List(CWProtocolMessage * msgPtr, int len, ACIPv4ListValues * valPtr)
+CWBool CWParseACIPv4List(const void *ctx, CWProtocolMessage * msgPtr, int len, ACIPv4ListValues * valPtr)
 {
 	int i;
 	CWParseMessageElementStart();
@@ -873,7 +873,7 @@ CWBool CWParseACIPv4List(CWProtocolMessage * msgPtr, int len, ACIPv4ListValues *
 	CWParseMessageElementEnd();
 }
 
-CWBool CWParseACIPv6List(CWProtocolMessage * msgPtr, int len, ACIPv6ListValues * valPtr)
+CWBool CWParseACIPv6List(const void *ctx, CWProtocolMessage * msgPtr, int len, ACIPv6ListValues * valPtr)
 {
 	int i;
 	CWParseMessageElementStart();
@@ -883,7 +883,7 @@ CWBool CWParseACIPv6List(CWProtocolMessage * msgPtr, int len, ACIPv6ListValues *
 
 	valPtr->ACIPv6ListCount = (len / 16);
 
-	if (!(valPtr->ACIPv6List = ralloc_array(NULL, struct in6_addr, valPtr->ACIPv6ListCount)))
+	if (!(valPtr->ACIPv6List = ralloc_array(ctx, struct in6_addr, valPtr->ACIPv6ListCount)))
 		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 	for (i = 0; i < valPtr->ACIPv6ListCount; i++) {
@@ -1139,6 +1139,7 @@ CWBool CWParseVendorTPWTPTimestamp(CWProtocolMessage * msgPtr, int len, struct t
 {
 	struct ntp_time_t ntp_time;
 
+	CWDebugLog("WTP Timestamp: %d", len);
 	CWParseMessageElementStart();
 
 	ntp_time.second = CWProtocolRetrieve32(msgPtr);
