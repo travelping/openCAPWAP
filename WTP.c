@@ -106,105 +106,46 @@ CWBool WTPExitOnUpdateCommit = CW_FALSE;
 /*
  * Receive a message, that can be fragmented. This is useful not only for the Join State
  */
-CWBool CWReceiveMessage(CWProtocolMessage * msgPtr)
+CWBool CWReceiveMessage(CWProtocolMessage *pm)
 {
-	CWList fragments = NULL;
 	int readBytes;
 	unsigned char buf[CW_BUFFER_SIZE];
-	CWBool dataFlag = CW_FALSE;
+	CWProtocolMessage msg;
+	CWFragmentBufferList frag_buffer;
+
+	CW_ZERO_MEMORY(&frag_buffer, sizeof(CWFragmentBufferList));
 
 	CW_REPEAT_FOREVER {
 		CW_ZERO_MEMORY(buf, CW_BUFFER_SIZE);
 #ifdef CW_NO_DTLS
-		char *pkt_buffer = NULL;
+		unsigned char *pkt;
 
 		CWLockSafeList(gPacketReceiveList);
-
 		while (CWGetCountElementFromSafeList(gPacketReceiveList) == 0)
 			CWWaitElementFromSafeList(gPacketReceiveList);
 
-		pkt_buffer =
-		    (char *)CWRemoveHeadElementFromSafeListwithDataFlag(gPacketReceiveList, &readBytes, &dataFlag);
-
+		pkt = CWRemoveHeadElementFromSafeListwithDataFlag(gPacketReceiveList, &readBytes, &dataFlag);
 		CWUnlockSafeList(gPacketReceiveList);
-
-		CW_COPY_MEMORY(buf, pkt_buffer, readBytes);
-		CW_FREE_OBJECT(pkt_buffer);
+		CWInitTransportMessage(&msg, pkt, readBytes, 0);
 #else
-		if (!CWSecurityReceive(gWTPSession, buf, CW_BUFFER_SIZE, &readBytes)) {
+		if (!CWSecurityReceive(gWTPSession, buf, CW_BUFFER_SIZE, &readBytes))
 			return CW_FALSE;
-		}
+
+		CWInitTransportMessage(&msg, buf, readBytes, 1);
 #endif
 
-		if (!CWProtocolParseFragment(buf, readBytes, &fragments, msgPtr, &dataFlag, NULL)) {
-			if (CWErrorGetLastErrorCode() == CW_ERROR_NEED_RESOURCE) {	// we need at least one more fragment
-				continue;
-			} else {	// error
-				CWErrorCode error;
-				error = CWErrorGetLastErrorCode();
-				switch (error) {
-				case CW_ERROR_SUCCESS:{
-						CWDebugLog("ERROR: Success");
-						break;
-					}
-				case CW_ERROR_OUT_OF_MEMORY:{
-						CWDebugLog("ERROR: Out of Memory");
-						break;
-					}
-				case CW_ERROR_WRONG_ARG:{
-						CWDebugLog("ERROR: Wrong Argument");
-						break;
-					}
-				case CW_ERROR_INTERRUPTED:{
-						CWDebugLog("ERROR: Interrupted");
-						break;
-					}
-				case CW_ERROR_NEED_RESOURCE:{
-						CWDebugLog("ERROR: Need Resource");
-						break;
-					}
-				case CW_ERROR_COMUNICATING:{
-						CWDebugLog("ERROR: Comunicating");
-						break;
-					}
-				case CW_ERROR_CREATING:{
-						CWDebugLog("ERROR: Creating");
-						break;
-					}
-				case CW_ERROR_GENERAL:{
-						CWDebugLog("ERROR: General");
-						break;
-					}
-				case CW_ERROR_OPERATION_ABORTED:{
-						CWDebugLog("ERROR: Operation Aborted");
-						break;
-					}
-				case CW_ERROR_SENDING:{
-						CWDebugLog("ERROR: Sending");
-						break;
-					}
-				case CW_ERROR_RECEIVING:{
-						CWDebugLog("ERROR: Receiving");
-						break;
-					}
-				case CW_ERROR_INVALID_FORMAT:{
-						CWDebugLog("ERROR: Invalid Format");
-						break;
-					}
-				case CW_ERROR_TIME_EXPIRED:{
-						CWDebugLog("ERROR: Time Expired");
-						break;
-					}
-				case CW_ERROR_NONE:{
-						CWDebugLog("ERROR: None");
-						break;
-					}
-				}
-				CWDebugLog("~~~~~~");
-				return CW_FALSE;
-			}
-		} else
-			break;	// the message is fully reassembled
+		if (CWProtocolParseFragment(&msg, &frag_buffer, pm))
+			/* the message is fully reassembled */
+			return CW_TRUE;
+
+		if (CWErrorGetLastErrorCode() != CW_ERROR_NEED_RESOURCE) {
+			CWDebugErrorLog();
+			CWReleaseMessage(&msg);
+
+			return CW_FALSE;
+		}
+
+		/* we need at least one more fragment */
 	}
 
 	return CW_TRUE;
@@ -212,36 +153,35 @@ CWBool CWReceiveMessage(CWProtocolMessage * msgPtr)
 
 CWBool CWWTPSendAcknowledgedPacket(int seqNum,
 				   CWList msgElemlist,
-				   CWBool(assembleFunc) (CWProtocolMessage **, int *, int, int, CWList),
-				   CWBool(parseFunc) (unsigned char *, int, int, void *),
+				   CWBool(assembleFunc) (CWTransportMessage *, int, int, CWList),
+				   CWBool(parseFunc) (CWProtocolMessage *, int, void *),
 				   CWBool(saveFunc) (void *), void *valuesPtr)
 {
 
-	CWProtocolMessage *messages = NULL;
+	CWTransportMessage tm;
 	CWProtocolMessage msg;
-	int fragmentsNum = 0, i;
+	int i;
 
 	struct timespec timewait;
 
 	int gTimeToSleep = gCWRetransmitTimer;
 	int gMaxTimeToSleep = CW_ECHO_INTERVAL_DEFAULT / 2;
 
-	msg.msg = NULL;
+	CW_ZERO_MEMORY(&tm, sizeof(CWTransportMessage));
+	CW_ZERO_MEMORY(&msg, sizeof(CWProtocolMessage));
 
-	if (!(assembleFunc(&messages, &fragmentsNum, gWTPPathMTU, seqNum, msgElemlist))) {
-
+	if (!assembleFunc(&tm, gWTPPathMTU, seqNum, msgElemlist))
 		goto cw_failure;
-	}
 
 	gWTPRetransmissionCount = 0;
 
 	while (gWTPRetransmissionCount < gCWMaxRetransmit) {
 		CWDebugLog("Transmission Num:%d", gWTPRetransmissionCount);
-		for (i = 0; i < fragmentsNum; i++) {
+		for (i = 0; i < tm.count; i++) {
 #ifdef CW_NO_DTLS
-			if (!CWNetworkSendUnsafeConnected(gWTPSocket, messages[i].msg, messages[i].offset))
+			if (!CWNetworkSendUnsafeConnected(gWTPSocket, tm.parts[i].data, tm.parts[i].pos))
 #else
-			if (!CWSecuritySend(gWTPSession, messages[i].msg, messages[i].offset))
+			if (!CWSecuritySend(gWTPSession, tm.parts[i].data, tm.parts[i].pos))
 #endif
 			{
 				CWDebugLog("Failure sending Request");
@@ -272,42 +212,44 @@ CWBool CWWTPSendAcknowledgedPacket(int seqNum,
 					break;
 				}
 
-			case CW_ERROR_SUCCESS:{
-					/* there's something to read */
-					if (!(CWReceiveMessage(&msg))) {
-						CW_FREE_PROTOCOL_MESSAGE(msg);
-						CWDebugLog("Failure Receiving Response");
-						goto cw_failure;
-					}
+			case CW_ERROR_SUCCESS:
+			{
+				CWProtocolTransportHeaderValues transportHeader;
 
-					if (!(parseFunc(msg.msg, msg.offset, seqNum, valuesPtr))) {
-						if (CWErrorGetLastErrorCode() != CW_ERROR_INVALID_FORMAT) {
-
-							CW_FREE_PROTOCOL_MESSAGE(msg);
-							CWDebugLog("Failure Parsing Response");
-							goto cw_failure;
-						} else {
-							CWErrorHandleLast();
-							{
-								gWTPRetransmissionCount++;
-								goto cw_continue_external_loop;
-							}
-							break;
-						}
-					}
-
-					if ((saveFunc(valuesPtr))) {
-
-						goto cw_success;
-					} else {
-						if (CWErrorGetLastErrorCode() != CW_ERROR_INVALID_FORMAT) {
-							CW_FREE_PROTOCOL_MESSAGE(msg);
-							CWDebugLog("Failure Saving Response");
-							goto cw_failure;
-						}
-					}
-					break;
+				/* there's something to read */
+				if (!(CWReceiveMessage(&msg))) {
+					CWReleaseMessage(&msg);
+					CWDebugLog("Failure Receiving Response");
+					goto cw_failure;
 				}
+
+				CWParseTransportHeader(&msg, &transportHeader, NULL);
+
+				if (!(parseFunc(&msg, seqNum, valuesPtr))) {
+					if (CWErrorGetLastErrorCode() != CW_ERROR_INVALID_FORMAT) {
+						CWReleaseMessage(&msg);
+						CWDebugLog("Failure Parsing Response");
+						goto cw_failure;
+					} else {
+						CWErrorHandleLast();
+						gWTPRetransmissionCount++;
+						goto cw_continue_external_loop;
+
+						break;
+					}
+				}
+
+				if ((saveFunc(valuesPtr))) {
+					CWDebugLog("Success Saving Response");
+					goto cw_success;
+				}
+				if (CWErrorGetLastErrorCode() != CW_ERROR_INVALID_FORMAT) {
+					CWReleaseMessage(&msg);
+					CWDebugLog("Failure Saving Response");
+					goto cw_failure;
+				}
+				break;
+			}
 
 			case CW_ERROR_INTERRUPTED:{
 					gWTPRetransmissionCount++;
@@ -335,14 +277,14 @@ CWBool CWWTPSendAcknowledgedPacket(int seqNum,
 	return CWErrorRaise(CW_ERROR_NEED_RESOURCE, "Peer Dead");
 
  cw_success:
-	CW_FREE_OBJECT(messages);
-	CW_FREE_PROTOCOL_MESSAGE(msg);
+	CWReleaseTransportMessage(&tm);
+	CWReleaseMessage(&msg);
 
 	return CW_TRUE;
 
  cw_failure:
-	if (messages != NULL)
-		CW_FREE_OBJECT(messages);
+	CWReleaseTransportMessage(&tm);
+	CWReleaseMessage(&msg);
 
 	CWDebugLog("Failure");
 	return CW_FALSE;
@@ -484,12 +426,6 @@ int main(int argc, char * const argv[])
 		CWLog("Error starting Thread that receive stats on monitoring interface");
 		exit(1);
 	}
-
-	/****************************************
-	 * 2009 Update:                         *
-	 *              Spawn Frequency Stats   *
-	 *              Receiver Thread         *
-	 ****************************************/
 
 	CWThread thread_receiveFreqStats;
 	if (!CWErr(CWCreateThread(&thread_receiveFreqStats, CWWTPReceiveFreqStats, NULL))) {

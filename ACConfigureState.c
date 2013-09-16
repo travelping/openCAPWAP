@@ -29,17 +29,14 @@
 
 int gCWChangeStatePendingTimer = CW_CHANGE_STATE_INTERVAL_DEFAULT;
 
-static CWBool CWAssembleConfigureResponse(CWProtocolMessage ** messagesPtr, int *fragmentsNumPtr, int PMTU, int seqNum);
-
-static CWBool CWParseConfigureRequestMessage(unsigned char *msg, int len,
-					     int *seqNumPtr,
+static CWBool CWAssembleConfigureResponse(CWTransportMessage *tm, int PMTU, int seqNum);
+static CWBool CWParseConfigureRequestMessage(CWProtocolMessage *pm, int *seqNumPtr,
 					     CWProtocolConfigureRequestValues * valuesPtr,
 					     unsigned char *, unsigned char *, unsigned char *);
-
 static CWBool CWSaveConfigureRequestMessage(CWProtocolConfigureRequestValues * configureRequest,
 				     CWWTPProtocolManager * WTPProtocolManager);
 
-CWBool ACEnterConfigure(int WTPIndex, CWProtocolMessage * msgPtr)
+CWBool ACEnterConfigure(int WTPIndex, CWProtocolMessage *pm)
 {
 
 	/*** tmp Radio Info ***/
@@ -53,10 +50,7 @@ CWBool ACEnterConfigure(int WTPIndex, CWProtocolMessage * msgPtr)
 	CWLog("\n");
 	CWLog("######### Configure State #########");
 
-	if (!(CWParseConfigureRequestMessage(msgPtr->msg,
-					     msgPtr->offset,
-					     &seqNum,
-					     &configureRequest,
+	if (!(CWParseConfigureRequestMessage(pm, &seqNum, &configureRequest,
 					     &tmp_RadioInformationABGN, tmp_SuppRates, tmp_MultiDomCapa))) {
 		/* note: we can kill our thread in case of out-of-memory
 		 * error to free some space.
@@ -78,8 +72,7 @@ CWBool ACEnterConfigure(int WTPIndex, CWProtocolMessage * msgPtr)
 
 	/* Store Radio Info in gWTPs */
 
-	if (!(CWAssembleConfigureResponse(&(gWTPs[WTPIndex].messages),
-					  &(gWTPs[WTPIndex].messagesCount), gWTPs[WTPIndex].pathMTU, seqNum))) {
+	if (!(CWAssembleConfigureResponse(&gWTPs[WTPIndex].messages, gWTPs[WTPIndex].pathMTU, seqNum))) {
 		return CW_FALSE;
 	}
 
@@ -101,7 +94,7 @@ CWBool ACEnterConfigure(int WTPIndex, CWProtocolMessage * msgPtr)
 	return CW_TRUE;
 }
 
-CWBool CWParseConfigureRequestMessage(unsigned char *msg, int len,
+CWBool CWParseConfigureRequestMessage(CWProtocolMessage *pm,
 				      int *seqNumPtr,
 				      CWProtocolConfigureRequestValues * valuesPtr,
 				      unsigned char *tmp_RadioInformationABGN,
@@ -113,17 +106,13 @@ CWBool CWParseConfigureRequestMessage(unsigned char *msg, int len,
 	int i, j;
 	int offsetTillMessages;
 
-	CWProtocolMessage completeMsg;
-
-	if (msg == NULL || seqNumPtr == NULL || valuesPtr == NULL)
-		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
+	assert(pm);
+	assert(seqNumPtr);
+	assert(valuesPtr);
 
 	CWDebugLog("Parsing Configure Request...");
 
-	completeMsg.msg = msg;
-	completeMsg.offset = 0;
-
-	if (!(CWParseControlHeader(&completeMsg, &controlVal)))
+	if (!(CWParseControlHeader(pm, &controlVal)))
 		/* will be handled by the caller */
 		return CW_FALSE;
 
@@ -136,25 +125,25 @@ CWBool CWParseConfigureRequestMessage(unsigned char *msg, int len,
 	/* skip timestamp */
 	controlVal.msgElemsLen -= CW_CONTROL_HEADER_OFFSET_FOR_MSG_ELEMS;
 
-	offsetTillMessages = completeMsg.offset;
+	offsetTillMessages = pm->pos;
 
 	/* valuesPtr->WTPRadioInfo.radiosCount=0; */
 	valuesPtr->ACinWTP.count = 0;
 	valuesPtr->radioAdminInfoCount = 0;
 
 	/* parse message elements */
-	while ((completeMsg.offset - offsetTillMessages) < controlVal.msgElemsLen) {
+	while ((pm->pos - offsetTillMessages) < controlVal.msgElemsLen) {
 
-		unsigned short int elemType = 0;	/* = CWProtocolRetrieve32(&completeMsg); */
-		unsigned short int elemLen = 0;	/* = CWProtocolRetrieve16(&completeMsg); */
+		unsigned short int elemType = 0;	/* = CWProtocolRetrieve32(pm); */
+		unsigned short int elemLen = 0;	/* = CWProtocolRetrieve16(pm); */
 
-		CWParseFormatMsgElem(&completeMsg, &elemType, &elemLen);
+		CWParseFormatMsgElem(pm, &elemType, &elemLen);
 
 		/*CWDebugLog("Parsing Message Element: %u, elemLen: %u", elemType, elemLen); */
 
 		switch (elemType) {
 		case CW_MSG_ELEMENT_AC_NAME_CW_TYPE:
-			if (!(CWParseACName(valuesPtr, &completeMsg, elemLen, &(valuesPtr->ACName))))
+			if (!(CWParseACName(valuesPtr, pm, elemLen, &(valuesPtr->ACName))))
 				/* will be handled by the caller */
 				return CW_FALSE;
 			break;
@@ -163,17 +152,17 @@ CWBool CWParseConfigureRequestMessage(unsigned char *msg, int len,
 			 * so we can allocate the array
 			 */
 			valuesPtr->ACinWTP.count++;
-			completeMsg.offset += elemLen;
+			CWParseSkipElement(pm, elemLen);
 			break;
 		case CW_MSG_ELEMENT_RADIO_ADMIN_STATE_CW_TYPE:
 			/* just count how many radios we have,
 			 * so we can allocate the array
 			 */
 			(valuesPtr->radioAdminInfoCount)++;
-			completeMsg.offset += elemLen;
+			CWParseSkipElement(pm, elemLen);
 			break;
 		case CW_MSG_ELEMENT_STATISTICS_TIMER_CW_TYPE:
-			if (!(CWParseWTPStatisticsTimer(&completeMsg, elemLen, &(valuesPtr->StatisticsTimer))))
+			if (!(CWParseWTPStatisticsTimer(pm, elemLen, &(valuesPtr->StatisticsTimer))))
 				/* will be handled by the caller */
 				return CW_FALSE;
 			break;
@@ -181,33 +170,34 @@ CWBool CWParseConfigureRequestMessage(unsigned char *msg, int len,
 			if (!(valuesPtr->WTPRebootStatistics = ralloc(NULL, WTPRebootStatisticsInfo)))
 				return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
-			if (!(CWParseWTPRebootStatistics(&completeMsg, elemLen, valuesPtr->WTPRebootStatistics)))
+			if (!(CWParseWTPRebootStatistics(pm, elemLen, valuesPtr->WTPRebootStatistics)))
 				/* will be handled by the caller */
 				return CW_FALSE;
 			break;
 
 		case CW_MSG_ELEMENT_IEEE80211_WTP_RADIO_INFORMATION_CW_TYPE:
-			if (!(CWParseWTPRadioInformation(&completeMsg, elemLen, tmp_RadioInformationABGN)))
+			if (!(CWParseWTPRadioInformation(pm, elemLen, tmp_RadioInformationABGN)))
 				return CW_FALSE;
 			break;
 
 		case CW_MSG_ELEMENT_IEEE80211_MULTI_DOMAIN_CAPABILITY_CW_TYPE:
-			if (!(CWParseWTPMultiDomainCapability(&completeMsg, elemLen, tmp_MultiDomCapa)))
+			if (!(CWParseWTPMultiDomainCapability(pm, elemLen, tmp_MultiDomCapa)))
 				return CW_FALSE;
 			break;
 
 		case CW_MSG_ELEMENT_IEEE80211_SUPPORTED_RATES_CW_TYPE:
-			if (!(CWParseWTPSupportedRates(&completeMsg, elemLen, tmp_SuppRates)))
+			if (!(CWParseWTPSupportedRates(pm, elemLen, tmp_SuppRates)))
 				return CW_FALSE;
 			break;
 
 		default:
-			return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Unrecognized Message Element");
+			CWLog("Unrecognized Message Element(%d) in Discovery response", elemType);
+			CWParseSkipElement(pm, elemLen);
+			break;
 		}
 	}
 
-	if (completeMsg.offset != len)
-		return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Garbage at the End of the Message");
+	CWParseTransportMessageEnd(pm);
 
 	/* actually read each radio info */
 	if (!(valuesPtr->ACinWTP.ACNameIndex = ralloc_array(NULL, CWACNameWithIndexValues, valuesPtr->ACinWTP.count)))
@@ -219,28 +209,28 @@ CWBool CWParseConfigureRequestMessage(unsigned char *msg, int len,
 	i = 0;
 	j = 0;
 
-	completeMsg.offset = offsetTillMessages;
-	while (completeMsg.offset - offsetTillMessages < controlVal.msgElemsLen) {
+	pm->pos = offsetTillMessages;
+	while (pm->pos - offsetTillMessages < controlVal.msgElemsLen) {
 		unsigned short int type = 0;
 		unsigned short int len = 0;
 
-		CWParseFormatMsgElem(&completeMsg, &type, &len);
+		CWParseFormatMsgElem(pm, &type, &len);
 
 		switch (type) {
 		case CW_MSG_ELEMENT_AC_NAME_INDEX_CW_TYPE:
-			if (!(CWParseACNameWithIndex(&completeMsg, len, &(valuesPtr->ACinWTP.ACNameIndex[i]))))
+			if (!(CWParseACNameWithIndex(pm, len, &(valuesPtr->ACinWTP.ACNameIndex[i]))))
 				/* will be handled by the caller */
 				return CW_FALSE;
 			i++;
 			break;
 		case CW_MSG_ELEMENT_RADIO_ADMIN_STATE_CW_TYPE:
-			if (!(CWParseWTPRadioAdminState(&completeMsg, len, &(valuesPtr->radioAdminInfo[j]))))
+			if (!(CWParseWTPRadioAdminState(pm, len, &(valuesPtr->radioAdminInfo[j]))))
 				/* will be handled by the caller */
 				return CW_FALSE;
 			j++;
 			break;
 		default:
-			completeMsg.offset += len;
+			CWParseSkipElement(pm, len);
 			break;
 		}
 	}
@@ -248,51 +238,36 @@ CWBool CWParseConfigureRequestMessage(unsigned char *msg, int len,
 	return CW_TRUE;
 }
 
-CWBool CWAssembleConfigureResponse(CWProtocolMessage ** messagesPtr, int *fragmentsNumPtr, int PMTU, int seqNum)
+CWBool CWAssembleConfigureResponse(CWTransportMessage *tm, int PMTU, int seqNum)
 {
+	CWProtocolMessage msg;
 
-	CWProtocolMessage *msgElems = NULL;
-	const int MsgElemCount = 6;
-	CWProtocolMessage *msgElemsBinding = NULL;
-	int msgElemBindingCount = 0;
-	int k = -1;
-
-	if (messagesPtr == NULL || fragmentsNumPtr == NULL)
-		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
+	assert(tm);
 
 	CWDebugLog("Assembling Configure Response...");
-	msgElems = CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(MsgElemCount, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
 
 	/* Assemble Message Elements */
-	if ((!(CWAssembleMsgElemACIPv4List(msgElems, &(msgElems[++k])))) ||
-	    (!(CWAssembleMsgElemACIPv6List(msgElems, &(msgElems[++k])))) || (!(CWAssembleMsgElemCWTimer(msgElems, &(msgElems[++k])))) ||
-	    /*(!(CWAssembleMsgElemRadioOperationalState(msgElems, -1, &(msgElems[++k])))) || */
-	    (!(CWAssembleMsgElemDecryptErrorReportPeriod(msgElems, &(msgElems[++k])))) ||
-	    (!(CWAssembleMsgElemIdleTimeout(msgElems, &(msgElems[++k])))) || (!(CWAssembleMsgElemWTPFallback(msgElems, &(msgElems[++k]))))
-	    ) {
-		CW_FREE_OBJECT(msgElems);
-		/* error will be handled by the caller */
-		return CW_FALSE;
-	}
+	if (!CWInitMessage(NULL, &msg, CW_MSG_TYPE_VALUE_CONFIGURE_RESPONSE, seqNum) ||
+	    !CWAssembleMsgElemACIPv4List(NULL, &msg) ||
+	    !CWAssembleMsgElemACIPv6List(NULL, &msg) ||
+	    !CWAssembleMsgElemCWTimer(NULL, &msg) ||
+	    /*!CWAssembleMsgElemRadioOperationalState(NULL, , -1, &msg) || */
+	    !CWAssembleMsgElemDecryptErrorReportPeriod(NULL, &msg) ||
+	    !CWAssembleMsgElemIdleTimeout(NULL, &msg) ||
+	    !CWAssembleMsgElemWTPFallback(NULL, &msg) ||
+	    !CWBindingAssembleConfigureResponse(&msg))
+		goto cw_assemble_error;
+	CWFinalizeMessage(&msg);
 
-	if (!CWBindingAssembleConfigureResponse(&msgElemsBinding, &msgElemBindingCount)) {
-		CW_FREE_OBJECT(msgElems);
-		return CW_FALSE;
-	}
-
-	/*CWDebugLog("~~~~~ msg count: %d ", msgElemBindingCount); */
-
-	if (!(CWAssembleMessage(messagesPtr,
-				fragmentsNumPtr,
-				PMTU,
-				seqNum,
-				CW_MSG_TYPE_VALUE_CONFIGURE_RESPONSE,
-				msgElems, MsgElemCount, msgElemsBinding, msgElemBindingCount)))
-		return CW_FALSE;
+	if (!CWAssembleMessage(tm, PMTU, &msg))
+		goto cw_assemble_error;
 
 	CWDebugLog("Configure Response Assembled");
 	return CW_TRUE;
+
+ cw_assemble_error:
+	CWReleaseMessage(&msg);
+        return CW_FALSE;
 }
 
 CWBool CWSaveConfigureRequestMessage(CWProtocolConfigureRequestValues * configureRequest,

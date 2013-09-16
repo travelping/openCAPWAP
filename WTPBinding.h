@@ -44,23 +44,10 @@ typedef struct {
 	RadioQosValues *radioQosValues;
 } CWBindingConfigurationUpdateRequestValues;
 
-/****************************************************
- * 2009 Updates:                                    *
- *              New Structure for mananagement of   *
- *              OFDM Message Element                *
- ****************************************************/
-
 typedef struct {
 	unsigned char radioID;
 	OFDMControlValues *radioOFDMValues;
 } CWBindingConfigurationUpdateRequestValuesOFDM;
-
-/****************************************************
- * 2009 Updates:                                    *
- *              Definition of port number and type  *
- *              of commands of Frequency Server     *
- *              Manager (WTP side).                 *
- ****************************************************/
 
 #define FREQ_SERVER_ADDR "127.0.0.1"
 #define FREQ_SERVER_PORT 1236
@@ -68,12 +55,14 @@ typedef struct {
 CWBool CWWTPInitBinding(int radioIndex);
 CWBool CWBindingSaveConfigureResponse(void *bindingValuesPtr, CWProtocolResultCode * resultCode);
 CWBool CWBindingSetQosValues(int qosCount, RadioQosValues * radioQosValues, CWProtocolResultCode * resultCode);
-CWBool CWBindingParseConfigurationUpdateRequest(unsigned char *msg, int len, void **valuesPtr);
+CWBool CWBindingParseConfigurationUpdateRequestElement(const void *ctx, CWProtocolMessage *pm,
+						       unsigned short int type, unsigned short int len,
+						       void **valuesPtr);
 CWBool CWBindingParseConfigureResponse(unsigned char *msg, int len, void **valuesPtr);
-/****************************************************
- * 2009 Updates: (SaveConfiguration)                *
- *              Prototype Modification (int * added)*
- ****************************************************/
 CWBool CWBindingSaveConfigurationUpdateRequest(void *bindingValuesPtr, CWProtocolResultCode * resultCode,
 					       int *updateRequestType);
+CWBool CWBindingParseConfigureResponseElement(const void *ctx, CWProtocolMessage *pm,
+					      unsigned short int type, unsigned short int len,
+					      void **valuesPtr);
+
 #endif

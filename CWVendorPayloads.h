@@ -44,10 +44,10 @@ typedef struct {
 	char *response;
 } CWVendorUciValues;
 
-CWBool CWParseVendorPayload(CWProtocolMessage * msg, int len, CWProtocolVendorSpecificValues * valPtr);
+CWBool CWParseVendorPayload(const void *ctx, CWProtocolMessage *pm, int len, void **valPtr);
 CWBool CWParseUCIPayload(CWProtocolMessage * msg, CWVendorUciValues ** payloadPtr);
 CWBool CWWTPSaveUCIValues(CWVendorUciValues * uciPayload, CWProtocolResultCode * resultCode);
-CWBool CWAssembleWTPVendorPayloadUCI(const void *ctx, CWProtocolMessage * msgPtr);
+CWBool CWAssembleWTPVendorPayloadUCI(const void *ctx, CWProtocolMessage *pm);
 
 /*************************************************************************
  *  WTP Update Messages
@@ -89,6 +89,6 @@ typedef struct {
 
 //CWBool CWParseWUMPayload(CWProtocolMessage *msg, CWVendorUciValues **payloadPtr);
 CWBool CWWTPSaveWUMValues(CWVendorWumValues * wumPayload, CWProtocolResultCode * resultCode);
-CWBool CWAssembleWTPVendorPayloadWUM(const void *ctx, CWProtocolMessage * msgPtr);
+CWBool CWAssembleWTPVendorPayloadWUM(const void *ctx, CWProtocolMessage *pm);
 
 #endif

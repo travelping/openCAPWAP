@@ -32,13 +32,10 @@ int gCWWaitJoin = CW_JOIN_INTERVAL_DEFAULT;
 
 /*__________________________________________________________*/
 /*  *******************___PROTOTYPES___*******************  */
-void CWWTPWaitJoinExpired(CWTimerArg arg);
-CWBool CWAssembleJoinRequest(CWProtocolMessage ** messagesPtr,
-			     int *fragmentsNumPtr, int PMTU, int seqNum, CWList msgElemList);
-
-CWBool CWParseJoinResponseMessage(unsigned char *msg, int len, int seqNum, CWProtocolJoinResponseValues * valuesPtr);
-
-CWBool CWSaveJoinResponseMessage(CWProtocolJoinResponseValues * joinResponse);
+static void CWWTPWaitJoinExpired(CWTimerArg arg);
+static CWBool CWAssembleJoinRequest(CWTransportMessage *tm, int PMTU, int seqNum, CWList msgElemList);
+static CWBool CWParseJoinResponseMessage(CWProtocolMessage *pm, int seqNum, void *values);
+static CWBool CWSaveJoinResponseMessage(void *values);
 
 /*_____________________________________________________*/
 /*  *******************___FUNCTIONS___*******************  */
@@ -64,6 +61,8 @@ CWStateTransition CWWTPEnterJoin()
 #endif
 
  cw_restart_join:
+	gSuccessfulHandshake = CW_TRUE;
+
 	ralloc_free(values);
 	if (!(values = rzalloc(NULL, CWProtocolJoinResponseValues)))
 		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
@@ -74,8 +73,10 @@ CWStateTransition CWWTPEnterJoin()
 	gACInfoPtr->ACIPv6ListInfo.ACIPv6ListCount = 0;
 	gACInfoPtr->ACIPv6ListInfo.ACIPv6List = NULL;
 
-	if ((waitJoinTimer = timer_add(gCWWaitJoin, 0, CWWTPWaitJoinExpired, NULL)) == -1)
+	if ((waitJoinTimer = timer_add(gCWWaitJoin, 0, CWWTPWaitJoinExpired, NULL)) == -1) {
+		ralloc_free(values);
 		return CW_ENTER_DISCOVERY;
+	}
 
 	if (gWTPForceACAddress != NULL) {
 		if (!(gACInfoPtr = ralloc(NULL, CWACInfoValues)))
@@ -108,7 +109,7 @@ CWStateTransition CWWTPEnterJoin()
 #endif
 	/* make sure we start with a fresh, empty list */
 	CWLockSafeList(gPacketReceiveList);
-	CWCleanSafeList(gPacketReceiveList, free);
+	CWCleanSafeList(gPacketReceiveList, ralloc_free);
 	CWUnlockSafeList(gPacketReceiveList);
 
 	CWThread thread_receiveFrame;
@@ -141,10 +142,11 @@ CWStateTransition CWWTPEnterJoin()
 	if (!CWErr(CWWTPSendAcknowledgedPacket(seqNum,
 					       NULL,
 					       CWAssembleJoinRequest,
-					       (void *)CWParseJoinResponseMessage,
-					       (void *)CWSaveJoinResponseMessage, values)))
+					       CWParseJoinResponseMessage,
+					       CWSaveJoinResponseMessage, values)))
 		goto cw_join_err;
 
+	CWDebugLog("Join Handshake State: %d", gSuccessfulHandshake);
 	timer_rem(waitJoinTimer, NULL);
 	if (!gSuccessfulHandshake)
 		/* timer expired */
@@ -169,13 +171,13 @@ CWStateTransition CWWTPEnterJoin()
 		/* selected a new AC from the list */
 		goto cw_restart_join;
 
+	ralloc_free(values);
 	return CW_ENTER_DISCOVERY;
 
 }
 
 void CWWTPWaitJoinExpired(CWTimerArg arg)
 {
-
 	CWLog("WTP Wait Join Expired");
 	CWDebugLog("gWTPSocket:%d, gWTPDataSocket:%d", gWTPSocket, gWTPDataSocket);
 	gSuccessfulHandshake = CW_FALSE;
@@ -184,69 +186,54 @@ void CWWTPWaitJoinExpired(CWTimerArg arg)
 	CWNetworkCloseSocket(gWTPDataSocket);
 }
 
-CWBool CWAssembleJoinRequest(CWProtocolMessage ** messagesPtr,
-			     int *fragmentsNumPtr, int PMTU, int seqNum, CWList msgElemList)
+CWBool CWAssembleJoinRequest(CWTransportMessage *tm, int PMTU, int seqNum, CWList msgElemList)
 {
-	CWBool msgOK;
-	CWProtocolMessage *msgElems = NULL;
-	int msgElemCount = 9;
-	CWProtocolMessage *msgElemsBinding = NULL;
-	const int msgElemBindingCount = 0;
-	int k = -1;
+	CWProtocolMessage msg;
 
-	if (messagesPtr == NULL || fragmentsNumPtr == NULL)
-		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
-
-	msgElems = CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(msgElemCount, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	assert(tm != NULL);
 
 	CWLog("Sending Join Request...");
 
 	/* Assemble Message Elements */
-	msgOK = CWAssembleMsgElemLocationData(msgElems, &(msgElems[++k])) &&
-		CWAssembleMsgElemWTPBoardData(msgElems, &(msgElems[++k])) &&
-		CWAssembleMsgElemWTPDescriptor(msgElems, &(msgElems[++k])) &&
-		CWAssembleMsgElemWTPIPv4Address(msgElems, &(msgElems[++k])) &&
-		CWAssembleMsgElemWTPName(msgElems, &(msgElems[++k])) &&
-		CWAssembleMsgElemSessionID(msgElems, &(msgElems[++k]), &gWTPSessionID[0]) &&
-		CWAssembleMsgElemWTPFrameTunnelMode(msgElems, &(msgElems[++k])) &&
-		CWAssembleMsgElemWTPMACType(msgElems, &(msgElems[++k])) &&
-		CWAssembleMsgElemWTPRadioInformation(msgElems, &(msgElems[++k]));
+	if (!CWInitMessage(NULL, &msg, CW_MSG_TYPE_VALUE_JOIN_REQUEST, seqNum) ||
+	    !CWAssembleMsgElemLocationData(NULL, &msg) ||
+	    !CWAssembleMsgElemWTPBoardData(NULL, &msg) ||
+	    !CWAssembleMsgElemWTPDescriptor(NULL, &msg) ||
+	    !CWAssembleMsgElemWTPIPv4Address(NULL, &msg) ||
+	    !CWAssembleMsgElemWTPName(NULL, &msg) ||
+	    !CWAssembleMsgElemSessionID(NULL, &msg, &gWTPSessionID[0]) ||
+	    !CWAssembleMsgElemWTPFrameTunnelMode(NULL, &msg) ||
+	    !CWAssembleMsgElemWTPMACType(NULL, &msg) ||
+	    !CWAssembleMsgElemWTPRadioInformation(NULL, &msg))
+		goto cw_assemble_error;
+	CWFinalizeMessage(&msg);
 
-	if (!msgOK) {
-		CW_FREE_OBJECT(msgElems);
-		/* error will be handled by the caller */
-		return CW_FALSE;
-	}
+	if (!CWAssembleMessage(tm, PMTU, &msg))
+		goto cw_assemble_error;
 
-	return CWAssembleMessage(messagesPtr,
-				 fragmentsNumPtr,
-				 PMTU,
-				 seqNum,
-				 CW_MSG_TYPE_VALUE_JOIN_REQUEST,
-				 msgElems, msgElemCount, msgElemsBinding, msgElemBindingCount);
+	return CW_TRUE;
+
+ cw_assemble_error:
+	CWReleaseMessage(&msg);
+        return CW_FALSE;
 }
 
 /*
  * Parse Join Response and return informations in *valuesPtr.
  */
-CWBool CWParseJoinResponseMessage(unsigned char *msg, int len, int seqNum, CWProtocolJoinResponseValues * valuesPtr)
+CWBool CWParseJoinResponseMessage(CWProtocolMessage *pm, int seqNum, void *values)
 {
-
+	CWProtocolJoinResponseValues *jr = (CWProtocolJoinResponseValues *)values;
 	CWControlHeaderValues controlVal;
-	CWProtocolMessage completeMsg;
-	int offsetTillMessages;
 	char tmp_ABGNTypes;
-	if (msg == NULL || valuesPtr == NULL)
-		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
+
+	assert(pm != NULL);
+	assert(values != NULL);
 
 	CWDebugLog("Parsing Join Response...");
 
-	completeMsg.msg = msg;
-	completeMsg.offset = 0;
-
 	/* error will be handled by the caller */
-	if (!(CWParseControlHeader(&completeMsg, &controlVal)))
+	if (!(CWParseControlHeader(pm, &controlVal)))
 		return CW_FALSE;
 
 	if (controlVal.messageTypeValue != CW_MSG_TYPE_VALUE_JOIN_RESPONSE)
@@ -258,178 +245,123 @@ CWBool CWParseJoinResponseMessage(unsigned char *msg, int len, int seqNum, CWPro
 	/* skip timestamp */
 	controlVal.msgElemsLen -= CW_CONTROL_HEADER_OFFSET_FOR_MSG_ELEMS;
 
-	offsetTillMessages = completeMsg.offset;
+	jr->ACInfoPtr.IPv4AddressesCount = 0;
+	jr->ACInfoPtr.IPv6AddressesCount = 0;
 
-	/* Mauro */
-	valuesPtr->ACInfoPtr.IPv4AddressesCount = 0;
-	valuesPtr->ACInfoPtr.IPv6AddressesCount = 0;
+	jr->ACIPv4ListInfo.ACIPv4ListCount = 0;
+	jr->ACIPv4ListInfo.ACIPv4List = NULL;
+	jr->ACIPv6ListInfo.ACIPv6ListCount = 0;
+	jr->ACIPv6ListInfo.ACIPv6List = NULL;
+
+	CWParseMessageElementStart(pm);
 
 	/* parse message elements */
-	while ((completeMsg.offset - offsetTillMessages) < controlVal.msgElemsLen) {
+	CWParseMessageElementWhile(pm, controlVal.msgElemsLen) {
 		unsigned short int type = 0;
 		unsigned short int len = 0;
 
-		CWParseFormatMsgElem(&completeMsg, &type, &len);
+		CWParseFormatMsgElem(pm, &type, &len);
 
 		CWDebugLog("Parsing Message Element: %u, len: %u", type, len);
-		/*
-		   valuesPtr->ACInfoPtr.IPv4AddressesCount = 0;
-		   valuesPtr->ACInfoPtr.IPv6AddressesCount = 0;
-		 */
-		valuesPtr->ACIPv4ListInfo.ACIPv4ListCount = 0;
-		valuesPtr->ACIPv4ListInfo.ACIPv4List = NULL;
-		valuesPtr->ACIPv6ListInfo.ACIPv6ListCount = 0;
-		valuesPtr->ACIPv6ListInfo.ACIPv6List = NULL;
 
 		switch (type) {
 		case CW_MSG_ELEMENT_AC_DESCRIPTOR_CW_TYPE:
 			/* will be handled by the caller */
-			if (!(CWParseACDescriptor(valuesPtr, &completeMsg, len, &(valuesPtr->ACInfoPtr))))
+			if (!(CWParseACDescriptor(jr, pm, len, &(jr->ACInfoPtr))))
 				return CW_FALSE;
 			break;
 		case CW_MSG_ELEMENT_IEEE80211_WTP_RADIO_INFORMATION_CW_TYPE:
 			/* will be handled by the caller */
-			if (!CWParseWTPRadioInformation_FromAC(&completeMsg, len, &tmp_ABGNTypes))
+			if (!CWParseWTPRadioInformation_FromAC(pm, len, &tmp_ABGNTypes))
 				return CW_FALSE;
 			break;
 		case CW_MSG_ELEMENT_AC_IPV4_LIST_CW_TYPE:
-			if (!(CWParseACIPv4List(valuesPtr, &completeMsg, len, &(valuesPtr->ACIPv4ListInfo))))
+			if (!(CWParseACIPv4List(jr, pm, len, &(jr->ACIPv4ListInfo))))
 				return CW_FALSE;
 			break;
 		case CW_MSG_ELEMENT_AC_IPV6_LIST_CW_TYPE:
-			if (!(CWParseACIPv6List(valuesPtr, &completeMsg, len, &(valuesPtr->ACIPv6ListInfo))))
+			if (!(CWParseACIPv6List(jr, pm, len, &(jr->ACIPv6ListInfo))))
 				return CW_FALSE;
 			break;
 		case CW_MSG_ELEMENT_RESULT_CODE_CW_TYPE:
-			if (!(CWParseResultCode(&completeMsg, len, &(valuesPtr->code))))
+			if (!(CWParseResultCode(pm, len, &(jr->code))))
 				return CW_FALSE;
 			break;
 		case CW_MSG_ELEMENT_AC_NAME_CW_TYPE:
-			/* will be handled by the caller */
-			if (!(CWParseACName(valuesPtr, &completeMsg, len, &(valuesPtr->ACInfoPtr.name))))
+			if (!(CWParseACName(jr, pm, len, &(jr->ACInfoPtr.name))))
 				return CW_FALSE;
 			break;
 		case CW_MSG_ELEMENT_CW_CONTROL_IPV4_ADDRESS_CW_TYPE:
-			/*
-			 * just count how many interfacess we
-			 * have, so we can allocate the array
-			 */
-			valuesPtr->ACInfoPtr.IPv4AddressesCount++;
-			completeMsg.offset += len;
+			if (!CWParseCWControlIPv4Addresses(jr, pm, len, &jr->ACInfoPtr))
+				return CW_FALSE;
 			break;
 		case CW_MSG_ELEMENT_CW_CONTROL_IPV6_ADDRESS_CW_TYPE:
-			/*
-			 * just count how many interfacess we
-			 * have, so we can allocate the array
-			 */
-			valuesPtr->ACInfoPtr.IPv6AddressesCount++;
-			completeMsg.offset += len;
+			if (!CWParseCWControlIPv6Addresses(jr, pm, len, &jr->ACInfoPtr))
+				return CW_FALSE;
 			break;
-			/*
-			   case CW_MSG_ELEMENT_SESSION_ID_CW_TYPE:
-			   if(!(CWParseSessionID(&completeMsg, len, valuesPtr))) return CW_FALSE;
-			   break;
-			 */
+#if 0
+		case CW_MSG_ELEMENT_SESSION_ID_CW_TYPE:
+			if (!CWParseSessionID(pm, len, jr))
+				return CW_FALSE;
+			break;
+#endif
 		default:
-			return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Unrecognized Message Element");
+			CWLog("unknown Message Element, Element; %u", type);
+
+			/* ignore unknown IE */
+			CWParseSkipElement(pm, len);
 		}
 
-		/* CWDebugLog("bytes: %d/%d", (completeMsg.offset-offsetTillMessages), controlVal.msgElemsLen); */
+		/* CWDebugLog("bytes: %d/%d", (pm.offset-offsetTillMessages), controlVal.msgElemsLen); */
 	}
 
-	if (completeMsg.offset != len)
-		return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Garbage at the End of the Message");
-
-	/* actually read each interface info */
-	if (!(valuesPtr->ACInfoPtr.IPv4Addresses = ralloc_array(NULL, CWProtocolIPv4NetworkInterface,
-								valuesPtr->ACInfoPtr.IPv4AddressesCount)))
-		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-
-	if (valuesPtr->ACInfoPtr.IPv6AddressesCount > 0) {
-
-		if (!(valuesPtr->ACInfoPtr.IPv6Addresses = ralloc_array(NULL, CWProtocolIPv6NetworkInterface,
-									valuesPtr->ACInfoPtr.IPv6AddressesCount)))
-			return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	}
-
-	int i = 0;
-	int j = 0;
-
-	completeMsg.offset = offsetTillMessages;
-	while ((completeMsg.offset - offsetTillMessages) < controlVal.msgElemsLen) {
-		unsigned short int type = 0;	/* = CWProtocolRetrieve32(&completeMsg); */
-		unsigned short int len = 0;	/* = CWProtocolRetrieve16(&completeMsg); */
-
-		CWParseFormatMsgElem(&completeMsg, &type, &len);
-
-		switch (type) {
-		case CW_MSG_ELEMENT_CW_CONTROL_IPV4_ADDRESS_CW_TYPE:
-			/* will be handled by the caller */
-			if (!(CWParseCWControlIPv4Addresses(&completeMsg,
-							    len, &(valuesPtr->ACInfoPtr.IPv4Addresses[i]))))
-				return CW_FALSE;
-			i++;
-			break;
-		case CW_MSG_ELEMENT_CW_CONTROL_IPV6_ADDRESS_CW_TYPE:
-			/* will be handled by the caller */
-			if (!(CWParseCWControlIPv6Addresses(&completeMsg,
-							    len, &(valuesPtr->ACInfoPtr.IPv6Addresses[j]))))
-				return CW_FALSE;
-			j++;
-			break;
-		default:
-			completeMsg.offset += len;
-			break;
-		}
-	}
-
-	return CW_TRUE;
+	CWParseMessageElementEnd(pm, controlVal.msgElemsLen);
+	return CWParseTransportMessageEnd(pm);
 }
 
-CWBool CWSaveJoinResponseMessage(CWProtocolJoinResponseValues * joinResponse)
+CWBool CWSaveJoinResponseMessage(void *values)
 {
+	CWProtocolJoinResponseValues *jr = (CWProtocolJoinResponseValues *)values;
 
-	if (joinResponse == NULL)
-		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
+	assert(values != NULL);
 
-	if ((joinResponse->code == CW_PROTOCOL_SUCCESS) || (joinResponse->code == CW_PROTOCOL_SUCCESS_NAT)) {
-
+	if ((jr->code == CW_PROTOCOL_SUCCESS) || (jr->code == CW_PROTOCOL_SUCCESS_NAT)) {
 		if (gACInfoPtr == NULL)
 			return CWErrorRaise(CW_ERROR_NEED_RESOURCE, NULL);
 
-		gACInfoPtr->stations = joinResponse->ACInfoPtr.stations;
-		gACInfoPtr->limit = joinResponse->ACInfoPtr.limit;
-		gACInfoPtr->activeWTPs = joinResponse->ACInfoPtr.activeWTPs;
-		gACInfoPtr->maxWTPs = joinResponse->ACInfoPtr.maxWTPs;
-		gACInfoPtr->security = joinResponse->ACInfoPtr.security;
-		gACInfoPtr->RMACField = joinResponse->ACInfoPtr.RMACField;
+		gACInfoPtr->stations = jr->ACInfoPtr.stations;
+		gACInfoPtr->limit = jr->ACInfoPtr.limit;
+		gACInfoPtr->activeWTPs = jr->ACInfoPtr.activeWTPs;
+		gACInfoPtr->maxWTPs = jr->ACInfoPtr.maxWTPs;
+		gACInfoPtr->security = jr->ACInfoPtr.security;
+		gACInfoPtr->RMACField = jr->ACInfoPtr.RMACField;
 
-		ralloc_steal(gACInfoPtr, joinResponse->ACInfoPtr.vendorInfos.vendorInfos);
+		ralloc_steal(gACInfoPtr, jr->ACInfoPtr.vendorInfos.vendorInfos);
 		ralloc_free(gACInfoPtr->vendorInfos.vendorInfos);
-		gACInfoPtr->vendorInfos.vendorInfos = joinResponse->ACInfoPtr.vendorInfos.vendorInfos;
+		gACInfoPtr->vendorInfos.vendorInfos = jr->ACInfoPtr.vendorInfos.vendorInfos;
 
-		if (joinResponse->ACIPv4ListInfo.ACIPv4ListCount > 0) {
+		if (jr->ACIPv4ListInfo.ACIPv4ListCount > 0) {
 			gACInfoPtr->ACIPv4ListInfo.ACIPv4ListCount =
-				joinResponse->ACIPv4ListInfo.ACIPv4ListCount;
+				jr->ACIPv4ListInfo.ACIPv4ListCount;
 
-			ralloc_steal(gACInfoPtr, joinResponse->ACIPv4ListInfo.ACIPv4List);
+			ralloc_steal(gACInfoPtr, jr->ACIPv4ListInfo.ACIPv4List);
 			ralloc_free(gACInfoPtr->ACIPv4ListInfo.ACIPv4List);
-			gACInfoPtr->ACIPv4ListInfo.ACIPv4List = joinResponse->ACIPv4ListInfo.ACIPv4List;
+			gACInfoPtr->ACIPv4ListInfo.ACIPv4List = jr->ACIPv4ListInfo.ACIPv4List;
 		}
 
-		if (joinResponse->ACIPv6ListInfo.ACIPv6ListCount > 0) {
+		if (jr->ACIPv6ListInfo.ACIPv6ListCount > 0) {
 			gACInfoPtr->ACIPv6ListInfo.ACIPv6ListCount =
-				joinResponse->ACIPv6ListInfo.ACIPv6ListCount;
+				jr->ACIPv6ListInfo.ACIPv6ListCount;
 
-			ralloc_steal(gACInfoPtr, joinResponse->ACIPv6ListInfo.ACIPv6List);
+			ralloc_steal(gACInfoPtr, jr->ACIPv6ListInfo.ACIPv6List);
 			ralloc_free(gACInfoPtr->ACIPv6ListInfo.ACIPv6List);
-			gACInfoPtr->ACIPv6ListInfo.ACIPv6List = joinResponse->ACIPv6ListInfo.ACIPv6List;
+			gACInfoPtr->ACIPv6ListInfo.ACIPv6List = jr->ACIPv6ListInfo.ACIPv6List;
 		}
 
 		/*
 		 * This field name was allocated for storing the AC name; however, it
 		 * doesn't seem to be used and it is certainly lost when we exit
-		 * CWWTPEnterJoin() as joinResponse is actually a local variable of that
+		 * CWWTPEnterJoin() as v is actually a local variable of that
 		 * function.
 		 *
 		 * Thus, it seems good to free it now.
@@ -437,9 +369,9 @@ CWBool CWSaveJoinResponseMessage(CWProtocolJoinResponseValues * joinResponse)
 		 * BUG ML03
 		 * 16/10/2009 - Donato Capitella
 		 */
-		CW_FREE_OBJECT(joinResponse->ACInfoPtr.name);
+		CW_FREE_OBJECT(jr->ACInfoPtr.name);
 		/* BUG ML08 */
-		CW_FREE_OBJECT(joinResponse->ACInfoPtr.IPv4Addresses);
+		CW_FREE_OBJECT(jr->ACInfoPtr.IPv4Addresses);
 
 		CWDebugLog("Join Response Saved");
 		return CW_TRUE;

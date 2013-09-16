@@ -548,8 +548,8 @@ CWBool CWNetworkUnsafeMultiHomed(CWMultiHomedSocket * sockPtr,
 
 	int k;
 	int fragmentsNum = 0;
-	CWProtocolMessage *completeMsgPtr = NULL;
-	CWProtocolMessage *frame = NULL;
+	CWTransportMessage tm;
+	CWProtocolMessage frame;
 	int dataSocket = 0;
 	int readBytes;
 	int flags = ((peekRead != CW_FALSE) ? MSG_PEEK : 0);
@@ -619,21 +619,15 @@ CWBool CWNetworkUnsafeMultiHomed(CWMultiHomedSocket * sockPtr,
 				get_mac_addr(macAddrTap, gWTPs[i].tap_name);
 				unsigned char buf80211[CW_BUFFER_SIZE + 24];
 				int readByest80211 = from_8023_to_80211(buf, readBytes, buf80211, macAddrTap);
-				if (!(frame = ralloc(NULL, CWProtocolMessage)))
-					return 0;
 
-				CW_CREATE_PROTOCOL_MESSAGE(frame, *frame, readByest80211, return 0;
-				    );
-				memcpy(frame->msg, buf80211, readByest80211);
-				frame->offset = readByest80211;
-				frame->data_msgType = CW_IEEE_802_11_FRAME_TYPE;
+				CW_CREATE_PROTOCOL_MESSAGE(NULL, &frame, readByest80211, return 0; );
+				memcpy(frame.data, buf80211, readByest80211);
+				frame.pos = readByest80211;
+				frame.data_msgType = CW_IEEE_802_11_FRAME_TYPE;
 
-				if (!CWAssembleDataMessage(&completeMsgPtr,
-							   &fragmentsNum,
-							   gWTPs[i].pathMTU, frame, NULL, CW_PACKET_PLAIN, 0)) {
-
-					CW_FREE_OBJECT(completeMsgPtr);
-					CW_FREE_OBJECT(frame);
+				if (!CWAssembleDataMessage(&tm, gWTPs[i].pathMTU, 1, BINDING_IEEE_802_11, CW_FALSE, CW_TRUE, NULL, NULL, &frame)) {
+					CWReleaseTransportMessage(&tm);
+					CWReleaseMessage(&frame);
 					continue;
 				}
 
@@ -654,18 +648,15 @@ CWBool CWNetworkUnsafeMultiHomed(CWMultiHomedSocket * sockPtr,
 				sock_set_port_cw((struct sockaddr *)&(address), htons(CW_DATA_PORT));
 
 				for (k = 0; k < fragmentsNum; k++) {
-					if (!CWNetworkSendUnsafeUnconnected(dataSocket,
-									    &(address),
-									    completeMsgPtr[k].msg,
-									    completeMsgPtr[k].offset)) {
+					if (!CWNetworkSendUnsafeUnconnected(dataSocket, &(address),
+									    tm.parts[k].data, tm.parts[k].pos)) {
 						CWDebugLog("Failure sending Request");
 						break;
 					}
 				}
 
-				CW_FREE_OBJECT(completeMsgPtr);
-				CW_FREE_OBJECT(frame);
-
+				CWReleaseTransportMessage(&tm);
+				CWReleaseMessage(&frame);
 			}
 		}
 	}

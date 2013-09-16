@@ -27,33 +27,30 @@
 
 #include "CWAC.h"
 
-static CWBool CWAssembleJoinResponse(CWProtocolMessage ** messagesPtr,
-			      int *fragmentsNumPtr, int PMTU, int seqNum, CWList msgElemList);
-
-static CWBool CWParseJoinRequestMessage(unsigned char *msg, int len,
-				 int *seqNumPtr, CWProtocolJoinRequestValues * valuesPtr);
-
+static CWBool CWAssembleJoinResponse(CWTransportMessage *tm, int PMTU, int seqNum, CWList msgElemList);
+static CWBool CWParseJoinRequestMessage(CWProtocolMessage *pm, int *seqNumPtr,
+					CWProtocolJoinRequestValues * valuesPtr);
 static CWBool CWSaveJoinRequestMessage(CWProtocolJoinRequestValues * joinRequest, CWWTPProtocolManager * WTPProtocolManager);
 
-CWBool ACEnterJoin(int WTPIndex, CWProtocolMessage * msgPtr)
+CWBool ACEnterJoin(int WTPIndex, CWProtocolMessage *pm)
 {
 	int seqNum = 0;
 	CWProtocolJoinRequestValues joinRequest;
 	CWList msgElemList = NULL;
 
+	assert(pm);
+
 	CWLog("\n");
 	CWLog("######### Join State #########");
 
-	if (msgPtr == NULL)
-		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
-
-	if (!(CWParseJoinRequestMessage(msgPtr->msg, msgPtr->offset, &seqNum, &joinRequest))) {
+	if (!(CWParseJoinRequestMessage(pm, &seqNum, &joinRequest))) {
 		/* note: we can kill our thread in case of out-of-memory
 		 * error to free some space.
 		 * we can see this just calling CWErrorGetLastErrorCode()
 		 */
 		return CW_FALSE;
 	}
+
 	// cancel waitJoin timer
 	if (!CWTimerCancel(&(gWTPs[WTPIndex].currentTimer))) {
 		return CW_FALSE;
@@ -106,9 +103,7 @@ CWBool ACEnterJoin(int WTPIndex, CWProtocolMessage * msgPtr)
 	 */
 
 	/* random session ID */
-	if (!(CWAssembleJoinResponse(&(gWTPs[WTPIndex].messages),
-				     &(gWTPs[WTPIndex].messagesCount), gWTPs[WTPIndex].pathMTU, seqNum, msgElemList))) {
-
+	if (!(CWAssembleJoinResponse(&gWTPs[WTPIndex].messages, gWTPs[WTPIndex].pathMTU, seqNum, msgElemList))) {
 		CWDeleteList(&msgElemList, CWProtocolDestroyMsgElemData);
 		return CW_FALSE;
 	}
@@ -124,118 +119,88 @@ CWBool ACEnterJoin(int WTPIndex, CWProtocolMessage * msgPtr)
 	return CW_TRUE;
 }
 
-/*
+/**
  * Assemble Join Response.
+ *
+ * Result code is not included because it's already
+ * in msgElemList. Control IPv6 to be added.
  */
-CWBool CWAssembleJoinResponse(CWProtocolMessage ** messagesPtr,
-			      int *fragmentsNumPtr, int PMTU, int seqNum, CWList msgElemList)
+CWBool CWAssembleJoinResponse(CWTransportMessage *tm, int PMTU, int seqNum, CWList msgElemList)
 {
-
-	CWProtocolMessage *msgElems = NULL;
-	int msgElemCount = 0;
-	/* Result code is not included because it's already
-	 * in msgElemList. Control IPv6 to be added.
-	 */
-	const int mandatoryMsgElemCount = 4;
-	CWProtocolMessage *msgElemsBinding = NULL;
-	const int msgElemBindingCount = 0;
-	int i;
+	CWProtocolMessage msg;
 	CWListElement *current;
-	int k = -1;
 
-	if (messagesPtr == NULL || fragmentsNumPtr == NULL || msgElemList == NULL)
-		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
-
-	msgElemCount = CWCountElementInList(msgElemList);
-
-	msgElems = CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(
-					 msgElemCount + mandatoryMsgElemCount,
-					 return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	assert(tm);
+	assert(msgElemList);
 
 	CWDebugLog("Assembling Join Response...");
 
-	if ((!(CWAssembleMsgElemACDescriptor(msgElems, &(msgElems[++k])))) ||
-	    (!(CWAssembleMsgElemACName(msgElems, &(msgElems[++k])))) ||
-	    (!(CWAssembleMsgElemCWControlIPv4Addresses(msgElems, &(msgElems[++k])))) ||
-	    (!(CWAssembleMsgElemACWTPRadioInformation(msgElems, &(msgElems[++k]))))
-	    ) {
-		CWErrorHandleLast();
-		CW_FREE_OBJECT(msgElems);
-		/* error will be handled by the caller */
-		return CW_FALSE;
-	}
+	if (!CWInitMessage(NULL, &msg, CW_MSG_TYPE_VALUE_JOIN_RESPONSE, seqNum) ||
+	    !CWAssembleMsgElemACDescriptor(NULL, &msg) ||
+	    !CWAssembleMsgElemACName(NULL, &msg) ||
+	    !CWAssembleMsgElemCWControlIPv4Addresses(NULL, &msg) ||
+	    !CWAssembleMsgElemACWTPRadioInformation(NULL, &msg))
+		goto cw_assemble_error;
 
-	current = msgElemList;
-	for (i = 0; i < msgElemCount; i++) {
-
+	CWListForeach(msgElemList, current) {
 		switch (((CWMsgElemData *) (current->data))->type) {
 
 		case CW_MSG_ELEMENT_AC_IPV4_LIST_CW_TYPE:
-			if (!(CWAssembleMsgElemACIPv4List(msgElems, &(msgElems[++k]))))
+			if (!(CWAssembleMsgElemACIPv4List(NULL, &msg)))
 				goto cw_assemble_error;
 			break;
 		case CW_MSG_ELEMENT_AC_IPV6_LIST_CW_TYPE:
-			if (!(CWAssembleMsgElemACIPv6List(msgElems, &(msgElems[++k]))))
+			if (!(CWAssembleMsgElemACIPv6List(NULL, &msg)))
 				goto cw_assemble_error;
 			break;
 		case CW_MSG_ELEMENT_RESULT_CODE_CW_TYPE:
-			if (!(CWAssembleMsgElemResultCode(msgElems, &(msgElems[++k]), ((CWMsgElemData *) current->data)->value)))
+			if (!(CWAssembleMsgElemResultCode(NULL, &msg,
+							  ((CWMsgElemData *) current->data)->value)))
 				goto cw_assemble_error;
 			break;
 			/*
 			   case CW_MSG_ELEMENT_SESSION_ID_CW_TYPE:
-			   if (!(CWAssembleMsgElemSessionID(msgElems, &(msgElems[++k]), ((CWMsgElemData *) current->data)->value)))
+			   if (!(CWAssembleMsgElemSessionID(NULL, &msg, ((CWMsgElemData *) current->data)->value)))
 			   goto cw_assemble_error;
 			   break;
 			 */
 		default:
-			CW_FREE_OBJECT(msgElems);
+			CWReleaseMessage(&msg);
 			return CWErrorRaise(CW_ERROR_INVALID_FORMAT,
 					    "Unrecognized Message Element for Join Response Message");
 		}
-		current = current->next;
 	}
+	CWFinalizeMessage(&msg);
 
-	if (!(CWAssembleMessage(messagesPtr,
-				fragmentsNumPtr,
-				PMTU,
-				seqNum,
-				CW_MSG_TYPE_VALUE_JOIN_RESPONSE,
-				msgElems, msgElemCount + mandatoryMsgElemCount, msgElemsBinding, msgElemBindingCount)))
-	    return CW_FALSE;
+	if (!CWAssembleMessage(tm, PMTU, &msg))
+		goto cw_assemble_error;
 
 	CWDebugLog("Join Response Assembled");
-
 	return CW_TRUE;
 
  cw_assemble_error:
-	CW_FREE_OBJECT(msgElems);
-	/* error will be handled by the caller */
-	return CW_FALSE;
+	CWReleaseMessage(&msg);
+        return CW_FALSE;
 }
 
 /*
  * Parses Join Request.
  */
-CWBool CWParseJoinRequestMessage(unsigned char *msg, int len,
-				 int *seqNumPtr, CWProtocolJoinRequestValues * valuesPtr)
+CWBool CWParseJoinRequestMessage(CWProtocolMessage *pm, int *seqNumPtr,
+				 CWProtocolJoinRequestValues * valuesPtr)
 {
 
 	CWControlHeaderValues controlVal;
 	int offsetTillMessages;
-	CWProtocolMessage completeMsg;
 	unsigned char RadioInfoABGN;
 
-	if (msg == NULL || seqNumPtr == NULL || valuesPtr == NULL)
-		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
+	assert(pm);
+	assert(seqNumPtr);
+	assert(valuesPtr);
 
 	CWDebugLog("Parse Join Request");
 
-	completeMsg.msg = msg;
-	completeMsg.offset = 0;
-
-	if (!(CWParseControlHeader(&completeMsg, &controlVal)))
+	if (!(CWParseControlHeader(pm, &controlVal)))
 		/* will be handled by the caller */
 		return CW_FALSE;
 
@@ -246,82 +211,79 @@ CWBool CWParseJoinRequestMessage(unsigned char *msg, int len,
 	*seqNumPtr = controlVal.seqNum;
 	/* skip timestamp */
 	controlVal.msgElemsLen -= CW_CONTROL_HEADER_OFFSET_FOR_MSG_ELEMS;
-	offsetTillMessages = completeMsg.offset;
+	offsetTillMessages = pm->pos;
 
 	/* parse message elements */
-	while ((completeMsg.offset - offsetTillMessages) < controlVal.msgElemsLen) {
+	while ((pm->pos - offsetTillMessages) < controlVal.msgElemsLen) {
 
-		unsigned short int elemType = 0;	/* = CWProtocolRetrieve32(&completeMsg); */
-		unsigned short int elemLen = 0;	/* = CWProtocolRetrieve16(&completeMsg); */
+		unsigned short int elemType = 0;	/* = CWProtocolRetrieve32(&pm); */
+		unsigned short int elemLen = 0;	/* = CWProtocolRetrieve16(&pm); */
 
-		CWParseFormatMsgElem(&completeMsg, &elemType, &elemLen);
+		CWParseFormatMsgElem(pm, &elemType, &elemLen);
 
 		/* CWDebugLog("Parsing Message Element: %u, elemLen: %u", elemType, elemLen); */
 
 		switch (elemType) {
 		case CW_MSG_ELEMENT_LOCATION_DATA_CW_TYPE:
-			if (!(CWParseLocationData(&completeMsg, elemLen, &(valuesPtr->location))))
+			if (!(CWParseLocationData(pm, elemLen, &(valuesPtr->location))))
 				/* will be handled by the caller */
 				return CW_FALSE;
 			break;
 
 		case CW_MSG_ELEMENT_WTP_BOARD_DATA_CW_TYPE:
-			if (!(CWParseWTPBoardData(&completeMsg, elemLen, &(valuesPtr->WTPBoardData))))
+			if (!(CWParseWTPBoardData(pm, elemLen, &(valuesPtr->WTPBoardData))))
 				/* will be handled by the caller */
 				return CW_FALSE;
 			break;
 
 		case CW_MSG_ELEMENT_SESSION_ID_CW_TYPE:
-			valuesPtr->sessionID = CWParseSessionID(&completeMsg, elemLen);
+			valuesPtr->sessionID = CWParseSessionID(pm, elemLen);
 			break;
 
 		case CW_MSG_ELEMENT_WTP_DESCRIPTOR_CW_TYPE:
-			if (!(CWParseWTPDescriptor(&completeMsg, elemLen, &(valuesPtr->WTPDescriptor))))
+			if (!(CWParseWTPDescriptor(pm, elemLen, &(valuesPtr->WTPDescriptor))))
 				/* will be handled by the caller */
 				return CW_FALSE;
 			break;
 
 		case CW_MSG_ELEMENT_WTP_IPV4_ADDRESS_CW_TYPE:
-			if (!(CWParseWTPIPv4Address(&completeMsg, elemLen, valuesPtr)))
+			if (!(CWParseWTPIPv4Address(pm, elemLen, valuesPtr)))
 				/* will be handled by the caller */
 				return CW_FALSE;
 			break;
 
 		case CW_MSG_ELEMENT_WTP_NAME_CW_TYPE:
-			if (!(CWParseWTPName(&completeMsg, elemLen, &(valuesPtr->name))))
+			if (!(CWParseWTPName(pm, elemLen, &(valuesPtr->name))))
 				/* will be handled by the caller */
 				return CW_FALSE;
 			break;
 
 		case CW_MSG_ELEMENT_WTP_FRAME_TUNNEL_MODE_CW_TYPE:
-			if (!(CWParseWTPFrameTunnelMode(&completeMsg, elemLen, &(valuesPtr->frameTunnelMode))))
+			if (!(CWParseWTPFrameTunnelMode(pm, elemLen, &(valuesPtr->frameTunnelMode))))
 				/* will be handled by the caller */
 				return CW_FALSE;
 			break;
 
 		case CW_MSG_ELEMENT_WTP_MAC_TYPE_CW_TYPE:
-			if (!(CWParseWTPMACType(&completeMsg, elemLen, &(valuesPtr->MACType))))
+			if (!(CWParseWTPMACType(pm, elemLen, &(valuesPtr->MACType))))
 				/* will be handled by the caller */
 				return CW_FALSE;
 			break;
 
 		case CW_MSG_ELEMENT_IEEE80211_WTP_RADIO_INFORMATION_CW_TYPE:
-			if (!(CWParseWTPRadioInformation(&completeMsg, elemLen, &RadioInfoABGN)))
+			if (!(CWParseWTPRadioInformation(pm, elemLen, &RadioInfoABGN)))
 				return CW_FALSE;
 			break;
 
 		default:
-			completeMsg.offset += elemLen;
 			CWLog("Unrecognized Message Element(%d) in Discovery response", elemType);
+			CWParseSkipElement(pm, elemLen);
 			break;
 		}
-		/*CWDebugLog("bytes: %d/%d", (completeMsg.offset-offsetTillMessages), controlVal.msgElemsLen); */
+		/*CWDebugLog("bytes: %d/%d", (pm.offset-offsetTillMessages), controlVal.msgElemsLen); */
 	}
 
-	if (completeMsg.offset != len)
-		return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Garbage at the End of the Message");
-
-	return CW_TRUE;
+	return CWParseTransportMessageEnd(pm);
 }
 
 CWBool CWSaveJoinRequestMessage(CWProtocolJoinRequestValues * joinRequest, CWWTPProtocolManager * WTPProtocolManager)

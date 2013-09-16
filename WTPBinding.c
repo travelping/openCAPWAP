@@ -378,16 +378,10 @@ CWBool CWBindingSetQosValues(int qosCount, RadioQosValues * radioQosValues, CWPr
 
 #endif
 
-/**************************************************************
- * Update 2009: OFDM Message Element Management               *
- **************************************************************/
-
 CWBool CWManageOFDMValues(CWBindingConfigurationUpdateRequestValuesOFDM * ofdmValues, CWProtocolResultCode * resultCode)
 {
-
-	if (ofdmValues == NULL) {
+	if (ofdmValues == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
-	}
 
 	*resultCode = CW_PROTOCOL_SUCCESS;
 
@@ -412,14 +406,6 @@ CWBool CWManageOFDMValues(CWBindingConfigurationUpdateRequestValuesOFDM * ofdmVa
 		return CWErrorRaise(CW_ERROR_GENERAL, NULL);
 	}
 
-	/********************************************************************
-	 * Update 2009: OFDM Management                                     *
-	 *                                                                  *
-	 * Send a OFDMControlValues to wtpFreqManager.                      *
-	 * In this function there is the control switch for the different   *
-	 * type of commands.                                                *
-	 ********************************************************************/
-
 	if (sendto(sendSock, radioValues, sizeof(OFDMControlValues), 0, (struct sockaddr *)&serv_addr, slen) < 0) {
 		CWLog("[CWManageOFDMValue]: Error on sendto function.");
 		close(sendSock);
@@ -430,40 +416,40 @@ CWBool CWManageOFDMValues(CWBindingConfigurationUpdateRequestValuesOFDM * ofdmVa
 	return CW_TRUE;
 }
 
-CWBool CWParseWTPOFDM(CWProtocolMessage * msgPtr, int len, unsigned char *radioID, OFDMControlValues * valPtr)
+CWBool CWParseWTPOFDM(CWProtocolMessage *pm, int len, unsigned char *radioID, OFDMControlValues * valPtr)
 {
-	CWParseMessageElementStart();
+	CWParseMessageElementStart(pm);
 
-	*radioID = CWProtocolRetrieve8(msgPtr);
+	*radioID = CWProtocolRetrieve8(pm);
 
-	valPtr->currentChan = CWProtocolRetrieve32(msgPtr);
-	valPtr->BandSupport = (unsigned char)CWProtocolRetrieve8(msgPtr);
-	valPtr->TIThreshold = (unsigned int)CWProtocolRetrieve32(msgPtr);
+	valPtr->currentChan = CWProtocolRetrieve32(pm);
+	valPtr->BandSupport = (unsigned char)CWProtocolRetrieve8(pm);
+	valPtr->TIThreshold = (unsigned int)CWProtocolRetrieve32(pm);
 
-	CWParseMessageElementEnd();
+	return CWParseMessageElementEnd(pm, len);
 
 }
 
-CWBool CWParseWTPQoS(CWProtocolMessage * msgPtr, int len, unsigned char *radioID, unsigned char *tagPackets,
+CWBool CWParseWTPQoS(CWProtocolMessage *pm, int len, unsigned char *radioID, unsigned char *tagPackets,
 		     WTPQosValues * valPtr)
 {
 	int i;
 
-	CWParseMessageElementStart();
+	CWParseMessageElementStart(pm);
 
-	*radioID = CWProtocolRetrieve8(msgPtr);
-	*tagPackets = CWProtocolRetrieve8(msgPtr);
+	*radioID = CWProtocolRetrieve8(pm);
+	*tagPackets = CWProtocolRetrieve8(pm);
 
 	for (i = 0; i < NUM_QOS_PROFILES; i++) {
-		valPtr[i].queueDepth = (unsigned char)CWProtocolRetrieve8(msgPtr);
-		valPtr[i].cwMin = CWProtocolRetrieve16(msgPtr);
-		valPtr[i].cwMax = CWProtocolRetrieve16(msgPtr);
-		valPtr[i].AIFS = (unsigned char)CWProtocolRetrieve8(msgPtr);
-		valPtr[i].dot1PTag = (unsigned char)CWProtocolRetrieve8(msgPtr);
-		valPtr[i].DSCPTag = (unsigned char)CWProtocolRetrieve8(msgPtr);
+		valPtr[i].queueDepth = (unsigned char)CWProtocolRetrieve8(pm);
+		valPtr[i].cwMin = CWProtocolRetrieve16(pm);
+		valPtr[i].cwMax = CWProtocolRetrieve16(pm);
+		valPtr[i].AIFS = (unsigned char)CWProtocolRetrieve8(pm);
+		valPtr[i].dot1PTag = (unsigned char)CWProtocolRetrieve8(pm);
+		valPtr[i].DSCPTag = (unsigned char)CWProtocolRetrieve8(pm);
 	}
 
-	CWParseMessageElementEnd();
+	return CWParseMessageElementEnd(pm, len);
 }
 
 CWBool CWBindingSaveConfigurationUpdateRequest(void *bindingValuesPtr, CWProtocolResultCode * resultCode,
@@ -476,18 +462,15 @@ CWBool CWBindingSaveConfigurationUpdateRequest(void *bindingValuesPtr, CWProtoco
 
 	switch (*updateRequestType) {
 	case BINDING_MSG_ELEMENT_TYPE_WTP_QOS:{
-
 			CWBindingConfigurationUpdateRequestValues *bindingPtr =
 			    (CWBindingConfigurationUpdateRequestValues *) bindingValuesPtr;
 
 			if (bindingPtr->qosCount > 0) {
 				if (!CWBindingSetQosValues
 				    (bindingPtr->qosCount, bindingPtr->radioQosValues, resultCode)) {
-					CW_FREE_OBJECT(bindingPtr->radioQosValues);
 					CW_FREE_OBJECT(bindingPtr);
 					return CW_FALSE;
 				}
-				CW_FREE_OBJECT(bindingPtr->radioQosValues);
 				CW_FREE_OBJECT(bindingPtr);
 			}
 			return CW_TRUE;
@@ -498,7 +481,6 @@ CWBool CWBindingSaveConfigurationUpdateRequest(void *bindingValuesPtr, CWProtoco
 			    (CWBindingConfigurationUpdateRequestValuesOFDM *) bindingValuesPtr;
 
 			if (!CWManageOFDMValues(bindingPtr, resultCode)) {
-				CW_FREE_OBJECT(bindingPtr->radioOFDMValues);
 				CW_FREE_OBJECT(bindingPtr);
 				return CW_FALSE;
 			}
@@ -511,126 +493,60 @@ CWBool CWBindingSaveConfigurationUpdateRequest(void *bindingValuesPtr, CWProtoco
 	return CW_TRUE;
 }
 
-CWBool CWBindingParseConfigurationUpdateRequest(unsigned char *msg, int len, void **valuesPtr)
+CWBool CWBindingParseConfigurationUpdateRequestElement(const void *ctx, CWProtocolMessage *pm,
+						       unsigned short int type, unsigned short int len,
+						       void **valuesPtr)
 {
-	int i;
-	CWProtocolMessage completeMsg;
-	unsigned short int GlobalElemType = 0;	// = CWProtocolRetrieve32(&completeMsg);
-	int qosCount = 0;
-
-	if (msg == NULL || valuesPtr == NULL)
-		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
-
-	CWLog("Parsing Binding Configuration Update Request...");
-
-	completeMsg.msg = msg;
-	completeMsg.offset = 0;
-
 	CWBindingConfigurationUpdateRequestValues *auxBindingPtr = NULL;
 	CWBindingConfigurationUpdateRequestValuesOFDM *ofdmBindingPtr = NULL;
 
-	// parse message elements
-	while (completeMsg.offset < len) {
-		unsigned short int elemType = 0;	// = CWProtocolRetrieve32(&completeMsg);
-		unsigned short int elemLen = 0;	// = CWProtocolRetrieve16(&completeMsg);
+	assert(pm != NULL);
+	assert(valuesPtr != NULL);
 
-		CWParseFormatMsgElem(&completeMsg, &elemType, &elemLen);
+	CWLog("Parsing Binding Configuration Update Request Element...");
 
-		GlobalElemType = elemType;
-
-		//CWDebugLog("Parsing Message Element: %u, elemLen: %u", elemType, elemLen);
-
-		switch (elemType) {
-		case BINDING_MSG_ELEMENT_TYPE_WTP_QOS:
-			qosCount++;
-			//(auxBindingPtr->qosCount)++; // just count
-			completeMsg.offset += elemLen;
-			break;
-		case BINDING_MSG_ELEMENT_TYPE_OFDM_CONTROL:
-			completeMsg.offset += elemLen;
-			break;
-		default:
-			if (CWBindingCheckType(elemType)) {
-				CW_FREE_OBJECT(valuesPtr);
-				return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Unrecognized Message Element");
-			} else {
-				completeMsg.offset += elemLen;
-				break;
-			}
-		}
-	}
-
-	if (completeMsg.offset != len)
-		return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Garbage at the End of the Message");
-
-	switch (GlobalElemType) {
-	case BINDING_MSG_ELEMENT_TYPE_WTP_QOS:{
-			if (!(auxBindingPtr = ralloc(NULL, CWBindingConfigurationUpdateRequestValues)))
+	CWParseMessageElementStart(pm);
+	switch (type) {
+	case BINDING_MSG_ELEMENT_TYPE_WTP_QOS: {
+		unsigned char tagPackets;
+		if (!*valuesPtr) {
+			if (!(auxBindingPtr = ralloc(ctx, CWBindingConfigurationUpdateRequestValues)))
 				return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 			*valuesPtr = (void *)auxBindingPtr;
-
-			auxBindingPtr->qosCount = qosCount;
-			auxBindingPtr->radioQosValues = NULL;
-
-			if (!(auxBindingPtr->radioQosValues = ralloc_array(NULL, RadioQosValues, auxBindingPtr->qosCount)))
-				return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-
-			break;
 		}
+
+		if ((auxBindingPtr->qosCount % CW_BLOCK_ALLOC) == 0) {
+			auxBindingPtr->radioQosValues =
+				reralloc(ctx, auxBindingPtr->radioQosValues, RadioQosValues,
+					 auxBindingPtr->qosCount + CW_BLOCK_ALLOC);
+		}
+
+		if (!CWParseWTPQoS(pm, len, &auxBindingPtr->radioQosValues[auxBindingPtr->qosCount].radioID, &tagPackets,
+				   auxBindingPtr->radioQosValues[auxBindingPtr->qosCount].qosValues))
+			return CW_FALSE;
+		auxBindingPtr->qosCount++;
+		break;
+
 	case BINDING_MSG_ELEMENT_TYPE_OFDM_CONTROL:
-		if (!(ofdmBindingPtr = ralloc(NULL, CWBindingConfigurationUpdateRequestValuesOFDM)) ||
+		if (!(ofdmBindingPtr = ralloc(ctx, CWBindingConfigurationUpdateRequestValuesOFDM)) ||
 		    !(ofdmBindingPtr->radioOFDMValues = ralloc(ofdmBindingPtr, OFDMControlValues)))
-			ralloc_free(ofdmBindingPtr);
 			return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
 		*valuesPtr = (void *)ofdmBindingPtr;
+
+		if (!CWParseWTPOFDM(pm, len, &ofdmBindingPtr->radioID, ofdmBindingPtr->radioOFDMValues)) {
+			CW_FREE_OBJECT(valuesPtr);
+			return CW_FALSE;
+		}
 		break;
 	}
 
-	i = 0;
-	completeMsg.offset = 0;
-	while (completeMsg.offset < len) {
-		unsigned short int type = 0;
-		unsigned short int elemLen = 0;
-
-		CWParseFormatMsgElem(&completeMsg, &type, &elemLen);
-
-		switch (type) {
-		case BINDING_MSG_ELEMENT_TYPE_WTP_QOS:{
-				unsigned char tagPackets;
-				if (!
-				    (CWParseWTPQoS
-				     (&completeMsg, elemLen, &(auxBindingPtr->radioQosValues[i].radioID), &tagPackets,
-				      auxBindingPtr->radioQosValues[i].qosValues))) {
-					CW_FREE_OBJECT(auxBindingPtr->radioQosValues);
-					CW_FREE_OBJECT(valuesPtr);
-					return CW_FALSE;	// will be handled by the caller
-				}
-				i++;
-				break;
-			}
-		case BINDING_MSG_ELEMENT_TYPE_OFDM_CONTROL:{
-				/* 2009: New case */
-				if (!
-				    (CWParseWTPOFDM
-				     (&completeMsg, elemLen, &(ofdmBindingPtr->radioID),
-				      ofdmBindingPtr->radioOFDMValues))) {
-					CW_FREE_OBJECT(ofdmBindingPtr->radioOFDMValues);
-					CW_FREE_OBJECT(valuesPtr);
-					return CW_FALSE;	// will be handled by the caller
-				}
-				break;
-			}
-		default:
-			completeMsg.offset += elemLen;
-			break;
-		}
+	default:
+		CWParseSkipElement(pm, len);
+		break;
 	}
-
-	CWLog("Binding Configure Update Request Parsed");
-
-	return CW_TRUE;
+	return CWParseMessageElementEnd(pm, len);
 }
 
 CWBool CWBindingSaveConfigureResponse(void *bindingValuesPtr, CWProtocolResultCode * resultCode)
@@ -652,88 +568,45 @@ CWBool CWBindingSaveConfigureResponse(void *bindingValuesPtr, CWProtocolResultCo
 	return CW_TRUE;
 }
 
-CWBool CWBindingParseConfigureResponse(unsigned char *msg, int len, void **valuesPtr)
+CWBool CWBindingParseConfigureResponseElement(const void *ctx, CWProtocolMessage *pm,
+					      unsigned short int type, unsigned short int len,
+					      void **valuesPtr)
 {
-	int i;
-	CWProtocolMessage completeMsg;
-
-	if (msg == NULL || valuesPtr == NULL)
-		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
-
-	CWLog("Parsing Binding Configuration Request...");
-
-	completeMsg.msg = msg;
-	completeMsg.offset = 0;
-
 	CWBindingConfigurationRequestValues *auxBindingPtr;
-	if (!(auxBindingPtr = ralloc(NULL, CWBindingConfigurationRequestValues)))
-		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
-	*valuesPtr = (void *)auxBindingPtr;
+	assert(pm != NULL);
+	assert(valuesPtr != NULL);
 
-	auxBindingPtr->qosCount = 0;
-	auxBindingPtr->radioQosValues = NULL;
-	// parse message elements
-	while (completeMsg.offset < len) {
-		unsigned short int elemType = 0;	// = CWProtocolRetrieve32(&completeMsg);
-		unsigned short int elemLen = 0;	// = CWProtocolRetrieve16(&completeMsg);
+	CWLog("Parsing Binding Configure Response Element...");
 
-		CWParseFormatMsgElem(&completeMsg, &elemType, &elemLen);
+	if (!*valuesPtr)
+		if (!(*valuesPtr = rzalloc(ctx, CWBindingConfigurationRequestValues)))
+			return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
-		CWDebugLog("Parsing Message Element: %d, elemLen: %d", elemType, elemLen);
+	auxBindingPtr = (CWBindingConfigurationRequestValues *)*valuesPtr;
 
-		switch (elemType) {
-		case BINDING_MSG_ELEMENT_TYPE_WTP_QOS:
-			(auxBindingPtr->qosCount)++;	// just count
-			completeMsg.offset += elemLen;
-			break;
-		default:
-			if (CWBindingCheckType(elemType)) {
-				CW_FREE_OBJECT(valuesPtr);
-				return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Unrecognized Message Element");
-			} else {
-				completeMsg.offset += elemLen;
-				break;
-			}
+	CWParseMessageElementStart(pm);
+	switch (type) {
+	case BINDING_MSG_ELEMENT_TYPE_WTP_QOS:
+	{
+		unsigned char tagPackets;
+		if ((auxBindingPtr->qosCount % CW_BLOCK_ALLOC) == 0) {
+			auxBindingPtr->radioQosValues =
+				reralloc(ctx, auxBindingPtr->radioQosValues, RadioQosValues,
+					 auxBindingPtr->qosCount + CW_BLOCK_ALLOC);
 		}
+		if (!auxBindingPtr->radioQosValues)
+			return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+
+		if (!CWParseWTPQoS(pm, len, &auxBindingPtr->radioQosValues[auxBindingPtr->qosCount].radioID, &tagPackets,
+				   auxBindingPtr->radioQosValues[auxBindingPtr->qosCount].qosValues))
+			return CW_FALSE;
+		auxBindingPtr->qosCount++;
+		break;
 	}
-
-	if (completeMsg.offset != len)
-		return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Garbage at the End of the Message");
-
-	// actually read each radio info
-	if (!(auxBindingPtr->radioQosValues = ralloc_array(NULL, RadioQosValues, auxBindingPtr->qosCount)))
-		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-
-	i = 0;
-	completeMsg.offset = 0;
-	while (completeMsg.offset < len) {
-		unsigned short int type = 0;
-		unsigned short int elemLen = 0;
-
-		CWParseFormatMsgElem(&completeMsg, &type, &elemLen);
-
-		switch (type) {
-		case BINDING_MSG_ELEMENT_TYPE_WTP_QOS:{
-				unsigned char tagPackets;
-				if (!
-				    (CWParseWTPQoS
-				     (&completeMsg, elemLen, &(auxBindingPtr->radioQosValues[i].radioID), &tagPackets,
-				      auxBindingPtr->radioQosValues[i].qosValues))) {
-					CW_FREE_OBJECT(auxBindingPtr->radioQosValues);
-					CW_FREE_OBJECT(valuesPtr);
-					return CW_FALSE;	// will be handled by the caller
-				}
-				i++;
-				break;
-			}
-		default:
-			completeMsg.offset += elemLen;
-			break;
-		}
+	default:
+		CWParseSkipElement(pm, len);
+		break;
 	}
-
-	CWLog("Binding Configuration Request Parsed");
-
-	return CW_TRUE;
+	return CWParseMessageElementEnd(pm, len);
 }

@@ -27,16 +27,12 @@
 
 #include "CWWTP.h"
 
-CWBool CWAssembleChangeStateEventRequest(CWProtocolMessage ** messagesPtr,
-					 int *fragmentsNumPtr, int PMTU, int seqNum, CWList msgElemList);
-
-CWBool CWParseChangeStateEventResponseMessage(unsigned char *msg, int len, int seqNum, void *values);
-
-CWBool CWSaveChangeStateEventResponseMessage(void *changeStateEventResp);
+static CWBool CWAssembleChangeStateEventRequest(CWTransportMessage *tm, int PMTU, int seqNum, CWList msgElemList);
+static CWBool CWParseChangeStateEventResponseMessage(CWProtocolMessage *, int seqNum, void *values);
+static CWBool CWSaveChangeStateEventResponseMessage(void *changeStateEventResp);
 
 CWStateTransition CWWTPEnterDataCheck()
 {
-
 	int seqNum;
 
 	CWLog("\n");
@@ -68,68 +64,43 @@ CWStateTransition CWWTPEnterDataCheck()
 	return CW_ENTER_RUN;
 }
 
-CWBool CWAssembleChangeStateEventRequest(CWProtocolMessage ** messagesPtr,
-					 int *fragmentsNumPtr, int PMTU, int seqNum, CWList msgElemList)
+CWBool CWAssembleChangeStateEventRequest(CWTransportMessage *tm, int PMTU, int seqNum, CWList msgElemList)
 {
-
-	CWProtocolMessage *msgElems = NULL;
-	CWProtocolMessage *msgElemsBinding = NULL;
-	const int msgElemCount = 2;
-	int msgElemBindingCount = 0;
+	CWProtocolMessage msg;
 	int resultCode = CW_PROTOCOL_SUCCESS;
-	int k = -1;
 
-	if (messagesPtr == NULL || fragmentsNumPtr == NULL)
-		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
-
-	msgElems = CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(msgElemCount, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	assert(tm != NULL);
 
 	CWLog("Assembling Change State Event Request...");
 
 	/* Assemble Message Elements */
-	if (!(CWAssembleMsgElemRadioOperationalState(msgElems, -1, &(msgElems[++k]))) ||
-	    !(CWAssembleMsgElemResultCode(msgElems, &(msgElems[++k]), resultCode))) {
+	if (!CWInitMessage(NULL, &msg, CW_MSG_TYPE_VALUE_CHANGE_STATE_EVENT_REQUEST, seqNum) ||
+	    !CWAssembleMsgElemRadioOperationalState(NULL, -1, &msg) ||
+	    !CWAssembleMsgElemResultCode(NULL, &msg, resultCode))
+		goto cw_assemble_error;
+	CWFinalizeMessage(&msg);
 
-		int i;
-
-		for (i = 0; i <= k; i++) {
-
-			CW_FREE_PROTOCOL_MESSAGE(msgElems[i]);
-		}
-		CW_FREE_OBJECT(msgElems);
-		/* error will be handled by the caller */
-		return CW_FALSE;
-	}
-
-	if (!(CWAssembleMessage(messagesPtr,
-				fragmentsNumPtr,
-				PMTU,
-				seqNum,
-				CW_MSG_TYPE_VALUE_CHANGE_STATE_EVENT_REQUEST,
-				msgElems, msgElemCount, msgElemsBinding, msgElemBindingCount)))
-		return CW_FALSE;
+	if (!CWAssembleMessage(tm, PMTU, &msg))
+		goto cw_assemble_error;
 
 	CWLog("Change State Event Request Assembled");
 	return CW_TRUE;
+
+ cw_assemble_error:
+	CWReleaseMessage(&msg);
+        return CW_FALSE;
 }
 
-CWBool CWParseChangeStateEventResponseMessage(unsigned char *msg, int len, int seqNum, void *values)
+CWBool CWParseChangeStateEventResponseMessage(CWProtocolMessage *pm, int seqNum, void *values)
 {
-
 	CWControlHeaderValues controlVal;
-	CWProtocolMessage completeMsg;
 
-	if (msg == NULL)
-		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
+	assert(pm != NULL);
 
 	CWLog("Parsing Change State Event Response...");
 
-	completeMsg.msg = msg;
-	completeMsg.offset = 0;
-
 	/* error will be handled by the caller */
-	if (!(CWParseControlHeader(&completeMsg, &controlVal)))
+	if (!(CWParseControlHeader(pm, &controlVal)))
 		return CW_FALSE;
 
 	if (controlVal.messageTypeValue != CW_MSG_TYPE_VALUE_CHANGE_STATE_EVENT_RESPONSE)
@@ -144,6 +115,8 @@ CWBool CWParseChangeStateEventResponseMessage(unsigned char *msg, int len, int s
 	if (controlVal.msgElemsLen != 0)
 		return CWErrorRaise(CW_ERROR_INVALID_FORMAT,
 				    "Change State Event Response must carry no message elements");
+
+	CWParseTransportMessageEnd(pm);
 
 	CWLog("Change State Event Response Parsed");
 	return CW_TRUE;

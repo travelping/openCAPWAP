@@ -248,15 +248,16 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveFrame(void *arg)
 							printf("\n");
 							fflush(stdout);
 
-							if (!(bindingValuesPtr = ralloc(NULL, CWBindingTransportHeaderValues)))
+							if (!(listElement = ralloc(NULL, CWBindingDataListElement)))
+								EXIT_FRAME_THREAD(gRawSock);
+
+							if (!(bindingValuesPtr = ralloc(listElement, CWBindingTransportHeaderValues)))
 								EXIT_FRAME_THREAD(gRawSock);
 
 							extractFrameInfo((char *)buffer, &(bindingValuesPtr->RSSI),
 									 &(bindingValuesPtr->SNR),
 									 &(bindingValuesPtr->dataRate));
 
-							if (!(listElement = ralloc(NULL, CWBindingDataListElement)))
-								EXIT_FRAME_THREAD(gRawSock);
 							listElement->frame = frame;
 							listElement->bindingValues = bindingValuesPtr;
 

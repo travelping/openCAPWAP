@@ -34,7 +34,7 @@
 #include <unistd.h>
 #include <signal.h>
 
-CWBool CWAssembleWTPVendorPayloadUCI(const void *ctx, CWProtocolMessage * msgPtr)
+CWBool CWAssembleWTPVendorPayloadUCI(const void *ctx, CWProtocolMessage *pm)
 {
 	int *iPtr;
 	unsigned short msgType;
@@ -43,7 +43,7 @@ CWBool CWAssembleWTPVendorPayloadUCI(const void *ctx, CWProtocolMessage * msgPtr
 
 	CWLog("Assembling Protocol Configuration Update Request [VENDOR CASE]...");
 
-	if (msgPtr == NULL)
+	if (pm == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
 	if ((iPtr = ((int *)CWThreadGetSpecific(&gIndexSpecific))) == NULL) {
@@ -56,22 +56,22 @@ CWBool CWAssembleWTPVendorPayloadUCI(const void *ctx, CWProtocolMessage * msgPtr
 		msgType = CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_UCI;
 		uciPtr = (CWVendorUciValues *) valuesPtr->payload;
 		if (uciPtr->commandArgs != NULL) {
-			CWInitMsgElem(ctx, msgPtr,
+			CWInitMsgElem(ctx, pm,
 				      sizeof(short) + sizeof(char) + sizeof(int) +
 				      (strlen(uciPtr->commandArgs) * sizeof(char)),
 				      CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_CW_TYPE);
-			CWProtocolStore16(msgPtr, (unsigned short)msgType);
-			CWProtocolStore8(msgPtr, (unsigned char)uciPtr->command);
-			CWProtocolStore32(msgPtr, (unsigned int)strlen(uciPtr->commandArgs));
-			CWProtocolStoreStr(msgPtr, uciPtr->commandArgs);
-			CWFinalizeMsgElem(msgPtr);
+			CWProtocolStore16(pm, (unsigned short)msgType);
+			CWProtocolStore8(pm, (unsigned char)uciPtr->command);
+			CWProtocolStore32(pm, (unsigned int)strlen(uciPtr->commandArgs));
+			CWProtocolStoreStr(pm, uciPtr->commandArgs);
+			CWFinalizeMsgElem(pm);
 		} else {
-			CWInitMsgElem(ctx, msgPtr, sizeof(short) + sizeof(char) + sizeof(int),
+			CWInitMsgElem(ctx, pm, sizeof(short) + sizeof(char) + sizeof(int),
 				      CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_CW_TYPE);
-			CWProtocolStore16(msgPtr, (unsigned short)msgType);
-			CWProtocolStore8(msgPtr, (unsigned char)uciPtr->command);
-			CWProtocolStore32(msgPtr, 0);
-			CWFinalizeMsgElem(msgPtr);
+			CWProtocolStore16(pm, (unsigned short)msgType);
+			CWProtocolStore8(pm, (unsigned char)uciPtr->command);
+			CWProtocolStore32(pm, 0);
+			CWFinalizeMsgElem(pm);
 		}
 		break;
 	default:
@@ -83,7 +83,7 @@ CWBool CWAssembleWTPVendorPayloadUCI(const void *ctx, CWProtocolMessage * msgPtr
 	return CW_TRUE;
 }
 
-CWBool CWAssembleWTPVendorPayloadWUM(const void *ctx, CWProtocolMessage * msgPtr)
+CWBool CWAssembleWTPVendorPayloadWUM(const void *ctx, CWProtocolMessage *pm)
 {
 	int *iPtr;
 	unsigned short msgType;
@@ -93,7 +93,7 @@ CWBool CWAssembleWTPVendorPayloadWUM(const void *ctx, CWProtocolMessage * msgPtr
 
 	CWLog("Assembling Protocol Configuration Update Request [VENDOR CASE]...");
 
-	if (msgPtr == NULL)
+	if (pm == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
 	if ((iPtr = ((int *)CWThreadGetSpecific(&gIndexSpecific))) == NULL) {
@@ -126,21 +126,21 @@ CWBool CWAssembleWTPVendorPayloadWUM(const void *ctx, CWProtocolMessage * msgPtr
 			return CW_FALSE;
 		}
 
-		CWInitMsgElem(ctx, msgPtr, payloadSize, CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_CW_TYPE);
-		CWProtocolStore16(msgPtr, (unsigned short)msgType);
-		CWProtocolStore8(msgPtr, (unsigned char)wumPtr->type);
+		CWInitMsgElem(ctx, pm, payloadSize, CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_CW_TYPE);
+		CWProtocolStore16(pm, (unsigned short)msgType);
+		CWProtocolStore8(pm, (unsigned char)wumPtr->type);
 		if (wumPtr->type == WTP_UPDATE_REQUEST) {
-			CWProtocolStore8(msgPtr, wumPtr->_major_v_);
-			CWProtocolStore8(msgPtr, wumPtr->_minor_v_);
-			CWProtocolStore8(msgPtr, wumPtr->_revision_v_);
-			CWProtocolStore32(msgPtr, wumPtr->_pack_size_);
+			CWProtocolStore8(pm, wumPtr->_major_v_);
+			CWProtocolStore8(pm, wumPtr->_minor_v_);
+			CWProtocolStore8(pm, wumPtr->_revision_v_);
+			CWProtocolStore32(pm, wumPtr->_pack_size_);
 		} else if (wumPtr->type == WTP_CUP_FRAGMENT) {
-			CWProtocolStore32(msgPtr, wumPtr->_seq_num_);
-			CWProtocolStore32(msgPtr, wumPtr->_cup_fragment_size_);
-			CWProtocolStoreRawBytes(msgPtr, wumPtr->_cup_, wumPtr->_cup_fragment_size_);
+			CWProtocolStore32(pm, wumPtr->_seq_num_);
+			CWProtocolStore32(pm, wumPtr->_cup_fragment_size_);
+			CWProtocolStoreRawBytes(pm, wumPtr->_cup_, wumPtr->_cup_fragment_size_);
 			CW_FREE_OBJECT(wumPtr->_cup_);
 		}
-		CWFinalizeMsgElem(msgPtr);
+		CWFinalizeMsgElem(pm);
 		break;
 	default:
 		return CW_FALSE;

@@ -116,7 +116,7 @@ typedef struct {
 	/* depends on the current state: WaitJoin, NeighborDead */
 	CWTimerID currentTimer;
 	CWTimerID heartbeatTimer;
-	CWList fragmentsList;
+	CWFragmentBufferList fragmentsList;
 	int pathMTU;
 
 	/**** ACInterface ****/
@@ -147,8 +147,7 @@ typedef struct {
 	CWWTPProtocolManager WTPProtocolManager;
 
 	/* Retransmission */
-	CWProtocolMessage *messages;
-	int messagesCount;
+	CWTransportMessage messages;
 	int retransmissionCount;
 	CWTimerID currentPacketTimer;
 	CWBool isRetransmitting;
@@ -241,18 +240,13 @@ CW_THREAD_RETURN_TYPE CWACipc_with_ac_hostapd(void *arg);
  *              all message elements                            *
  ****************************************************************/
 
-CWBool CWAssembleConfigurationUpdateRequest(CWProtocolMessage ** messagesPtr,
-					    int *fragmentsNumPtr, int PMTU, int seqNum, int msgElement);
-
-CWBool CWAssembleStationConfigurationRequest(CWProtocolMessage ** messagesPtr,
-					     int *fragmentsNumPtr,
+CWBool CWAssembleConfigurationUpdateRequest(CWTransportMessage *tm, int PMTU, int seqNum, int msgElement);
+CWBool CWAssembleStationConfigurationRequest(CWTransportMessage *tm,
 					     int PMTU, int seqNum, unsigned char *StationMacAddr, int Operation);
-
-CWBool CWAssembleClearConfigurationRequest(CWProtocolMessage ** messagesPtr,
-					   int *fragmentsNumPtr, int PMTU, int seqNum);
+CWBool CWAssembleClearConfigurationRequest(CWTransportMessage *tm, int PMTU, int seqNum);
 
 /* in ACDiscoveryState.c */
-CWBool CWAssembleDiscoveryResponse(CWProtocolMessage ** messagesPtr, int seqNum);
+CWBool CWAssembleDiscoveryResponse(CWTransportMessage *tm, int seqNum);
 CWBool CWParseDiscoveryRequestMessage(unsigned char *msg, int len,
 				      int *seqNumPtr, CWDiscoveryRequestValues * valuesPtr);
 

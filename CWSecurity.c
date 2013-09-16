@@ -99,43 +99,33 @@ int psk_key2bn(const char *psk_key, unsigned char *psk, unsigned int max_psk_len
 
 static void CWSslLockingFunc(int mode, int n, const char *file, int line)
 {
-
 	if (mode & CRYPTO_LOCK)
 		CWThreadMutexLock(&mutexOpensslBuf[n]);
 	else
 		CWThreadMutexUnlock(&mutexOpensslBuf[n]);
-
-	return;
 }
 
 static unsigned long CWSslIdFunction()
 {
-
 	return (unsigned long)pthread_self();
 }
 
 void CWSslCleanUp()
 {
-
 	int i;
 
 	if (mutexOpensslBuf == NULL)
 		return;
 
-	for (i = 0; i < CRYPTO_num_locks(); i++) {
-
+	for (i = 0; i < CRYPTO_num_locks(); i++)
 		CWDestroyThreadMutex(&mutexOpensslBuf[i]);
-	}
 
 	CW_FREE_OBJECT(mutexOpensslBuf);
 	mutexOpensslBuf = NULL;
-
-	return;
 }
 
 CWBool CWSecurityInitLib()
 {
-
 	int i;
 
 	SSL_load_error_strings();
@@ -146,11 +136,7 @@ CWBool CWSecurityInitLib()
 		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, "Cannot create openssl mutexes");
 
 	for (i = 0; i < CRYPTO_num_locks(); i++) {
-
-		CWBool rv;
-		rv = CWCreateThreadMutex(&mutexOpensslBuf[i]);
-		if (rv != CW_TRUE) {
-
+		if (!CWCreateThreadMutex(&mutexOpensslBuf[i])) {
 			CWSslCleanUp();
 			return CWErrorRaise(CW_ERROR_CREATING, "Cannot create openssl mutexes");
 		}
@@ -167,7 +153,6 @@ CWBool CWSecurityInitSessionClient(CWSocket sock,
 				   CWSafeList packetReceiveList,
 				   CWSecurityContext ctx, CWSecuritySession * sessionPtr, int *PMTUPtr)
 {
-
 	BIO *sbio = NULL;
 	CWNetworkLev4Address peer;
 	int peerlen = sizeof(peer);
@@ -175,9 +160,9 @@ CWBool CWSecurityInitSessionClient(CWSocket sock,
 	if (ctx == NULL || sessionPtr == NULL || PMTUPtr == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
-	if ((*sessionPtr = SSL_new(ctx)) == NULL) {
+	if ((*sessionPtr = SSL_new(ctx)) == NULL)
 		CWSecurityRaiseError(CW_ERROR_CREATING);
-	}
+
 #ifdef CW_DEBUGGING
 	CWDebugLog("My Certificate");
 	PEM_write_X509(stdout, SSL_get_certificate(*sessionPtr));
@@ -259,9 +244,7 @@ void CWSecurityCloseSession(CWSecuritySession * sPtr)
 
 CWBool CWSecurityReceive(CWSecuritySession session, void *buf, int len, int *readBytesPtr)
 {
-
-	CWSecurityManageSSLError((*readBytesPtr = SSL_read(session, buf, len)), session,;
-	    );
+	CWSecurityManageSSLError((*readBytesPtr = SSL_read(session, buf, len)), session,; );
 
 	CWDebugLog("Received packet\n");
 	/*
@@ -280,12 +263,10 @@ CWBool CWSecurityReceive(CWSecuritySession session, void *buf, int len, int *rea
 
 CWBool CWSecuritySend(CWSecuritySession session, const void *buf, int len)
 {
-
 	if (buf == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
-	CWSecurityManageSSLError(SSL_write(session, buf, len), session,;
-	    );
+	CWSecurityManageSSLError(SSL_write(session, buf, len), session,; );
 	CWDebugLog("Packet Sent\n");
 	return CW_TRUE;
 }
@@ -298,9 +279,8 @@ CWBool CWSecurityInitSessionServer(CWWTPManager * pWtp,
 	if (ctx == NULL || sessionPtr == NULL || PMTUPtr == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
-	if ((*sessionPtr = SSL_new(ctx)) == NULL) {
+	if ((*sessionPtr = SSL_new(ctx)) == NULL)
 		CWSecurityRaiseError(CW_ERROR_CREATING);
-	}
 
 	if ((sbio = BIO_new_memory(sock, &pWtp->address, pWtp->packetReceiveList)) == NULL) {
 		CWSecurityDestroySession(sessionPtr);
@@ -336,19 +316,16 @@ CWBool CWSecurityInitSessionServer(CWWTPManager * pWtp,
 	SSL_set_accept_state((*sessionPtr));
 
 	CWDebugLog("Before HS");
-	CWSecurityManageSSLError(SSL_do_handshake(*sessionPtr), *sessionPtr, CWSecurityDestroySession(sessionPtr);
-	    );
+	CWSecurityManageSSLError(SSL_do_handshake(*sessionPtr), *sessionPtr, CWSecurityDestroySession(sessionPtr); );
 	CWDebugLog("After HS");
 
 	if (SSL_get_verify_result(*sessionPtr) == X509_V_OK) {
-
 		CWDebugLog("Certificate Verified");
 	} else {
 		CWDebugLog("Certificate Error (%ld)", SSL_get_verify_result(*sessionPtr));
 	}
 
 	if (useCertificate) {
-
 		if (CWSecurityVerifyPeerCertificateForCAPWAP((*sessionPtr), CW_FALSE)) {
 
 			CWDebugLog("Certificate Ok for CAPWAP");
@@ -375,16 +352,11 @@ CWBool CWSecurityInitContext(CWSecurityContext * ctxPtr,
 			     const char *caList,
 			     const char *keyfile, const char *passw, CWBool isClient, int (*hackPtr) (void *))
 {
-
-	if (ctxPtr == NULL || (caList != NULL && (keyfile == NULL || passw == NULL))) {
-
+	if (ctxPtr == NULL || (caList != NULL && (keyfile == NULL || passw == NULL)))
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
-	}
 
-	if (((*ctxPtr) = SSL_CTX_new((isClient) ? DTLSv1_client_method() : DTLSv1_server_method())) == NULL) {
-
+	if (((*ctxPtr) = SSL_CTX_new((isClient) ? DTLSv1_client_method() : DTLSv1_server_method())) == NULL)
 		CWSecurityRaiseError(CW_ERROR_CREATING);
-	}
 
 	/* certificates */
 	if (caList != NULL) {
@@ -476,7 +448,6 @@ CWBool CWSecurityInitContext(CWSecurityContext * ctxPtr,
 
 void CWSecurityDestroyContext(CWSecurityContext *ctxPtr)
 {
-
 	if (*ctxPtr != NULL)
 		SSL_CTX_free(*ctxPtr);
 	*ctxPtr = NULL;
@@ -493,7 +464,6 @@ void CWSecurityDestroySession(CWSecuritySession *sessionPtr)
 
 CWBool CWSecurityVerifyCertEKU(X509 * x509, const char *const expected_oid)
 {
-
 	EXTENDED_KEY_USAGE *eku = NULL;
 	CWBool fFound = CW_FALSE;
 
@@ -527,9 +497,8 @@ CWBool CWSecurityVerifyCertEKU(X509 * x509, const char *const expected_oid)
 		}
 	}
 
-	if (eku != NULL) {
+	if (eku != NULL)
 		sk_ASN1_OBJECT_pop_free(eku, ASN1_OBJECT_free);
-	}
 
 	return fFound;
 }
@@ -554,7 +523,6 @@ CWBool CWSecurityVerifyPeerCertificateForCAPWAP(SSL * ssl, CWBool isClient)
  */
 static int CWDTLSPasswordCB(char *buf, int num, int rwflag, void *userdata)
 {
-
 	if (buf == NULL || num < strlen(gSecurityPassword) + 1)
 		return 0;
 
@@ -565,7 +533,6 @@ static int CWDTLSPasswordCB(char *buf, int num, int rwflag, void *userdata)
 
 int CWSecurityVerifyCB(int ok, X509_STORE_CTX * ctx)
 {
-
 	char buf[256];
 	X509 *err_cert;
 	int err, depth;
@@ -624,7 +591,6 @@ unsigned int CWSecurityPSKClientCB(SSL * ssl,
 				   char *identity,
 				   unsigned int max_identity_len, unsigned char *psk, unsigned int max_psk_len)
 {
-
 	/* TO-DO load identity from config */
 	if (snprintf(identity, max_identity_len, "CLient_identity") < 0)
 		return 0;
@@ -635,7 +601,6 @@ unsigned int CWSecurityPSKClientCB(SSL * ssl,
 
 unsigned int CWSecurityPSKServerCB(SSL * ssl, const char *identity, unsigned char *psk, unsigned int max_psk_len)
 {
-
 	CWDebugLog("Identity: %s, PSK: %s", identity, psk);
 	/* TO-DO load keys from... Plain-text config file? Leave them hard-coded? */
 	return psk_key2bn("1a2b3c", psk, max_psk_len);
@@ -646,14 +611,12 @@ unsigned int CWSecurityPSKServerCB(SSL * ssl, const char *identity, unsigned cha
  */
 int psk_key2bn(const char *psk_key, unsigned char *psk, unsigned int max_psk_len)
 {
-
 	unsigned int psk_len = 0;
 	int ret;
 	BIGNUM *bn = NULL;
 
 	ret = BN_hex2bn(&bn, psk_key);
 	if (!ret) {
-
 		printf("Could not convert PSK key '%s' to BIGNUM\n", psk_key);
 		if (bn)
 			BN_free(bn);
@@ -661,7 +624,6 @@ int psk_key2bn(const char *psk_key, unsigned char *psk, unsigned int max_psk_len
 	}
 
 	if (BN_num_bytes(bn) > max_psk_len) {
-
 		printf("psk buffer of callback is too small (%d) for key (%d)\n", max_psk_len, BN_num_bytes(bn));
 		BN_free(bn);
 		return 0;

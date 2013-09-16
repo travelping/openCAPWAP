@@ -27,51 +27,26 @@
 
 #include "CWAC.h"
 
-/*
- * CW_FREE_WTP_MSG_ARRAY - free the array of the messages
- * to be sent relative to the WTP with the specified index.
- *
- * ref -> BUG ML12
- * 20/10/2009 - Donato Capitella
- */
-static void inline CW_FREE_WTP_MSG_ARRAY(int WTPIndex)
-{
-	int i;
-	for (i = 0; i < gWTPs[WTPIndex].messagesCount; i++) {
-		CW_FREE_OBJECT(gWTPs[WTPIndex].messages[i].msg);
-	}
-	CW_FREE_OBJECT(gWTPs[WTPIndex].messages);
-	gWTPs[WTPIndex].messagesCount = 0;
-}
-
 CWBool CWACSendFragments(int WTPIndex)
 {
 	int i;
 
-	if (gWTPs[WTPIndex].messages == NULL)
-		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
-
-	for (i = 0; i < gWTPs[WTPIndex].messagesCount; i++) {
+	for (i = 0; i < gWTPs[WTPIndex].messages.count; i++) {
 #ifdef CW_NO_DTLS
 		if (!CWNetworkSendUnsafeUnconnected(gWTPs[WTPIndex].socket,
 						    &gWTPs[WTPIndex].address,
-						    gWTPs[WTPIndex].messages[i].msg,
-						    gWTPs[WTPIndex].messages[i].offset)) {
+						    gWTPs[WTPIndex].messages.parts[i].data,
+						    gWTPs[WTPIndex].messages.parts[i].pos)) {
 #else
 		if (!
 		    (CWSecuritySend
-		     (gWTPs[WTPIndex].session, gWTPs[WTPIndex].messages[i].msg, gWTPs[WTPIndex].messages[i].offset))) {
+		     (gWTPs[WTPIndex].session, gWTPs[WTPIndex].messages.parts[i].data, gWTPs[WTPIndex].messages.parts[i].pos))) {
 #endif
 			return CW_FALSE;
 		}
 	}
 
-	/*
-	 * BUG - ML12
-	 *
-	 * 20/10/2009 - Donato Capitella
-	 */
-	CW_FREE_WTP_MSG_ARRAY(WTPIndex);
+	CWReleaseTransportMessage(&gWTPs[WTPIndex].messages);
 
 	CWLog("Message Sent\n");
 
@@ -118,7 +93,7 @@ void CWACStopRetransmission(int WTPIndex)
 		gWTPs[WTPIndex].responseType = UNUSED_MSG_TYPE;
 		gWTPs[WTPIndex].responseSeqNum = 0;
 
-		CW_FREE_OBJECT(gWTPs[WTPIndex].messages);
+		CWReleaseTransportMessage(&gWTPs[WTPIndex].messages);
 //      CWDebugLog("~~~~~~ End of Stop Retransmission");
 	}
 }

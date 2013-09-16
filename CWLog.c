@@ -150,4 +150,35 @@ void CWDebugLog(const char *format, ...)
 
 	errno = _errno;
 }
+
+static const char *error_str[] = {
+	[CW_ERROR_SUCCESS]		= "Success",
+	[CW_ERROR_OUT_OF_MEMORY]	= "Out of Memory",
+	[CW_ERROR_WRONG_ARG]		= "Wrong Argument",
+	[CW_ERROR_INTERRUPTED]		= "Interrupted",
+	[CW_ERROR_NEED_RESOURCE]	= "Need Resource",
+	[CW_ERROR_COMUNICATING]		= "Comunicating",
+	[CW_ERROR_CREATING]		= "Creating",
+	[CW_ERROR_GENERAL]		= "General",
+	[CW_ERROR_OPERATION_ABORTED]	= "Operation Aborted",
+	[CW_ERROR_SENDING]		= "Sending",
+	[CW_ERROR_RECEIVING]		= "Receiving",
+	[CW_ERROR_INVALID_FORMAT]	= "Invalid Format",
+	[CW_ERROR_TIME_EXPIRED]		= "Time Expired",
+	[CW_ERROR_NONE]			= "None"
+};
+
+void CWDebugErrorLog()
+{
+	CWErrorCode error;
+
+	if (!(error = CWErrorGetLastErrorCode()))
+		return;
+
+	if (error <= CW_ERROR_NONE)
+		CWDebugLog("ERROR: %s", error_str[error]);
+	else
+		CWDebugLog("ERROR: %d", error);
+}
+
 #endif

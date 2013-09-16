@@ -22,6 +22,11 @@ AM_PROG_CC_C_O
 AC_PROG_INSTALL
 AC_SET_MAKE
 
+AC_CHECK_HEADERS(\
+	valgrind/memcheck.h \
+	valgrind/valgrind.h \
+)
+
 AC_FUNC_STRERROR_R
 
 AC_CHECK_HEADER([pthread.h], [], [AC_MSG_ERROR(You need the pthread headers)])

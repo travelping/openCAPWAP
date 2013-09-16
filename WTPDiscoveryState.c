@@ -54,11 +54,11 @@ int gCWMaxDiscoveryInterval = 20;
 
 /*__________________________________________________________*/
 /*  *******************___PROTOTYPES___*******************  */
-CWBool CWReceiveDiscoveryResponse();
-void CWWTPEvaluateAC(CWACInfoValues * ACInfoPtr);
-CWBool CWReadResponses();
-CWBool CWAssembleDiscoveryRequest(CWProtocolMessage ** messagesPtr, int seqNum);
-CWBool CWParseDiscoveryResponseMessage(unsigned char *msg, int len, int *seqNumPtr, CWACInfoValues * ACInfoPtr);
+static CWBool CWReceiveDiscoveryResponse();
+static void CWWTPEvaluateAC(CWACInfoValues * ACInfoPtr);
+static CWBool CWReadResponses();
+static CWBool CWAssembleDiscoveryRequest(CWTransportMessage *tm, int seqNum);
+static CWBool CWParseDiscoveryResponseMessage(unsigned char *msg, int len, int *seqNumPtr, CWACInfoValues * ACInfoPtr);
 
 typedef struct {
 	CWNetworkLev4Address address;
@@ -232,19 +232,19 @@ CWStateTransition CWWTPEnterDiscovery()
 
                         /* ...send a Discovery Request */
 
-                        CWProtocolMessage *msgPtr = NULL;
+                        CWTransportMessage tm;
 
                         /* get sequence number (and increase it) */
                         AC->seqNum = CWGetSeqNum();
 
-                        if (!CWErr(CWAssembleDiscoveryRequest(&msgPtr, AC->seqNum)))
+                        if (!CWErr(CWAssembleDiscoveryRequest(&tm, AC->seqNum)))
                                 exit(1);
 
                         CWUseSockNtop(&AC->address, CWLog("WTP sends Discovery Request to: %s", str););
-                        (void)CWErr(CWNetworkSendUnsafeUnconnected(gWTPSocket, &AC->address, (*msgPtr).msg, (*msgPtr).offset));
+			CWLog("Data: %p, Length: %zd", tm.parts[0].data, tm.parts[0].pos);
+                        (void)CWErr(CWNetworkSendUnsafeUnconnected(gWTPSocket, &AC->address, tm.parts[0].data, tm.parts[0].pos));
 
-                        CW_FREE_PROTOCOL_MESSAGE(*msgPtr);
-                        CW_FREE_OBJECT(msgPtr);
+			CWReleaseTransportMessage(&tm);
 
                         /*
                          * we sent at least one Request in this loop
@@ -356,7 +356,7 @@ CWBool CWReceiveDiscoveryResponse()
 	CWDiscoverAC *AC;
 	CWNetworkLev4Address addr;
 	CWACInfoValues *ACInfoPtr;
-	int seqNum;
+	int seqNum = 0;
 	int readBytes;
 
 	/* receive the datagram */
@@ -450,10 +450,10 @@ CWBool CWAddDiscoveredACAddress(unsigned char priority,
 	return CW_TRUE;
 }
 
-CWBool CWParseACAddressListWithPrio(CWProtocolMessage * msgPtr, int len)
+CWBool CWParseACAddressListWithPrio(CWProtocolMessage *pm, int len)
 {
 	CWProtocolACAddressListWithPrio *elem =
-		(CWProtocolACAddressListWithPrio *)CWProtocolRetrievePtr(msgPtr);
+		(CWProtocolACAddressListWithPrio *)CWProtocolRetrievePtr(pm);
 
 	if (len < sizeof(CWProtocolACAddressListWithPrio))
 	    return CWErrorRaise(CW_ERROR_INVALID_FORMAT,
@@ -487,7 +487,7 @@ CWBool CWParseACAddressListWithPrio(CWProtocolMessage * msgPtr, int len)
 		break;
 	}
 
-	msgPtr->offset += len;
+	pm->pos += len;
 
 	return CW_TRUE;
 }
@@ -629,42 +629,32 @@ void CWWTPPickACInterface()
 	return;
 }
 
-CWBool CWAssembleDiscoveryRequest(CWProtocolMessage ** messagesPtr, int seqNum)
+CWBool CWAssembleDiscoveryRequest(CWTransportMessage *tm, int seqNum)
 {
+	CWProtocolMessage msg;
 
-	CWProtocolMessage *msgElems = NULL;
-	const int msgElemCount = 6;
-	CWProtocolMessage *msgElemsBinding = NULL;
-	const int msgElemBindingCount = 0;
-	int k = -1;
-	int fragmentsNum;
+	assert(tm != NULL);
 
-	if (messagesPtr == NULL)
-		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
+	CWLog("Assembling Discovery Request...");
+	if (!CWInitMessage(NULL, &msg, CW_MSG_TYPE_VALUE_DISCOVERY_REQUEST, seqNum) ||
+	    !CWAssembleMsgElemDiscoveryType(NULL, &msg) ||
+	    !CWAssembleMsgElemWTPBoardData(NULL, &msg) ||
+	    !CWAssembleMsgElemWTPDescriptor(NULL, &msg) ||
+	    !CWAssembleMsgElemWTPFrameTunnelMode(NULL, &msg) ||
+	    !CWAssembleMsgElemWTPMACType(NULL, &msg) ||
+	    !CWAssembleMsgElemWTPRadioInformation(NULL, &msg))
+		goto cw_assemble_error;
+	CWFinalizeMessage(&msg);
 
-	msgElems = CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(msgElemCount, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
+	if (!CWAssembleMessage(tm, 0, &msg))
+		goto cw_assemble_error;
 
-	/* Assemble Message Elements */
+	CWLog("Discovery Request Assembled");
+	return CW_TRUE;
 
-	if ((!(CWAssembleMsgElemDiscoveryType(msgElems, &(msgElems[++k])))) ||
-	    (!(CWAssembleMsgElemWTPBoardData(msgElems, &(msgElems[++k])))) ||
-	    (!(CWAssembleMsgElemWTPDescriptor(msgElems, &(msgElems[++k])))) ||
-	    (!(CWAssembleMsgElemWTPFrameTunnelMode(msgElems, &(msgElems[++k])))) ||
-	    (!(CWAssembleMsgElemWTPMACType(msgElems, &(msgElems[++k])))) ||
-	    (!(CWAssembleMsgElemWTPRadioInformation(msgElems, &(msgElems[++k]))))
-	    ) {
-		CW_FREE_OBJECT(msgElems);
-		/* error will be handled by the caller */
-		return CW_FALSE;
-	}
-
-	return CWAssembleMessage(messagesPtr,
-				 &fragmentsNum,
-				 0,
-				 seqNum,
-				 CW_MSG_TYPE_VALUE_DISCOVERY_REQUEST,
-				 msgElems, msgElemCount, msgElemsBinding, msgElemBindingCount);
+ cw_assemble_error:
+	CWReleaseMessage(&msg);
+        return CW_FALSE;
 }
 
 /*
@@ -672,27 +662,25 @@ CWBool CWAssembleDiscoveryRequest(CWProtocolMessage ** messagesPtr, int seqNum)
  */
 CWBool CWParseDiscoveryResponseMessage(unsigned char *msg, int len, int *seqNumPtr, CWACInfoValues * ACInfoPtr)
 {
-
+	CWProtocolMessage pm;
 	CWControlHeaderValues controlVal;
 	CWProtocolTransportHeaderValues transportVal;
-	int offsetTillMessages;
 	char tmp_ABGNTypes;
-	CWProtocolMessage completeMsg;
 
-	if (msg == NULL || seqNumPtr == NULL || ACInfoPtr == NULL)
-		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
+	assert(msg != NULL);
+	assert(seqNumPtr != NULL);
+	assert(ACInfoPtr != NULL);
 
 	CWDebugLog("Parse Discovery Response");
 
-	completeMsg.msg = msg;
-	completeMsg.offset = 0;
+	CWInitTransportMessage(&pm, msg, len, 0);
 
-	CWBool dataFlag = CW_FALSE;
 	/* will be handled by the caller */
-	if (!(CWParseTransportHeader(&completeMsg, &transportVal, &dataFlag, NULL)))
+	if (!(CWParseTransportHeader(&pm, &transportVal, NULL)))
 		return CW_FALSE;
+
 	/* will be handled by the caller */
-	if (!(CWParseControlHeader(&completeMsg, &controlVal)))
+	if (!(CWParseControlHeader(&pm, &controlVal)))
 		return CW_FALSE;
 
 	/* different type */
@@ -704,68 +692,43 @@ CWBool CWParseDiscoveryResponseMessage(unsigned char *msg, int len, int *seqNumP
 	/* skip timestamp */
 	controlVal.msgElemsLen -= CW_CONTROL_HEADER_OFFSET_FOR_MSG_ELEMS;
 
-	offsetTillMessages = completeMsg.offset;
-
 	ACInfoPtr->IPv4AddressesCount = 0;
 	ACInfoPtr->IPv6AddressesCount = 0;
 
-	/* parse message elements */
-	while ((completeMsg.offset - offsetTillMessages) < controlVal.msgElemsLen) {
-		unsigned short int type = 0;	/* = CWProtocolRetrieve32(&completeMsg); */
-		unsigned short int len = 0;	/* = CWProtocolRetrieve16(&completeMsg); */
+	CWParseMessageElementStart(&pm);
 
-		CWParseFormatMsgElem(&completeMsg, &type, &len);
+	/* parse message elements */
+	CWParseMessageElementWhile(&pm, controlVal.msgElemsLen) {
+		unsigned short int type = 0;	/* = CWProtocolRetrieve32(&pm); */
+		unsigned short int len = 0;	/* = CWProtocolRetrieve16(&pm); */
+
+		CWParseFormatMsgElem(&pm, &type, &len);
 		CWDebugLog("Parsing Message Element: %u, len: %u", type, len);
 
 		switch (type) {
 		case CW_MSG_ELEMENT_AC_DESCRIPTOR_CW_TYPE:
-			/* will be handled by the caller */
-			if (!(CWParseACDescriptor(ACInfoPtr, &completeMsg, len, ACInfoPtr)))
+			if (!(CWParseACDescriptor(ACInfoPtr, &pm, len, ACInfoPtr)))
 				return CW_FALSE;
 			break;
 		case CW_MSG_ELEMENT_IEEE80211_WTP_RADIO_INFORMATION_CW_TYPE:
-			/* will be handled by the caller */
-			if (!(CWParseWTPRadioInformation_FromAC(&completeMsg, len, &tmp_ABGNTypes)))
+			if (!(CWParseWTPRadioInformation_FromAC(&pm, len, &tmp_ABGNTypes)))
 				return CW_FALSE;
 			break;
 		case CW_MSG_ELEMENT_AC_NAME_CW_TYPE:
-			/* will be handled by the caller */
-			if (!(CWParseACName(ACInfoPtr, &completeMsg, len, &(ACInfoPtr->name))))
+			if (!(CWParseACName(ACInfoPtr, &pm, len, &(ACInfoPtr->name))))
 				return CW_FALSE;
 			break;
 		case CW_MSG_ELEMENT_CW_CONTROL_IPV4_ADDRESS_CW_TYPE:
-			if ((ACInfoPtr->IPv4AddressesCount % CW_BLOCK_ALLOC) == 0) {
-				ACInfoPtr->IPv4Addresses =
-					reralloc(ACInfoPtr, ACInfoPtr->IPv4Addresses, CWProtocolIPv4NetworkInterface,
-						 ACInfoPtr->IPv4AddressesCount + CW_BLOCK_ALLOC);
-			}
-			if (!ACInfoPtr->IPv4Addresses)
-				return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-
-			if (!(CWParseCWControlIPv4Addresses(&completeMsg, len,
-							    &(ACInfoPtr->IPv4Addresses[ACInfoPtr->IPv4AddressesCount]))))
+			if (!CWParseCWControlIPv4Addresses(ACInfoPtr, &pm, len, ACInfoPtr))
 				return CW_FALSE;
-
-			ACInfoPtr->IPv4AddressesCount++;
 			break;
 		case CW_MSG_ELEMENT_CW_CONTROL_IPV6_ADDRESS_CW_TYPE:
-			if ((ACInfoPtr->IPv6AddressesCount % CW_BLOCK_ALLOC) == 0) {
-				ACInfoPtr->IPv6Addresses =
-					reralloc(ACInfoPtr, ACInfoPtr->IPv6Addresses, CWProtocolIPv6NetworkInterface,
-						 ACInfoPtr->IPv6AddressesCount + CW_BLOCK_ALLOC);
-			}
-			if (!ACInfoPtr->IPv6Addresses)
-				return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-
-			if (!(CWParseCWControlIPv6Addresses(&completeMsg, len,
-							    &(ACInfoPtr->IPv6Addresses[ACInfoPtr->IPv6AddressesCount]))))
+			if (!CWParseCWControlIPv6Addresses(ACInfoPtr, &pm, len, ACInfoPtr))
 				return CW_FALSE;
-
-			ACInfoPtr->IPv6AddressesCount++;
 			break;
                 case CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_BW_CW_TYPE: {
-			unsigned int vendorId = CWProtocolRetrieve32(&completeMsg);
-			unsigned short int vendorElemType = CWProtocolRetrieve16(&completeMsg);
+			unsigned int vendorId = CWProtocolRetrieve32(&pm);
+			unsigned short int vendorElemType = CWProtocolRetrieve16(&pm);
 			len -= 6;
 
 			CWDebugLog("Parsing Vendor Message Element, Vendor: %u, Element: %u", vendorId, vendorElemType);
@@ -774,7 +737,7 @@ CWBool CWParseDiscoveryResponseMessage(unsigned char *msg, int len, int *seqNumP
                                 CWDebugLog("Parsing TP Vendor Message Element: %u", vendorElemType);
                                 switch (vendorElemType) {
                                 case CW_MSG_ELEMENT_TRAVELPING_AC_ADDRESS_LIST_WITH_PRIORITY:
-					if (!(CWParseACAddressListWithPrio(&completeMsg, len)))
+					if (!(CWParseACAddressListWithPrio(&pm, len)))
 						return CW_FALSE;
 					break;
 
@@ -782,7 +745,7 @@ CWBool CWParseDiscoveryResponseMessage(unsigned char *msg, int len, int *seqNumP
                                         CWLog("unknown TP Vendor Message Element: %u", vendorElemType);
 
                                         /* ignore unknown vendor extensions */
-                                        completeMsg.offset += len;
+					CWParseSkipElement(&pm, len);
                                         break;
                                 }
                                 break;
@@ -792,7 +755,7 @@ CWBool CWParseDiscoveryResponseMessage(unsigned char *msg, int len, int *seqNumP
                                 CWLog("unknown Vendor Message Element, Vendor: %u", vendorId);
 
                                 /* ignore unknown vendor extensions */
-                                completeMsg.offset += len;
+				CWParseSkipElement(&pm, len);
                                 break;
                         }
 			break;
@@ -802,18 +765,13 @@ CWBool CWParseDiscoveryResponseMessage(unsigned char *msg, int len, int *seqNumP
 			CWLog("unknown Message Element, Element; %u", type);
 
 			/* ignore unknown IE */
-			completeMsg.offset += len;
+			CWParseSkipElement(&pm, len);
 			break;
 		}
 
-		/* CWDebugLog("bytes: %d/%d",
-		 *        (completeMsg.offset-offsetTillMessages),
-		 *        controlVal.msgElemsLen);
-		 */
+		/* CWDebugLog("bytes: %d/%d", (pm.offset-offsetTillMessages), controlVal.msgElemsLen); */
 	}
 
-	if (completeMsg.offset != len)
-		return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Garbage at the End of the Message");
-
-	return CW_TRUE;
+	CWParseMessageElementEnd(&pm, controlVal.msgElemsLen);
+	return CWParseTransportMessageEnd(&pm);
 }

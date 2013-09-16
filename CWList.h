@@ -52,4 +52,12 @@ void CWDeleteList(CWList * list, void (*deleteFunc) (void *));
 int CWCountElementInList(CWList list);
 //CWList * FindLastElementInList (CWList list);
 
+#define CWListForeach(head, pos)			\
+        for (pos = head; pos != NULL; pos = pos->next)
+
+#define CListForeachSafe(head, pos, n)			\
+        for (pos = head, n = pos ? pos->next : NULL;	\
+	     pos != NULL;				\
+	     pos = n, n = pos ? pos->next : NULL)
+
 #endif

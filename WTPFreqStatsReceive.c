@@ -26,16 +26,16 @@
 
 CW_THREAD_RETURN_TYPE CWWTPReceiveFreqStats(void *arg)
 {
-	int recSock, rlen, k, fragmentsNum = 0;
+	int recSock, rlen, k;
 
 	struct sockaddr_in servaddr, client_addr;
 	socklen_t slen = sizeof(client_addr);
 
-	char buffer[PACKET_SIZE];
+	unsigned char buffer[PACKET_SIZE];
 
-	CWProtocolMessage *completeMsgPtr = NULL;
-	CWProtocolMessage *data = NULL;
-	CWBindingTransportHeaderValues *bindingValuesPtr = NULL;
+	CWTransportMessage tm;
+	CWProtocolMessage pm;
+	CWBindingTransportHeaderValues binding;
 
 	CWThreadSetSignals(SIG_BLOCK, 1, SIGALRM);
 
@@ -60,58 +60,29 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveFreqStats(void *arg)
 		CWExitThread();
 	}
 
-	CW_REPEAT_FOREVER	/* Receive data Loop */
+	CW_REPEAT_FOREVER	/* Receive pm Loop */
 	{
-		memset(buffer, 0, PACKET_SIZE);
-		fragmentsNum = 0;
 		k = 0;
 		rlen = 0;
 
 		if ((rlen = recvfrom(recSock, buffer, PACKET_SIZE, 0, (struct sockaddr *)&client_addr, &slen)) > 0) {
 			/* Creation of stats/ack message for AC */
 
-			if (!(data = ralloc(NULL, CWProtocolMessage)))
-				return 0;
+			CWInitTransportMessage(&pm, buffer, rlen, 1);
 
-			CW_CREATE_PROTOCOL_MESSAGE(data, *data, rlen, return 0;
-			    );
+			CW_ZERO_MEMORY(&binding, sizeof(binding));
+			binding.length = sizeof(binding.ieee80211);
+			binding.ieee80211.dataRate = htons(-1);
+			binding.ieee80211.SNR = 1;
 
-			memcpy(data->msg, buffer, rlen);
-			data->offset = rlen;
-
-			/**************************************************************
-			 * 2009 Update:                                               *
-			 *                                                            *
-			 * Frequency Stats Message, like the QoS Data message are     *
-			 * encapsuled on Capwap Data Message.                         *
-			 * For distinguish the two types of message we use the fields *
-			 * of binding dataRate and SNR.                               *
-			 * Frequency Stats Message: dataRate=-1 && SNR=1              *
-			 * QoS Stats Message      : dataRate=-1                       *
-			 * ---------------------------------------------------------- *
-			 * For others Info: see  CWBinding.c                          *
-			 **************************************************************/
-
-			/* In this function is tied the name of the socket: recSock */
-			if (!(bindingValuesPtr = ralloc(NULL, CWBindingTransportHeaderValues)))
-				EXIT_THREAD
-
-			bindingValuesPtr->dataRate = -1;
-			bindingValuesPtr->SNR = 1;
-
-			/* Capwap Message Assembling */
-
-			if (CWAssembleDataMessage(&completeMsgPtr, &fragmentsNum, gWTPPathMTU, data, bindingValuesPtr,
-						  CW_PACKET_PLAIN, 0) == CW_TRUE)
-			{
-				for (k = 0; k < fragmentsNum; k++) {
-
+			if (CWAssembleDataMessage(&tm, gWTPPathMTU, 1, BINDING_IEEE_802_11, CW_FALSE, CW_FALSE, NULL, &binding, &pm)) {
+				for (k = 0; k < tm.count; k++) {
 #ifdef CW_NO_DTLS
 					if (!CWNetworkSendUnsafeConnected
-					    (gWTPSocket, completeMsgPtr[k].msg, completeMsgPtr[k].offset)) {
+					    (gWTPSocket, tm.parts[k].data, tm.parts[k].pos)) {
 #else
 					if (!CWSecuritySend
-					    (gWTPSession, completeMsgPtr[k].msg, completeMsgPtr[k].offset)) {
+					    (gWTPSession, tm.parts[k].data, tm.parts[k].pos)) {
 #endif
 						CWDebugLog("Failure sending Request");
 					}
@@ -119,9 +90,7 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveFreqStats(void *arg)
 			}
 
 			/* Free used Structures */
-			CW_FREE_OBJECT(completeMsgPtr);
-			CW_FREE_OBJECT(data);
-			CW_FREE_OBJECT(bindingValuesPtr);
+			CWReleaseTransportMessage(&tm);
 		} else {
 			CWDebugLog("Thread Frequency Receive Stats: Error on recvfrom");
 			close(recSock);

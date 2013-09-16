@@ -47,186 +47,140 @@ static inline void convert_unix_time_into_ntp_time(struct timeval *tv, struct nt
 
 /*____________________________________________________________________________*/
 /*  *****************************___ASSEMBLE___*****************************  */
-CWBool CWAssembleMsgElemACName(const void *ctx, CWProtocolMessage * msgPtr)
+CWBool CWAssembleMsgElemACName(const void *ctx, CWProtocolMessage *pm)
 {
 	char *name;
-	if (msgPtr == NULL)
+	if (pm == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
 	name = CWWTPGetACName();
-//  CWDebugLog("AC Name: %s", name);
+	//  CWDebugLog("AC Name: %s", name);
 
-	CWInitMsgElem(ctx, msgPtr, strlen(name), CW_MSG_ELEMENT_AC_NAME_CW_TYPE);
-	CWProtocolStoreStr(msgPtr, name);
-	CWFinalizeMsgElem(msgPtr);
+	CWInitMsgElem(ctx, pm, strlen(name), CW_MSG_ELEMENT_AC_NAME_CW_TYPE);
+	CWProtocolStoreStr(pm, name);
+	CWFinalizeMsgElem(pm);
 
 	return CW_TRUE;
 }
 
-CWBool CWAssembleMsgElemACNameWithIndex(const void *ctx, CWProtocolMessage * msgPtr)
+CWBool CWAssembleMsgElemACNameWithIndex(const void *ctx, CWProtocolMessage *pm)
 {
-	const int ac_Index_length = 1;
 	CWACNamesWithIndex ACsinfo;
-	CWProtocolMessage *msgs;
-	int len = 0;
 	int i;
 
-	if (msgPtr == NULL)
+	if (pm == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
-	if (!CWWTPGetACNameWithIndex(&ACsinfo)) {
+	if (!CWWTPGetACNameWithIndex(&ACsinfo))
 		return CW_FALSE;
-	}
-
-	msgs = CW_CREATE_PROTOCOL_MSG_ARRAY_ERR(ACsinfo.count, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL); );
 
 	for (i = 0; i < ACsinfo.count; i++) {
 		//      CWDebugLog("AC Name with index: %d - %s", ACsinfo.ACNameIndex[i].index, ACsinfo.ACNameIndex[i].ACName);
-		CWInitMsgElem(msgs, msgs +i, ac_Index_length + strlen(ACsinfo.ACNameIndex[i].ACName), CW_MSG_ELEMENT_AC_NAME_INDEX_CW_TYPE);
-		CWProtocolStore8(msgs + i, ACsinfo.ACNameIndex[i].index);	// ID of the AC
-		CWProtocolStoreStr(msgs + i, ACsinfo.ACNameIndex[i].ACName);	// name of the AC
-		CWFinalizeMsgElem(msgs + i);
-
-		len += msgs[i].offset;
+		CWInitMsgElem(ctx, pm, 1 + strlen(ACsinfo.ACNameIndex[i].ACName), CW_MSG_ELEMENT_AC_NAME_INDEX_CW_TYPE);
+		CWProtocolStore8(pm, ACsinfo.ACNameIndex[i].index);	// ID of the AC
+		CWProtocolStoreStr(pm, ACsinfo.ACNameIndex[i].ACName);	// name of the AC
+		CWFinalizeMsgElem(pm);
 	}
-	CW_CREATE_PROTOCOL_MESSAGE(ctx, *msgPtr, len, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
 
-	for (i = 0; i < ACsinfo.count; i++)
-		CWProtocolStoreMessage(msgPtr, msgs + i);
-
-	CW_FREE_OBJECT(msgs);
 	CW_FREE_OBJECT(ACsinfo.ACNameIndex);
 
 	return CW_TRUE;
 }
 
-CWBool CWAssembleMsgElemDataTransferData(const void *ctx, CWProtocolMessage * msgPtr, int data_type)
+CWBool CWAssembleMsgElemDataTransferData(const void *ctx, CWProtocolMessage *pm, int data_type)
 {
-	if (msgPtr == NULL)
+	if (pm == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
 	char *debug_data = " #### DATA DEBUG INFO #### ";	//to be changed...
 
-	CWInitMsgElem(ctx, msgPtr, 2 + strlen(debug_data), CW_MSG_ELEMENT_DATA_TRANSFER_DATA_CW_TYPE);
-	CWProtocolStore8(msgPtr, data_type);
-	CWProtocolStore8(msgPtr, strlen(debug_data));
-	CWProtocolStoreStr(msgPtr, debug_data);
-	CWFinalizeMsgElem(msgPtr);
+	CWInitMsgElem(ctx, pm, 2 + strlen(debug_data), CW_MSG_ELEMENT_DATA_TRANSFER_DATA_CW_TYPE);
+	CWProtocolStore8(pm, data_type);
+	CWProtocolStore8(pm, strlen(debug_data));
+	CWProtocolStoreStr(pm, debug_data);
+	CWFinalizeMsgElem(pm);
 
 	return CW_TRUE;
 }
 
-CWBool CWAssembleMsgElemDiscoveryType(const void *ctx, CWProtocolMessage * msgPtr)
+CWBool CWAssembleMsgElemDiscoveryType(const void *ctx, CWProtocolMessage *pm)
 {
-	if (msgPtr == NULL)
+	if (pm == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
-	CWInitMsgElem(ctx, msgPtr, 1, CW_MSG_ELEMENT_DISCOVERY_TYPE_CW_TYPE);
 	//  CWDebugLog("Discovery Type: %d", CWWTPGetDiscoveryType());
-	CWProtocolStore8(msgPtr, CWWTPGetDiscoveryType());
-	CWFinalizeMsgElem(msgPtr);
+	CWInitMsgElem(ctx, pm, 1, CW_MSG_ELEMENT_DISCOVERY_TYPE_CW_TYPE);
+	CWProtocolStore8(pm, CWWTPGetDiscoveryType());
+	CWFinalizeMsgElem(pm);
 
 	return CW_TRUE;
 }
 
-CWBool CWAssembleMsgElemLocationData(const void *ctx, CWProtocolMessage * msgPtr)
+CWBool CWAssembleMsgElemLocationData(const void *ctx, CWProtocolMessage *pm)
 {
 	char *location;
 
-	if (msgPtr == NULL)
+	if (pm == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
 	location = CWWTPGetLocation();
 
-	CWInitMsgElem(ctx, msgPtr, strlen(location), CW_MSG_ELEMENT_LOCATION_DATA_CW_TYPE);
 	//  CWDebugLog("Location Data: %s", location);
-	CWProtocolStoreStr(msgPtr, location);
-	CWFinalizeMsgElem(msgPtr);
+	CWInitMsgElem(ctx, pm, strlen(location), CW_MSG_ELEMENT_LOCATION_DATA_CW_TYPE);
+	CWProtocolStoreStr(pm, location);
+	CWFinalizeMsgElem(pm);
 
 	return CW_TRUE;
 }
 
-CWBool CWAssembleMsgElemStatisticsTimer(const void *ctx, CWProtocolMessage * msgPtr)
+CWBool CWAssembleMsgElemStatisticsTimer(const void *ctx, CWProtocolMessage *pm)
 {
 	//  CWDebugLog("Statistics Timer: %d", CWWTPGetStatisticsTimer());
-	CWInitMsgElem(ctx, msgPtr, 2,  CW_MSG_ELEMENT_STATISTICS_TIMER_CW_TYPE);
-	CWProtocolStore16(msgPtr, CWWTPGetStatisticsTimer());
-	CWFinalizeMsgElem(msgPtr);
+	CWInitMsgElem(ctx, pm, 2,  CW_MSG_ELEMENT_STATISTICS_TIMER_CW_TYPE);
+	CWProtocolStore16(pm, CWWTPGetStatisticsTimer());
+	CWFinalizeMsgElem(pm);
 
 	return CW_TRUE;
 }
 
-CWBool CWAssembleMsgElemWTPBoardData(const void *ctx, CWProtocolMessage * msgPtr)
+CWBool CWAssembleMsgElemWTPBoardData(const void *ctx, CWProtocolMessage *pm)
 {
-	const int VENDOR_ID_LENGTH = 4;	//Vendor Identifier is 4 bytes long
-	const int TLV_HEADER_LENGTH = 4;	//Type and Length of a TLV field is 4 byte long
-	CWWTPVendorInfos infos;
-	int i, size = 0;
+	assert(pm != NULL);
 
-	if (msgPtr == NULL)
-		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
-
-	// get infos
-	if (!CWWTPGetBoardData(&infos))
+	CWInitMsgElem(ctx, pm, 4, CW_MSG_ELEMENT_WTP_BOARD_DATA_CW_TYPE);
+	CWProtocolStore32(pm, WTP_VENDOR_IANA_ENTERPRISE_NUMBER);
+	if (!CWAssembleMsgElemWTPBoardData_User(ctx, pm))
 		return CW_FALSE;
-
-	//Calculate msg elem size
-	size = VENDOR_ID_LENGTH;
-	for (i = 0; i < infos.vendorInfosCount; i++)
-		size += (TLV_HEADER_LENGTH + ((infos.vendorInfos)[i]).length);
-
-	CWInitMsgElem(ctx, msgPtr, size, CW_MSG_ELEMENT_WTP_BOARD_DATA_CW_TYPE);
-	CWProtocolStore32(msgPtr, infos.vendorInfos[0].vendorIdentifier);
-
-	for (i = 0; i < infos.vendorInfosCount; i++) {
-		CWProtocolStore16(msgPtr, infos.vendorInfos[i].type);
-		CWProtocolStore16(msgPtr, infos.vendorInfos[i].length);
-		CWProtocolStoreRawBytes(msgPtr, (unsigned char *)infos.vendorInfos[i].valuePtr,
-			infos.vendorInfos[i].length);
-
-		//      CWDebugLog("Board Data: %d - %d - %d - %s", infos.vendorInfos[i].vendorIdentifier, infos.vendorInfos[i].type, infos.vendorInfos[i].length, infos.vendorInfos[i].valuePtr);
-	}
-	CWFinalizeMsgElem(msgPtr);
-
-	CWWTPDestroyVendorInfos(&infos);
+	CWFinalizeMsgElem(pm);
 
 	return CW_TRUE;
 }
 
-CWBool CWAssembleMsgElemVendorSpecificPayload(const void *ctx, CWProtocolMessage * msgPtr)
+CWBool CWAssembleMsgElemVendorSpecificPayload(const void *ctx, CWProtocolMessage *pm)
 {
 	const int VENDOR_ID_LENGTH = 4;	//Vendor Identifier is 4 bytes long
 	const int ELEMENT_ID = 2;	//Type and Length of a TLV field is 4 byte long
 	const int DATA_LEN = 2;
-	CWWTPVendorInfos infos;
 	int size = 0;
 	int element_id_zero = 0;
 	int data_zero = 0;
 
-	if (msgPtr == NULL)
-		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
-
-	// get infos
-	if (!CWWTPGetBoardData(&infos))
-		return CW_FALSE;
+	assert(pm != NULL);
 
 	//Calculate msg elem size
 	size = VENDOR_ID_LENGTH + ELEMENT_ID + DATA_LEN;
 
 	// create message
-	CWInitMsgElem(ctx, msgPtr, size, CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_BW_CW_TYPE);
-	CWProtocolStore32(msgPtr, ((infos.vendorInfos)[0].vendorIdentifier));
-	CWProtocolStore16(msgPtr, element_id_zero);
-	CWProtocolStore16(msgPtr, data_zero);
-	CWFinalizeMsgElem(msgPtr);
-
-	CWWTPDestroyVendorInfos(&infos);
+	CWInitMsgElem(ctx, pm, size, CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_BW_CW_TYPE);
+	CWProtocolStore32(pm, WTP_VENDOR_IANA_ENTERPRISE_NUMBER);
+	CWProtocolStore16(pm, element_id_zero);
+	CWProtocolStore16(pm, data_zero);
+	CWFinalizeMsgElem(pm);
 
 	return CW_TRUE;
 }
 
-CWBool CWAssembleMsgElemWTPDescriptor(const void *ctx, CWProtocolMessage * msgPtr)
+CWBool CWAssembleMsgElemWTPDescriptor(const void *ctx, CWProtocolMessage *pm)
 {
 	const int GENERIC_RADIO_INFO_LENGTH = 5;	//First 4 bytes for Max Radios, Radios In Use and Num Encryption Capability
 	const int VENDOR_ID_LENGTH = 4;	//Vendor Identifier is 4 bytes long
@@ -235,7 +189,7 @@ CWBool CWAssembleMsgElemWTPDescriptor(const void *ctx, CWProtocolMessage * msgPt
 	CWWTPVendorInfos infos;
 	int i, size = 0;
 
-	if (msgPtr == NULL)
+	if (pm == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
 	// get infos
@@ -255,21 +209,21 @@ CWBool CWAssembleMsgElemWTPDescriptor(const void *ctx, CWProtocolMessage * msgPt
 	for (i = 0; i < infos.vendorInfosCount; i++)
 		size += (VENDOR_ID_LENGTH + TLV_HEADER_LENGTH + ((infos.vendorInfos)[i]).length);
 
-	CWInitMsgElem(ctx, msgPtr, size, CW_MSG_ELEMENT_WTP_DESCRIPTOR_CW_TYPE);
-	CWProtocolStore8(msgPtr, CWWTPGetMaxRadios());	// number of radios supported by the WTP
-	CWProtocolStore8(msgPtr, CWWTPGetRadiosInUse());	// number of radios present in the WTP
-	CWProtocolStore8(msgPtr, encc.encryptCapsCount);
+	CWInitMsgElem(ctx, pm, size, CW_MSG_ELEMENT_WTP_DESCRIPTOR_CW_TYPE);
+	CWProtocolStore8(pm, CWWTPGetMaxRadios());	// number of radios supported by the WTP
+	CWProtocolStore8(pm, CWWTPGetRadiosInUse());	// number of radios present in the WTP
+	CWProtocolStore8(pm, encc.encryptCapsCount);
 
 	for (i = 0; i < encc.encryptCapsCount; i++) {
-		CWProtocolStore8(msgPtr, (encc.encryptCaps)[i].WBID & 0x1f);
-		CWProtocolStore16(msgPtr, (encc.encryptCaps)[i].encryptionCapabilities);
+		CWProtocolStore8(pm, (encc.encryptCaps)[i].WBID & 0x1f);
+		CWProtocolStore16(pm, (encc.encryptCaps)[i].encryptionCapabilities);
 	}
 
 	for (i = 0; i < infos.vendorInfosCount; i++) {
-		CWProtocolStore32(msgPtr, infos.vendorInfos[i].vendorIdentifier);
-		CWProtocolStore16(msgPtr, infos.vendorInfos[i].type);
-		CWProtocolStore16(msgPtr, infos.vendorInfos[i].length);
-		CWProtocolStoreRawBytes(msgPtr, (unsigned char *)infos.vendorInfos[i].valuePtr,
+		CWProtocolStore32(pm, infos.vendorInfos[i].vendorIdentifier);
+		CWProtocolStore16(pm, infos.vendorInfos[i].type);
+		CWProtocolStore16(pm, infos.vendorInfos[i].length);
+		CWProtocolStoreRawBytes(pm, (unsigned char *)infos.vendorInfos[i].valuePtr,
 					infos.vendorInfos[i].length);
 
 #if 0
@@ -281,7 +235,7 @@ CWBool CWAssembleMsgElemWTPDescriptor(const void *ctx, CWProtocolMessage * msgPt
 		CWDebugLog("Vendor Info \"%d\" = %d - %d - %d", i, infos.vendorInfos[i].vendorIdentifier, infos.vendorInfos[i].type, infos.vendorInfos[i].length);
 #endif
 	}
-	CWFinalizeMsgElem(msgPtr);
+	CWFinalizeMsgElem(pm);
 
 	CWWTPDestroyVendorInfos(&infos);
 	CWWTPDestroyEncCapabilities(&encc);
@@ -289,182 +243,213 @@ CWBool CWAssembleMsgElemWTPDescriptor(const void *ctx, CWProtocolMessage * msgPt
 	return CW_TRUE;
 }
 
-CWBool CWAssembleMsgElemWTPFrameTunnelMode(const void *ctx, CWProtocolMessage * msgPtr)
+CWBool CWAssembleMsgElemWTPFrameTunnelMode(const void *ctx, CWProtocolMessage *pm)
 {
-	if (msgPtr == NULL)
+	if (pm == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
-	CWInitMsgElem(ctx, msgPtr, 1, CW_MSG_ELEMENT_WTP_FRAME_TUNNEL_MODE_CW_TYPE);
 	//  CWDebugLog("Frame Tunnel Mode: %d", CWWTPGetFrameTunnelMode());
-	CWProtocolStore8(msgPtr, CWWTPGetFrameTunnelMode());	// frame encryption
-	CWFinalizeMsgElem(msgPtr);
+	CWInitMsgElem(ctx, pm, 1, CW_MSG_ELEMENT_WTP_FRAME_TUNNEL_MODE_CW_TYPE);
+	CWProtocolStore8(pm, CWWTPGetFrameTunnelMode());	// frame encryption
+	CWFinalizeMsgElem(pm);
 
 	return CW_TRUE;
 }
 
-CWBool CWAssembleMsgElemWTPIPv4Address(const void *ctx, CWProtocolMessage * msgPtr)
+CWBool CWAssembleMsgElemWTPIPv4Address(const void *ctx, CWProtocolMessage *pm)
 {
-	if (msgPtr == NULL)
+	if (pm == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
-	CWInitMsgElem(ctx, msgPtr, 4, CW_MSG_ELEMENT_WTP_IPV4_ADDRESS_CW_TYPE);
 	//  CWDebugLog("WTP IPv4 Address: %d", CWWTPGetIPv4Address());
-	CWProtocolStore32(msgPtr, CWWTPGetIPv4Address());
-	CWFinalizeMsgElem(msgPtr);
+	CWInitMsgElem(ctx, pm, 4, CW_MSG_ELEMENT_WTP_IPV4_ADDRESS_CW_TYPE);
+	CWProtocolStore32(pm, CWWTPGetIPv4Address());
+	CWFinalizeMsgElem(pm);
 
 	return CW_TRUE;
 }
 
-CWBool CWAssembleMsgElemWTPMACType(const void *ctx, CWProtocolMessage * msgPtr)
+CWBool CWAssembleMsgElemWTPMACType(const void *ctx, CWProtocolMessage *pm)
 {
 
-	if (msgPtr == NULL)
+	if (pm == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
-	CWInitMsgElem(ctx, msgPtr, 1, CW_MSG_ELEMENT_WTP_MAC_TYPE_CW_TYPE);
 	//  CWDebugLog("WTP MAC Type: %d", CWWTPGetMACType());
-	CWProtocolStore8(msgPtr, CWWTPGetMACType());	// mode of operation of the WTP (local, split, ...)
-	CWFinalizeMsgElem(msgPtr);
+	CWInitMsgElem(ctx, pm, 1, CW_MSG_ELEMENT_WTP_MAC_TYPE_CW_TYPE);
+	CWProtocolStore8(pm, CWWTPGetMACType());	// mode of operation of the WTP (local, split, ...)
+	CWFinalizeMsgElem(pm);
 
 	return CW_TRUE;
 }
 
-CWBool CWAssembleMsgElemWTPRadioInformation(const void *ctx, CWProtocolMessage * msgPtr)
+CWBool CWAssembleMsgElemWTPRadioInformation(const void *ctx, CWProtocolMessage *pm)
 {
-
-	if (msgPtr == NULL)
+	if (pm == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
-
-	CWInitMsgElem(ctx, msgPtr, 5, CW_MSG_ELEMENT_IEEE80211_WTP_RADIO_INFORMATION_CW_TYPE);
 
 	unsigned char wtp_r_info;
 	wtp_r_info = CWTP_get_WTP_Radio_Information();
 	int radioID = 0;
 
-	CWProtocolStore8(msgPtr, radioID);
-	CWProtocolStore8(msgPtr, 0);
-	CWProtocolStore8(msgPtr, 0);
-	CWProtocolStore8(msgPtr, 0);
-	CWProtocolStore8(msgPtr, wtp_r_info);
-
-	CWFinalizeMsgElem(msgPtr);
+	CWInitMsgElem(ctx, pm, 5, CW_MSG_ELEMENT_IEEE80211_WTP_RADIO_INFORMATION_CW_TYPE);
+	CWProtocolStore8(pm, radioID);
+	CWProtocolStore8(pm, 0);
+	CWProtocolStore8(pm, 0);
+	CWProtocolStore8(pm, 0);
+	CWProtocolStore8(pm, wtp_r_info);
+	CWFinalizeMsgElem(pm);
 
 	return CW_TRUE;
 }
 
-CWBool CWAssembleMsgElemSupportedRates(const void *ctx, CWProtocolMessage * msgPtr)
+#if 0
+/**
+ * assemble IEEE 802.11 WTP Radio Information message element
+ *
+ * multi radio version - currently unsused
+ */
+CWBool CWAssembleMsgElemWTPRadioInformation(const void *ctx, CWProtocolMessage *pm)
+{
+     CWRadiosInformation infos;
+
+    int i;
+
+    if(pm == NULL)
+	    return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
+
+    CWDebugLog("Assemble WTP Radio Info");
+
+    if(!CWWTPGetRadiosInformation(&infos))
+        return CW_FALSE;
+
+    for (i = 0; i < infos.radiosCount; i++) {
+	    CWDebugLog("WTPRadioInformation: %d - %d", infos.radios[i].ID, infos.radios[i].type);
+	    CWInitMsgElem(ctx, pm, 5, CW_MSG_ELEMENT_WTP_RADIO_INFO_CW_TYPE);
+	    CWProtocolStore8(pm, infos.radios[i].ID);		 /* ID of the radio */
+	    CWProtocolStore32(pm, infos.radios[i].type);	 /* type of the radio */
+	    CWFinalizeMsgElem(pm);
+    }
+
+    CW_FREE_OBJECT(infos.radios);
+
+    return CW_TRUE;
+}
+#endif
+
+CWBool CWAssembleMsgElemSupportedRates(const void *ctx, CWProtocolMessage *pm)
 {
 
-	if (msgPtr == NULL)
+	if (pm == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
-	CWInitMsgElem(ctx, msgPtr, 9, CW_MSG_ELEMENT_IEEE80211_SUPPORTED_RATES_CW_TYPE);
+	CWInitMsgElem(ctx, pm, 9, CW_MSG_ELEMENT_IEEE80211_SUPPORTED_RATES_CW_TYPE);
 
 	unsigned char tmp_sup_rate[8];
 	CWWTP_get_WTP_Rates(tmp_sup_rate);
 
 	int radioID = 0;
 
-	CWProtocolStore8(msgPtr, radioID);
-	CWProtocolStore8(msgPtr, tmp_sup_rate[0]);
-	CWProtocolStore8(msgPtr, tmp_sup_rate[1]);
-	CWProtocolStore8(msgPtr, tmp_sup_rate[2]);
-	CWProtocolStore8(msgPtr, tmp_sup_rate[3]);
-	CWProtocolStore8(msgPtr, tmp_sup_rate[4]);
-	CWProtocolStore8(msgPtr, tmp_sup_rate[5]);
-	CWProtocolStore8(msgPtr, tmp_sup_rate[6]);
-	CWProtocolStore8(msgPtr, tmp_sup_rate[7]);
+	CWProtocolStore8(pm, radioID);
+	CWProtocolStore8(pm, tmp_sup_rate[0]);
+	CWProtocolStore8(pm, tmp_sup_rate[1]);
+	CWProtocolStore8(pm, tmp_sup_rate[2]);
+	CWProtocolStore8(pm, tmp_sup_rate[3]);
+	CWProtocolStore8(pm, tmp_sup_rate[4]);
+	CWProtocolStore8(pm, tmp_sup_rate[5]);
+	CWProtocolStore8(pm, tmp_sup_rate[6]);
+	CWProtocolStore8(pm, tmp_sup_rate[7]);
 
-	CWFinalizeMsgElem(msgPtr);
+	CWFinalizeMsgElem(pm);
 
 	return CW_TRUE;
 }
 
-CWBool CWAssembleMsgElemMultiDomainCapability(const void *ctx, CWProtocolMessage * msgPtr)
+CWBool CWAssembleMsgElemMultiDomainCapability(const void *ctx, CWProtocolMessage *pm)
 {
 
-	if (msgPtr == NULL)
+	if (pm == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
-	CWInitMsgElem(ctx, msgPtr, 8, CW_MSG_ELEMENT_IEEE80211_MULTI_DOMAIN_CAPABILITY_CW_TYPE);
+	CWInitMsgElem(ctx, pm, 8, CW_MSG_ELEMENT_IEEE80211_MULTI_DOMAIN_CAPABILITY_CW_TYPE);
 
 	unsigned char tmp_mdc[6];
 	CWWTP_get_WTP_MDC(tmp_mdc);
 
 	int radioID = 0;
 
-	CWProtocolStore8(msgPtr, radioID);
-	CWProtocolStore8(msgPtr, 0);
+	CWProtocolStore8(pm, radioID);
+	CWProtocolStore8(pm, 0);
 
-	CWProtocolStore8(msgPtr, tmp_mdc[0]);
-	CWProtocolStore8(msgPtr, tmp_mdc[1]);
-	CWProtocolStore8(msgPtr, tmp_mdc[2]);
-	CWProtocolStore8(msgPtr, tmp_mdc[3]);
-	CWProtocolStore8(msgPtr, tmp_mdc[4]);
-	CWProtocolStore8(msgPtr, tmp_mdc[5]);
+	CWProtocolStore8(pm, tmp_mdc[0]);
+	CWProtocolStore8(pm, tmp_mdc[1]);
+	CWProtocolStore8(pm, tmp_mdc[2]);
+	CWProtocolStore8(pm, tmp_mdc[3]);
+	CWProtocolStore8(pm, tmp_mdc[4]);
+	CWProtocolStore8(pm, tmp_mdc[5]);
 
-	CWFinalizeMsgElem(msgPtr);
+	CWFinalizeMsgElem(pm);
 
 	return CW_TRUE;
 }
 
-CWBool CWAssembleMsgElemWTPName(const void *ctx, CWProtocolMessage * msgPtr)
+CWBool CWAssembleMsgElemWTPName(const void *ctx, CWProtocolMessage *pm)
 {
 	char *name;
 
-	if (msgPtr == NULL)
+	if (pm == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
 	name = CWWTPGetName();
 
-	CWInitMsgElem(ctx, msgPtr, strlen(name), CW_MSG_ELEMENT_WTP_NAME_CW_TYPE);
+	CWInitMsgElem(ctx, pm, strlen(name), CW_MSG_ELEMENT_WTP_NAME_CW_TYPE);
 	//  CWDebugLog("WTPName: %s", name);
-	CWProtocolStoreStr(msgPtr, name);
-	CWFinalizeMsgElem(msgPtr);
+	CWProtocolStoreStr(pm, name);
+	CWFinalizeMsgElem(pm);
 
 	return CW_TRUE;
 }
 
-CWBool CWAssembleMsgElemWTPOperationalStatistics(const void *ctx, CWProtocolMessage * msgPtr, int radio)
+CWBool CWAssembleMsgElemWTPOperationalStatistics(const void *ctx, CWProtocolMessage *pm, int radio)
 {
-	if (msgPtr == NULL)
+	if (pm == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
 	if (radio < 0 || radio >= gRadiosInfo.radioCount)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
-	CWInitMsgElem(ctx, msgPtr, 4, CW_MSG_ELEMENT_WTP_OPERAT_STATISTICS_CW_TYPE);
-	CWProtocolStore8(msgPtr, radio);
-	CWProtocolStore8(msgPtr, gRadiosInfo.radiosInfo[radio].TxQueueLevel);
-	CWProtocolStore16(msgPtr, gRadiosInfo.radiosInfo[radio].wirelessLinkFramesPerSec);
+	CWInitMsgElem(ctx, pm, 4, CW_MSG_ELEMENT_WTP_OPERAT_STATISTICS_CW_TYPE);
+	CWProtocolStore8(pm, radio);
+	CWProtocolStore8(pm, gRadiosInfo.radiosInfo[radio].TxQueueLevel);
+	CWProtocolStore16(pm, gRadiosInfo.radiosInfo[radio].wirelessLinkFramesPerSec);
 
 	//  CWDebugLog("");
 	//  CWDebugLog("WTPOperationalStatistics of radio \"%d\": %d - %d", radio,gRadiosInfo.radiosInfo[radio].TxQueueLevel,  gRadiosInfo.radiosInfo[radio].wirelessLinkFramesPerSec);
-	CWFinalizeMsgElem(msgPtr);
+	CWFinalizeMsgElem(pm);
 
 	return CW_TRUE;
 }
 
-CWBool CWAssembleMsgElemWTPRadioStatistics(const void *ctx, CWProtocolMessage * msgPtr, int radio)
+CWBool CWAssembleMsgElemWTPRadioStatistics(const void *ctx, CWProtocolMessage *pm, int radio)
 {
-	if (msgPtr == NULL)
+	if (pm == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
 	if (radio < 0 || radio > gRadiosInfo.radioCount)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
-	CWInitMsgElem(ctx, msgPtr, 20, CW_MSG_ELEMENT_WTP_RADIO_STATISTICS_CW_TYPE);
-	CWProtocolStore8(msgPtr, radio);
-	CWProtocolStore8(msgPtr, gRadiosInfo.radiosInfo[radio].statistics.lastFailureType);
-	CWProtocolStore16(msgPtr, gRadiosInfo.radiosInfo[radio].statistics.resetCount);
-	CWProtocolStore16(msgPtr, gRadiosInfo.radiosInfo[radio].statistics.SWFailureCount);
-	CWProtocolStore16(msgPtr, gRadiosInfo.radiosInfo[radio].statistics.HWFailuireCount);
-	CWProtocolStore16(msgPtr, gRadiosInfo.radiosInfo[radio].statistics.otherFailureCount);
-	CWProtocolStore16(msgPtr, gRadiosInfo.radiosInfo[radio].statistics.unknownFailureCount);
-	CWProtocolStore16(msgPtr, gRadiosInfo.radiosInfo[radio].statistics.configUpdateCount);
-	CWProtocolStore16(msgPtr, gRadiosInfo.radiosInfo[radio].statistics.channelChangeCount);
-	CWProtocolStore16(msgPtr, gRadiosInfo.radiosInfo[radio].statistics.bandChangeCount);
-	CWProtocolStore16(msgPtr, gRadiosInfo.radiosInfo[radio].statistics.currentNoiseFloor);
+	CWInitMsgElem(ctx, pm, 20, CW_MSG_ELEMENT_WTP_RADIO_STATISTICS_CW_TYPE);
+	CWProtocolStore8(pm, radio);
+	CWProtocolStore8(pm, gRadiosInfo.radiosInfo[radio].statistics.lastFailureType);
+	CWProtocolStore16(pm, gRadiosInfo.radiosInfo[radio].statistics.resetCount);
+	CWProtocolStore16(pm, gRadiosInfo.radiosInfo[radio].statistics.SWFailureCount);
+	CWProtocolStore16(pm, gRadiosInfo.radiosInfo[radio].statistics.HWFailuireCount);
+	CWProtocolStore16(pm, gRadiosInfo.radiosInfo[radio].statistics.otherFailureCount);
+	CWProtocolStore16(pm, gRadiosInfo.radiosInfo[radio].statistics.unknownFailureCount);
+	CWProtocolStore16(pm, gRadiosInfo.radiosInfo[radio].statistics.configUpdateCount);
+	CWProtocolStore16(pm, gRadiosInfo.radiosInfo[radio].statistics.channelChangeCount);
+	CWProtocolStore16(pm, gRadiosInfo.radiosInfo[radio].statistics.bandChangeCount);
+	CWProtocolStore16(pm, gRadiosInfo.radiosInfo[radio].statistics.currentNoiseFloor);
 
 #if 0
 	CWDebugLog("");
@@ -483,25 +468,25 @@ CWBool CWAssembleMsgElemWTPRadioStatistics(const void *ctx, CWProtocolMessage * 
 		   gRadiosInfo.radiosInfo[radio].statistics.bandChangeCount,
 		   gRadiosInfo.radiosInfo[radio].statistics.currentNoiseFloor);
 #endif
-	CWFinalizeMsgElem(msgPtr);
+	CWFinalizeMsgElem(pm);
 
 	return CW_TRUE;
 }
 
-CWBool CWAssembleMsgElemWTPRebootStatistics(const void *ctx, CWProtocolMessage * msgPtr)
+CWBool CWAssembleMsgElemWTPRebootStatistics(const void *ctx, CWProtocolMessage *pm)
 {
-	if (msgPtr == NULL)
+	if (pm == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
-	CWInitMsgElem(ctx, msgPtr, 15, CW_MSG_ELEMENT_WTP_REBOOT_STATISTICS_CW_TYPE);
-	CWProtocolStore16(msgPtr, gWTPRebootStatistics.rebootCount);
-	CWProtocolStore16(msgPtr, gWTPRebootStatistics.ACInitiatedCount);
-	CWProtocolStore16(msgPtr, gWTPRebootStatistics.linkFailurerCount);
-	CWProtocolStore16(msgPtr, gWTPRebootStatistics.SWFailureCount);
-	CWProtocolStore16(msgPtr, gWTPRebootStatistics.HWFailuireCount);
-	CWProtocolStore16(msgPtr, gWTPRebootStatistics.otherFailureCount);
-	CWProtocolStore16(msgPtr, gWTPRebootStatistics.unknownFailureCount);
-	CWProtocolStore8(msgPtr, gWTPRebootStatistics.lastFailureType);
+	CWInitMsgElem(ctx, pm, 15, CW_MSG_ELEMENT_WTP_REBOOT_STATISTICS_CW_TYPE);
+	CWProtocolStore16(pm, gWTPRebootStatistics.rebootCount);
+	CWProtocolStore16(pm, gWTPRebootStatistics.ACInitiatedCount);
+	CWProtocolStore16(pm, gWTPRebootStatistics.linkFailurerCount);
+	CWProtocolStore16(pm, gWTPRebootStatistics.SWFailureCount);
+	CWProtocolStore16(pm, gWTPRebootStatistics.HWFailuireCount);
+	CWProtocolStore16(pm, gWTPRebootStatistics.otherFailureCount);
+	CWProtocolStore16(pm, gWTPRebootStatistics.unknownFailureCount);
+	CWProtocolStore8(pm, gWTPRebootStatistics.lastFailureType);
 
 #if 0
 	CWDebugLog("");
@@ -517,34 +502,34 @@ CWBool CWAssembleMsgElemWTPRebootStatistics(const void *ctx, CWProtocolMessage *
 		   gWTPRebootStatistics.unknownFailureCount,
 		   gWTPRebootStatistics.lastFailureType);
 #endif
-	CWFinalizeMsgElem(msgPtr);
+	CWFinalizeMsgElem(pm);
 
 	return CW_TRUE;
 }
 
 //test version
-CWBool CWAssembleMsgElemDuplicateIPv4Address(const void *ctx, CWProtocolMessage * msgPtr)
+CWBool CWAssembleMsgElemDuplicateIPv4Address(const void *ctx, CWProtocolMessage *pm)
 {
 	unsigned char macAddress[6] = {103, 204, 204, 190, 180, 0};
 
 	//  CWDebugLog("");
 	//  CWDebugLog("Duplicate IPv4 Address: %d", CWWTPGetIPv4Address());
 
-	if (msgPtr == NULL)
+	if (pm == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
-	CWInitMsgElem(ctx, msgPtr, 11, CW_MSG_ELEMENT_DUPLICATE_IPV4_ADDRESS_CW_TYPE);
-	CWProtocolStore32(msgPtr, CWWTPGetIPv4Address());
-	CWProtocolStore8(msgPtr, CWWTPGetIPv4StatusDuplicate());
-	CWProtocolStore8(msgPtr, 6);
-	CWProtocolStoreRawBytes(msgPtr, macAddress, 6);
-	CWFinalizeMsgElem(msgPtr);
+	CWInitMsgElem(ctx, pm, 11, CW_MSG_ELEMENT_DUPLICATE_IPV4_ADDRESS_CW_TYPE);
+	CWProtocolStore32(pm, CWWTPGetIPv4Address());
+	CWProtocolStore8(pm, CWWTPGetIPv4StatusDuplicate());
+	CWProtocolStore8(pm, 6);
+	CWProtocolStoreRawBytes(pm, macAddress, 6);
+	CWFinalizeMsgElem(pm);
 
 	return CW_TRUE;
 }
 
 //test version
-CWBool CWAssembleMsgElemDuplicateIPv6Address(const void *ctx, CWProtocolMessage * msgPtr)
+CWBool CWAssembleMsgElemDuplicateIPv6Address(const void *ctx, CWProtocolMessage *pm)
 {
 	unsigned char macAddress[6] = {103, 204, 204, 190, 180, 0};
 	struct sockaddr_in6 myAddr;
@@ -552,127 +537,93 @@ CWBool CWAssembleMsgElemDuplicateIPv6Address(const void *ctx, CWProtocolMessage 
 	//  CWDebugLog("");
 	//  CWDebugLog("Duplicate IPv6 Address");
 
-	if (msgPtr == NULL)
+	if (pm == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
 	CWWTPGetIPv6Address(&myAddr);
 
-	CWInitMsgElem(ctx, msgPtr, 23, CW_MSG_ELEMENT_DUPLICATE_IPV6_ADDRESS_CW_TYPE);
-	CWProtocolStoreRawBytes(msgPtr, (unsigned char *)myAddr.sin6_addr.s6_addr, 16);
-	CWProtocolStore8(msgPtr, CWWTPGetIPv6StatusDuplicate());
-	CWProtocolStore8(msgPtr, 6);
-	CWProtocolStoreRawBytes(msgPtr, macAddress, 6);
-	CWFinalizeMsgElem(msgPtr);
+	CWInitMsgElem(ctx, pm, 23, CW_MSG_ELEMENT_DUPLICATE_IPV6_ADDRESS_CW_TYPE);
+	CWProtocolStoreRawBytes(pm, (unsigned char *)myAddr.sin6_addr.s6_addr, 16);
+	CWProtocolStore8(pm, CWWTPGetIPv6StatusDuplicate());
+	CWProtocolStore8(pm, 6);
+	CWProtocolStoreRawBytes(pm, macAddress, 6);
+	CWFinalizeMsgElem(pm);
 
 	return CW_TRUE;
 }
 
-CWBool CWAssembleMsgElemRadioAdminState(const void *ctx, CWProtocolMessage * msgPtr)
+CWBool CWAssembleMsgElemRadioAdminState(const void *ctx, CWProtocolMessage *pm)
 {
 	CWRadiosAdminInfo infos;
-	CWProtocolMessage *msgs;
-	int len = 0;
 	int i;
 
-	if (msgPtr == NULL)
+	if (pm == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
 	if (!CWGetWTPRadiosAdminState(&infos))
 		return CW_FALSE;
 
-	msgs = CW_CREATE_PROTOCOL_MSG_ARRAY_ERR((infos.radiosCount), return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
-
 	for (i = 0; i < infos.radiosCount; i++) {
 		//      CWDebugLog("Radio Admin State: %d - %d - %d", infos.radios[i].ID, infos.radios[i].state, infos.radios[i].cause);
-		CWInitMsgElem(msgs, msgs +i, 2, CW_MSG_ELEMENT_RADIO_ADMIN_STATE_CW_TYPE);
-		CWProtocolStore8(msgs + i, infos.radios[i].ID);	// ID of the radio
-		CWProtocolStore8(msgs + i, infos.radios[i].state);	// state of the radio
-		CWFinalizeMsgElem(msgs + i);
-
-		len += msgs[i].offset;
+		CWInitMsgElem(ctx, pm, 2, CW_MSG_ELEMENT_RADIO_ADMIN_STATE_CW_TYPE);
+		CWProtocolStore8(pm, infos.radios[i].ID);	// ID of the radio
+		CWProtocolStore8(pm, infos.radios[i].state);	// state of the radio
+		CWFinalizeMsgElem(pm);
 	}
 
-	CW_CREATE_PROTOCOL_MESSAGE(ctx, *msgPtr, len, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
-
-	for (i = 0; i < infos.radiosCount; i++)
-		CWProtocolStoreMessage(msgPtr, msgs + i);
-
-	CW_FREE_OBJECT(msgs);
 	CW_FREE_OBJECT(infos.radios);
 
 	return CW_TRUE;
 }
 
 //if radioID is negative return Radio Operational State for all radios
-CWBool CWAssembleMsgElemRadioOperationalState(const void *ctx, int radioID, CWProtocolMessage * msgPtr)
+CWBool CWAssembleMsgElemRadioOperationalState(const void *ctx, int radioID, CWProtocolMessage *pm)
 {
 	CWRadiosOperationalInfo infos;
-	CWProtocolMessage *msgs;
-	int len = 0;
 	int i;
 
-	if (msgPtr == NULL)
+	if (pm == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
-	if (!(CWGetWTPRadiosOperationalState(radioID, &infos))) {
+	if (!CWGetWTPRadiosOperationalState(radioID, &infos))
 		return CW_FALSE;
-	}
-
-	msgs = CW_CREATE_PROTOCOL_MSG_ARRAY_ERR((infos.radiosCount), return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
 
 	for (i = 0; i < infos.radiosCount; i++) {
 		//      CWDebugLog("Radio Operational State: %d - %d - %d", infos.radios[i].ID, infos.radios[i].state, infos.radios[i].cause);
-		CWInitMsgElem(msgs, msgs +i, 3, CW_MSG_ELEMENT_RADIO_OPERAT_STATE_CW_TYPE);
-		CWProtocolStore8(msgs + i, infos.radios[i].ID);	// ID of the radio
-		CWProtocolStore8(msgs + i, infos.radios[i].state);	// state of the radio
-		CWProtocolStore8(msgs + i, infos.radios[i].cause);
-		CWFinalizeMsgElem(msgs + i);
-
-		len += msgs[i].offset;
+		CWInitMsgElem(ctx, pm, 3, CW_MSG_ELEMENT_RADIO_OPERAT_STATE_CW_TYPE);
+		CWProtocolStore8(pm, infos.radios[i].ID);	// ID of the radio
+		CWProtocolStore8(pm, infos.radios[i].state);	// state of the radio
+		CWProtocolStore8(pm, infos.radios[i].cause);
+		CWFinalizeMsgElem(pm);
 	}
 
-	CW_CREATE_PROTOCOL_MESSAGE(ctx, *msgPtr, len, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
-
-	for (i = 0; i < infos.radiosCount; i++)
-		CWProtocolStoreMessage(msgPtr, msgs + i);
-
-	CW_FREE_OBJECT(msgs);
 	CW_FREE_OBJECT(infos.radios);
 
 	return CW_TRUE;
 }
 
-CWBool CWAssembleMsgElemDecryptErrorReport(const void *ctx, CWProtocolMessage * msgPtr, int radioID)
+CWBool CWAssembleMsgElemDecryptErrorReport(const void *ctx, CWProtocolMessage *pm, int radioID)
 {
 	int decrypy_Error_Report_Length = 0;
 	CWDecryptErrorReportInfo infos;
-	CWProtocolMessage *msgs;
-	int len = 0;
 	int i;
 
-	if (msgPtr == NULL)
+	if (pm == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
 	if (!(CWGetDecryptErrorReport(radioID, &infos))) {
 		return CW_FALSE;
 	}
 
-	msgs = CW_CREATE_PROTOCOL_MSG_ARRAY_ERR((infos.radiosCount), return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
-
 	for (i = 0; i < infos.radiosCount; i++) {
 		//      CWDebugLog("Radio Decrypt Error Report of radio \"%d\" = %d", infos.radios[i].ID, infos.radios[i].numEntries);
 		decrypy_Error_Report_Length = 2 + sizeof(CWMACAddress) * (infos.radios[i].numEntries);
 
-		CWInitMsgElem(msgs, msgs +i, decrypy_Error_Report_Length, CW_MSG_ELEMENT_CW_DECRYPT_ER_REPORT_CW_TYPE);
-		CWProtocolStore8(msgs + i, infos.radios[i].ID);               // ID of the radio
-		CWProtocolStore8(msgs + i, infos.radios[i].numEntries);       // state of the radio
-		CWProtocolStore8(msgs + i, (unsigned char)sizeof(CWMACAddress) * (infos.radios[i].numEntries));
-		CWProtocolStoreRawBytes(msgs + i, (unsigned char *)*(infos.radios[i].decryptErrorMACAddressList),
+		CWInitMsgElem(ctx, pm, decrypy_Error_Report_Length, CW_MSG_ELEMENT_CW_DECRYPT_ER_REPORT_CW_TYPE);
+		CWProtocolStore8(pm, infos.radios[i].ID);               // ID of the radio
+		CWProtocolStore8(pm, infos.radios[i].numEntries);       // state of the radio
+		CWProtocolStore8(pm, (unsigned char)sizeof(CWMACAddress) * (infos.radios[i].numEntries));
+		CWProtocolStoreRawBytes(pm, (unsigned char *)*(infos.radios[i].decryptErrorMACAddressList),
 					sizeof(CWMACAddress) * (infos.radios[i].numEntries));
 
 		/*
@@ -683,115 +634,63 @@ CWBool CWAssembleMsgElemDecryptErrorReport(const void *ctx, CWProtocolMessage * 
 		   for (j=(sizeof(CWMACAddress)*(infos.radios[i].numEntries)); j>0; j--)
 		   CWDebugLog("##(%d/6) = %d", j, msgs[i].msg[(msgs[i].offset)-j]);
 		 */
-		CWFinalizeMsgElem(msgs + i);
-
-		len += msgs[i].offset;
+		CWFinalizeMsgElem(pm);
 	}
 
-	CW_CREATE_PROTOCOL_MESSAGE(ctx, *msgPtr, len, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-	    );
-
-	for (i = 0; i < infos.radiosCount; i++)
-		CWProtocolStoreMessage(msgPtr, msgs + i);
-
-	CW_FREE_OBJECT(msgs);
 	CW_FREE_OBJECT(infos.radios);
 
 	return CW_TRUE;
 
 }
 
-/*
-CWBool CWAssembleMsgElemWTPRadioInformation(const void *ctx, CWProtocolMessage *msgPtr) {
-    CWProtocolMessage *msgs;
-    CWRadiosInformation infos;
-
-    int len = 0;
-    int i;
-
-    if(msgPtr == NULL) return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
-
-    CWDebugLog("Assemble WTP Radio Info");
-
-    if(!CWWTPGetRadiosInformation(&infos)) {
-        return CW_FALSE;
-    }
-
-    // create one message element for each radio
-
-    if (!(msgs = ralloc_array(ctx, CWProtocolMessage, (infos.radiosCount)))) return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-
-    for(i = 0; i < infos.radiosCount; i++) {
-        CWDebugLog("WTPRadioInformation: %d - %d", infos.radios[i].ID, infos.radios[i].type);
-        CWInitMsgElem(msgs, msgs +i, 5, CW_MSG_ELEMENT_WTP_RADIO_INFO_CW_TYPE);
-        CWProtocolStore8(msgs + i, infos.radios[i].ID); // ID of the radio
-        CWProtocolStore32(msgs + i, infos.radios[i].type); // type of the radio
-	CWFinalizeMsgElem(msgs + i);
-
-        len += msgs[i].offset;
-    }
-
-    // return all the messages as one big message
-    CW_CREATE_PROTOCOL_MESSAGE(ctx, *msgPtr, len, return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL););
-
-    for(i = 0; i < infos.radiosCount; i++)
-        CWProtocolStoreMessage(msgPtr, msgs + i);
-
-    CW_FREE_OBJECT(msgs);
-    CW_FREE_OBJECT(infos.radios);
-
-    return CW_TRUE;
-}
-*/
-
-CWBool CWAssembleMsgElemVendorTPWTPTimestamp(const void *ctx, CWProtocolMessage * msgPtr, struct timeval *tv)
+CWBool CWAssembleMsgElemVendorTPWTPTimestamp(const void *ctx, CWProtocolMessage *pm, struct timeval *tv)
 {
 	struct ntp_time_t ntp_time;
 
-	if (msgPtr == NULL)
+	if (pm == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
 
 	convert_unix_time_into_ntp_time(tv, &ntp_time);
 
-	CWInitMsgElem(ctx, msgPtr, 14, CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_BW_CW_TYPE);
-	CWProtocolStore32(msgPtr, CW_IANA_ENTERPRISE_NUMBER_VENDOR_TRAVELPING);
-	CWProtocolStore16(msgPtr, CW_MSG_ELEMENT_TRAVELPING_WTP_TIMESTAMP);
-	CWProtocolStore32(msgPtr, ntp_time.second);
-	CWProtocolStore32(msgPtr, ntp_time.fraction);
-	CWFinalizeMsgElem(msgPtr);
+	CWInitMsgElem(ctx, pm, 14, CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_BW_CW_TYPE);
+	CWProtocolStore32(pm, CW_IANA_ENTERPRISE_NUMBER_VENDOR_TRAVELPING);
+	CWProtocolStore16(pm, CW_MSG_ELEMENT_TRAVELPING_WTP_TIMESTAMP);
+	CWProtocolStore32(pm, ntp_time.second);
+	CWProtocolStore32(pm, ntp_time.fraction);
+	CWFinalizeMsgElem(pm);
 
 	return CW_TRUE;
 }
 
 /*_________________________________________________________________________*/
 /*  *****************************___PARSE___*****************************  */
-CWBool CWParseWTPRadioInformation_FromAC(CWProtocolMessage * msgPtr, int len, char *valPtr)
+CWBool CWParseWTPRadioInformation_FromAC(CWProtocolMessage *pm, int len, char *valPtr)
 {
-	//CWParseMessageElementStart();
+	//CWParseMessageElementStart(pm);
 
-	CWProtocolRetrieve8(msgPtr);
+	CWProtocolRetrieve8(pm);
 
-	CWProtocolRetrieve8(msgPtr);
-	CWProtocolRetrieve8(msgPtr);
-	CWProtocolRetrieve8(msgPtr);
-	*valPtr = CWProtocolRetrieve8(msgPtr);
+	CWProtocolRetrieve8(pm);
+	CWProtocolRetrieve8(pm);
+	CWProtocolRetrieve8(pm);
+	*valPtr = CWProtocolRetrieve8(pm);
 	return CW_TRUE;
-	//CWParseMessageElementEnd();
+	//return CWParseMessageElementEnd(pm, len);
 }
 
-CWBool CWParseACDescriptor(const void *ctx, CWProtocolMessage * msgPtr, int len, CWACInfoValues * valPtr)
+CWBool CWParseACDescriptor(const void *ctx, CWProtocolMessage *pm, int len, CWACInfoValues * valPtr)
 {
-	CWParseMessageElementStart();
+	CWParseMessageElementStart(pm);
 
-	valPtr->stations = CWProtocolRetrieve16(msgPtr);
-	valPtr->limit = CWProtocolRetrieve16(msgPtr);
-	valPtr->activeWTPs = CWProtocolRetrieve16(msgPtr);
-	valPtr->maxWTPs = CWProtocolRetrieve16(msgPtr);
-	valPtr->security = CWProtocolRetrieve8(msgPtr);
-	valPtr->RMACField = CWProtocolRetrieve8(msgPtr);
-	CWProtocolRetrieve8(msgPtr);					/* Reserved */
-	valPtr->DTLSPolicy = CWProtocolRetrieve8(msgPtr);		/* DTLS Policy */
+	valPtr->stations = CWProtocolRetrieve16(pm);
+	valPtr->limit = CWProtocolRetrieve16(pm);
+	valPtr->activeWTPs = CWProtocolRetrieve16(pm);
+	valPtr->maxWTPs = CWProtocolRetrieve16(pm);
+	valPtr->security = CWProtocolRetrieve8(pm);
+	valPtr->RMACField = CWProtocolRetrieve8(pm);
+	CWProtocolRetrieve8(pm);					/* Reserved */
+	valPtr->DTLSPolicy = CWProtocolRetrieve8(pm);		/* DTLS Policy */
 
 #if 0
 	CWDebugLog("AC Descriptor Stations: %d",        valPtr->stations);
@@ -806,8 +705,7 @@ CWBool CWParseACDescriptor(const void *ctx, CWProtocolMessage * msgPtr, int len,
 
 	valPtr->vendorInfos.vendorInfosCount = 0;
 
-	// see how many vendor ID we have in the message
-	while ((msgPtr->offset - oldOffset) < len) {
+	CWParseMessageElementWhile(pm, len) {
 		CWACVendorInfoValues *vi;
 
 		if ((valPtr->vendorInfos.vendorInfosCount % CW_BLOCK_ALLOC) == 0) {
@@ -820,10 +718,10 @@ CWBool CWParseACDescriptor(const void *ctx, CWProtocolMessage * msgPtr, int len,
 
 		vi = &valPtr->vendorInfos.vendorInfos[valPtr->vendorInfos.vendorInfosCount];
 
-		vi->vendorIdentifier = CWProtocolRetrieve32(msgPtr);
-		vi->type = CWProtocolRetrieve16(msgPtr);
-		vi->length = CWProtocolRetrieve16(msgPtr);
-		vi->valuePtr = CWProtocolRetrieveRawBytes(valPtr, msgPtr, vi->length);
+		vi->vendorIdentifier = CWProtocolRetrieve32(pm);
+		vi->type = CWProtocolRetrieve16(pm);
+		vi->length = CWProtocolRetrieve16(pm);
+		vi->valuePtr = CWProtocolRetrieveRawBytes(valPtr, pm, vi->length);
 
 		if (vi->valuePtr == NULL)
 			return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
@@ -844,13 +742,13 @@ CWBool CWParseACDescriptor(const void *ctx, CWProtocolMessage * msgPtr, int len,
 	CWDebugLog("vendorInfosCount %d", valPtr->vendorInfos.vendorInfosCount);
 #endif
 
-	CWParseMessageElementEnd();
+	return CWParseMessageElementEnd(pm, len);
 }
 
-CWBool CWParseACIPv4List(const void *ctx, CWProtocolMessage * msgPtr, int len, ACIPv4ListValues * valPtr)
+CWBool CWParseACIPv4List(const void *ctx, CWProtocolMessage *pm, int len, ACIPv4ListValues * valPtr)
 {
 	int i;
-	CWParseMessageElementStart();
+	CWParseMessageElementStart(pm);
 
 	if (len == 0 || ((len % 4) != 0))
 		return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Malformed AC IPv4 List Messame Element");
@@ -862,7 +760,7 @@ CWBool CWParseACIPv4List(const void *ctx, CWProtocolMessage * msgPtr, int len, A
 
 	for (i = 0; i < valPtr->ACIPv4ListCount; i++) {
 		struct sockaddr_in addr;
-		(valPtr->ACIPv4List)[i] = CWProtocolRetrieve32(msgPtr);
+		(valPtr->ACIPv4List)[i] = CWProtocolRetrieve32(pm);
 //      CWDebugLog("AC IPv4 List (%d): %d", i+1, (valPtr->ACIPv4List)[i]);
 		addr.sin_addr.s_addr = (valPtr->ACIPv4List)[i];
 		addr.sin_family = AF_INET;
@@ -870,13 +768,13 @@ CWBool CWParseACIPv4List(const void *ctx, CWProtocolMessage * msgPtr, int len, A
 		CWUseSockNtop(&addr, CWDebugLog("CWParseACIPv4List: %s", str); );
 	}
 
-	CWParseMessageElementEnd();
+	return CWParseMessageElementEnd(pm, len);
 }
 
-CWBool CWParseACIPv6List(const void *ctx, CWProtocolMessage * msgPtr, int len, ACIPv6ListValues * valPtr)
+CWBool CWParseACIPv6List(const void *ctx, CWProtocolMessage *pm, int len, ACIPv6ListValues * valPtr)
 {
 	int i;
-	CWParseMessageElementStart();
+	CWParseMessageElementStart(pm);
 
 	if (len == 0 || ((len % 16) != 0))
 		return CWErrorRaise(CW_ERROR_INVALID_FORMAT, "Malformed AC IPv6 List Messame Element");
@@ -894,7 +792,7 @@ CWBool CWParseACIPv6List(const void *ctx, CWProtocolMessage * msgPtr, int len, A
 		 * 19/10/2009 - Donato Capitella
 		 */
 		void *ptr;
-		ptr = CWProtocolRetrieveRawBytes(NULL, msgPtr, 16);
+		ptr = CWProtocolRetrieveRawBytes(NULL, pm, 16);
 		CW_COPY_MEMORY(&((valPtr->ACIPv6List)[i]), ptr, 16);
 		CW_FREE_OBJECT(ptr);
 		CW_COPY_MEMORY(&(addr.sin6_addr), &((valPtr->ACIPv6List)[i]), 16);
@@ -904,249 +802,231 @@ CWBool CWParseACIPv6List(const void *ctx, CWProtocolMessage * msgPtr, int len, A
 //      CWUseSockNtop(&addr, CWDebugLog("AC IPv6 List: %s",str););
 	}
 
-	CWParseMessageElementEnd();
+	return CWParseMessageElementEnd(pm, len);
 }
 
-CWBool CWParseDeleteStation(CWProtocolMessage * msgPtr, int len)
+CWBool CWParseDeleteStation(CWProtocolMessage *pm, int len)
 {
 	__attribute__ ((unused)) int radioID = 0;			/* TODO: support multiple radios */
 	int Length = 0;
-	unsigned char *StationMacAddress;
 
-	//CWParseMessageElementStart();  sostituire al posto delle righe successive quando passerò valPtr alla funzione CWarseAddStation
-	/*--------------------------------------------------------------------------------------*/
-	int oldOffset;
-	if (msgPtr == NULL)
-		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
-	oldOffset = msgPtr->offset;
-	/*----------------------------------------------------------------------------------*/
+	CWParseMessageElementStart(pm);
 
-	radioID = CWProtocolRetrieve8(msgPtr);
+	radioID = CWProtocolRetrieve8(pm);
+	Length = CWProtocolRetrieve8(pm);
+
+	unsigned char mac[Length + 1];
+	CWProtocolCopyRawBytes(mac + 1, pm, Length);
+
 	//CWDebugLog("radio ID %d",radioID);
-	Length = CWProtocolRetrieve8(msgPtr);
 	//CWDebugLog("Length of mac address field %d",Length);
-	StationMacAddress = (unsigned char *)CWProtocolRetrieveRawBytes(NULL, msgPtr, Length);
 
-	CWDebugLog("DEL MAC: %02X:%02X:%02X:%02X:%02X:%02X", (unsigned char)StationMacAddress[0],
-		   (unsigned char)StationMacAddress[1],
-		   (unsigned char)StationMacAddress[2],
-		   (unsigned char)StationMacAddress[3],
-		   (unsigned char)StationMacAddress[4], (unsigned char)StationMacAddress[5]);
+	CWDebugLog("DEL MAC: %02X:%02X:%02X:%02X:%02X:%02X",
+		   mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
-	unsigned char tmp_mac[7];
-	memcpy(tmp_mac + 1, StationMacAddress, 6);
-
-	CWWTPsend_command_to_hostapd_DEL_ADDR(tmp_mac, 7);
+	CWWTPsend_command_to_hostapd_DEL_ADDR(mac, 7);
 
 	CWDebugLog("STATION'S MAC ADDRESS TO FORWARD TRAFFIC: %02X:%02X:%02X:%02X:%02X:%02X",
-		   StationMacAddress[0] & 0xFF,
-		   StationMacAddress[1] & 0xFF,
-		   StationMacAddress[2] & 0xFF,
-		   StationMacAddress[3] & 0xFF, StationMacAddress[4] & 0xFF, StationMacAddress[5] & 0xFF);
+		   mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
-	CWParseMessageElementEnd();
+	return CWParseMessageElementEnd(pm, len);
 }
 
-CWBool CWParseDeleteWLAN(CWProtocolMessage * msgPtr, int len)
+CWBool CWParseDeleteWLAN(CWProtocolMessage *pm, int len)
 {
-	//CWParseMessageElementStart();  sostituire al posto delle righe successive quando passerò valPtr alla funzione CWarseAddStation
-	/*--------------------------------------------------------------------------------------*/
-	int oldOffset;
-	if (msgPtr == NULL)
-		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
-	oldOffset = msgPtr->offset;
-	/*----------------------------------------------------------------------------------*/
+	CWParseMessageElementStart(pm);
 
-	__attribute__((unused)) int radioID = CWProtocolRetrieve8(msgPtr);			/* TODO: support multiple radios */
-	__attribute__((unused)) int wlanID = CWProtocolRetrieve8(msgPtr);			/* TODO: support multiple WLANs */
+	__attribute__((unused)) int radioID = CWProtocolRetrieve8(pm);			/* TODO: support multiple radios */
+	__attribute__((unused)) int wlanID = CWProtocolRetrieve8(pm);			/* TODO: support multiple WLANs */
 
-
-	unsigned char tmp_ssid[3];
-
+	unsigned char tmp_ssid[3] = {0, };
 	CWWTPsend_command_to_hostapd_DEL_WLAN(tmp_ssid, 3);
 
-	CWParseMessageElementEnd();
+	return CWParseMessageElementEnd(pm, len);
 }
 
-CWBool CWParseAddWLAN(CWProtocolMessage * msgPtr, int len)
+CWBool CWParseAddWLAN(CWProtocolMessage *pm, int len)
 {
 	unsigned char tmp_buf[len + 1];
 
-	//CWParseMessageElementStart();  sostituire al posto delle righe successive quando passerò valPtr alla funzione CWarseAddStation
-	/*--------------------------------------------------------------------------------------*/
-	int oldOffset;
-	if (msgPtr == NULL)
-		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
-	oldOffset = msgPtr->offset;
-	/*----------------------------------------------------------------------------------*/
+	CWParseMessageElementStart(pm);
 
-	tmp_buf[1] = CWProtocolRetrieve8(msgPtr);
-	tmp_buf[2] = CWProtocolRetrieve8(msgPtr);
-	tmp_buf[3] = CWProtocolRetrieve8(msgPtr);
-	tmp_buf[4] = CWProtocolRetrieve8(msgPtr);
-
-	tmp_buf[5] = CWProtocolRetrieve8(msgPtr);
-	tmp_buf[6] = CWProtocolRetrieve8(msgPtr);
-	unsigned short keyLength = CWProtocolRetrieve16(msgPtr);
+	CWProtocolCopyRawBytes(tmp_buf + 1, pm, 6);
+	unsigned short keyLength = CWProtocolRetrieve16(pm);
 
 	tmp_buf[7] = keyLength >> 8;
 	tmp_buf[8] = keyLength & 0xff;
 
 	if (keyLength)
 		/* PSK */
-		CWProtocolCopyRawBytes(tmp_buf + 9, msgPtr, keyLength);
+		CWProtocolCopyRawBytes(tmp_buf + 9, pm, keyLength);
 
-	tmp_buf[9 + keyLength] = CWProtocolRetrieve8(msgPtr);
-	tmp_buf[10 + keyLength] = CWProtocolRetrieve8(msgPtr);
-	tmp_buf[11 + keyLength] = CWProtocolRetrieve8(msgPtr);
-	tmp_buf[12 + keyLength] = CWProtocolRetrieve8(msgPtr);
-	tmp_buf[13 + keyLength] = CWProtocolRetrieve8(msgPtr);
-	tmp_buf[14 + keyLength] = CWProtocolRetrieve8(msgPtr);
+	tmp_buf[9 + keyLength] = CWProtocolRetrieve8(pm);
+	tmp_buf[10 + keyLength] = CWProtocolRetrieve8(pm);
+	tmp_buf[11 + keyLength] = CWProtocolRetrieve8(pm);
+	tmp_buf[12 + keyLength] = CWProtocolRetrieve8(pm);
+	tmp_buf[13 + keyLength] = CWProtocolRetrieve8(pm);
+	tmp_buf[14 + keyLength] = CWProtocolRetrieve8(pm);
 
-	tmp_buf[15 + keyLength] = CWProtocolRetrieve8(msgPtr);
+	tmp_buf[15 + keyLength] = CWProtocolRetrieve8(pm);
 
-	tmp_buf[16 + keyLength] = CWProtocolRetrieve8(msgPtr);			/* Auth Type */
-	tmp_buf[17 + keyLength] = gWTPMACMode = CWProtocolRetrieve8(msgPtr);	/* MAC Mode */
-	tmp_buf[18 + keyLength] = gWTPTunnelMode = CWProtocolRetrieve8(msgPtr);	/* Tunnel Mode */
-	tmp_buf[19 + keyLength] = CWProtocolRetrieve8(msgPtr);			/* Suppress SSID */
+	tmp_buf[16 + keyLength] = CWProtocolRetrieve8(pm);			/* Auth Type */
+	tmp_buf[17 + keyLength] = gWTPMACMode = CWProtocolRetrieve8(pm);	/* MAC Mode */
+	tmp_buf[18 + keyLength] = gWTPTunnelMode = CWProtocolRetrieve8(pm);	/* Tunnel Mode */
+	tmp_buf[19 + keyLength] = CWProtocolRetrieve8(pm);			/* Suppress SSID */
 
 	/* SSID */
-	CWProtocolCopyRawBytes(tmp_buf + 20 + keyLength, msgPtr, len - (19 + keyLength));
+	CWProtocolCopyRawBytes(tmp_buf + 20 + keyLength, pm, len - (19 + keyLength));
 
 	CWWTPsend_command_to_hostapd_ADD_WLAN(tmp_buf, len + 1);
 
-	CWParseMessageElementEnd();
+	return CWParseMessageElementEnd(pm, len);
 }
 
-CWBool CWParseAddStation(CWProtocolMessage * msgPtr, int len)
+CWBool CWParseAddStation(CWProtocolMessage *pm, int len)
 {
 	__attribute__ ((unused)) int radioID = 0;			/* TODO: support multiple radios */
 	int Length = 0;
-	unsigned char *StationMacAddress;
 
-	//CWParseMessageElementStart();  sostituire al posto delle righe successive quando passerò valPtr alla funzione CWarseAddStation
-	/*--------------------------------------------------------------------------------------*/
-	int oldOffset;
-	if (msgPtr == NULL)
-		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
-	oldOffset = msgPtr->offset;
-	/*----------------------------------------------------------------------------------*/
+	CWParseMessageElementStart(pm);
 
-	radioID = CWProtocolRetrieve8(msgPtr);
+	radioID = CWProtocolRetrieve8(pm);
+	Length = CWProtocolRetrieve8(pm);
+
+	unsigned char mac[Length + 1];
+	CWProtocolCopyRawBytes(mac + 1, pm, Length);
+
 	//CWDebugLog("radio ID %d",radioID);
-	Length = CWProtocolRetrieve8(msgPtr);
 	//CWDebugLog("Length of mac address field %d",Length);
-	StationMacAddress = (unsigned char *)CWProtocolRetrieveRawBytes(NULL, msgPtr, Length);
 
-	CWDebugLog("ADD MAC: %02X:%02X:%02X:%02X:%02X:%02X", (unsigned char)StationMacAddress[0],
-		   (unsigned char)StationMacAddress[1],
-		   (unsigned char)StationMacAddress[2],
-		   (unsigned char)StationMacAddress[3],
-		   (unsigned char)StationMacAddress[4], (unsigned char)StationMacAddress[5]);
+	CWDebugLog("ADD MAC: %02X:%02X:%02X:%02X:%02X:%02X",
+		   mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
-	unsigned char tmp_mac[7];
-	memcpy(tmp_mac + 1, StationMacAddress, 6);
-
-	CWWTPsend_command_to_hostapd_SET_ADDR(tmp_mac, 7);
+	CWWTPsend_command_to_hostapd_SET_ADDR(mac, 7);
 
 	CWDebugLog("STATION'S MAC ADDRESS TO FORWARD TRAFFIC: %02X:%02X:%02X:%02X:%02X:%02X",
-		   StationMacAddress[0] & 0xFF,
-		   StationMacAddress[1] & 0xFF,
-		   StationMacAddress[2] & 0xFF,
-		   StationMacAddress[3] & 0xFF, StationMacAddress[4] & 0xFF, StationMacAddress[5] & 0xFF);
+		   mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
-	CWParseMessageElementEnd();
+	return CWParseMessageElementEnd(pm, len);
 }
 
-CWBool CWParseCWControlIPv4Addresses(CWProtocolMessage * msgPtr, int len, CWProtocolIPv4NetworkInterface * valPtr)
-{
-	CWParseMessageElementStart();
 
-	valPtr->addr.sin_addr.s_addr = htonl(CWProtocolRetrieve32(msgPtr));
+static void CWParseCWControlIPv4Address(CWProtocolMessage *pm, CWProtocolIPv4NetworkInterface * valPtr)
+{
+	valPtr->addr.sin_addr.s_addr = htonl(CWProtocolRetrieve32(pm));
 	valPtr->addr.sin_family = AF_INET;
 	valPtr->addr.sin_port = htons(CW_CONTROL_PORT);
 
-	CWUseSockNtop((&(valPtr->addr)), CWDebugLog("Interface Address: %s", str);
-	    );
+	CWUseSockNtop((&(valPtr->addr)), CWDebugLog("Interface Address: %s", str); );
 
-	valPtr->WTPCount = CWProtocolRetrieve16(msgPtr);
-//  CWDebugLog("WTP Count: %d", valPtr->WTPCount);
-
-	CWParseMessageElementEnd();
+	valPtr->WTPCount = CWProtocolRetrieve16(pm);
+	//  CWDebugLog("WTP Count: %d", valPtr->WTPCount);
 }
 
-CWBool CWParseCWControlIPv6Addresses(CWProtocolMessage * msgPtr, int len, CWProtocolIPv6NetworkInterface * valPtr)
+CWBool CWParseCWControlIPv4Addresses(const void *ctx, CWProtocolMessage *pm, int len, CWACInfoValues *ACInfoPtr)
 {
-	CWParseMessageElementStart();
+	CWParseMessageElementStart(pm);
 
-	CWProtocolCopyRawBytes(&valPtr->addr.sin6_addr, msgPtr, 16);
+	if ((ACInfoPtr->IPv4AddressesCount % CW_BLOCK_ALLOC) == 0) {
+		ACInfoPtr->IPv4Addresses =
+			reralloc(ctx, ACInfoPtr->IPv4Addresses, CWProtocolIPv4NetworkInterface,
+				 ACInfoPtr->IPv4AddressesCount + CW_BLOCK_ALLOC);
+	}
+	if (!ACInfoPtr->IPv4Addresses)
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+
+	CWParseCWControlIPv4Address(pm, &(ACInfoPtr->IPv4Addresses[ACInfoPtr->IPv4AddressesCount]));
+	ACInfoPtr->IPv4AddressesCount++;
+
+	return CWParseMessageElementEnd(pm, len);
+}
+
+static void CWParseCWControlIPv6Address(CWProtocolMessage *pm, CWProtocolIPv6NetworkInterface * valPtr)
+{
+	CWProtocolCopyRawBytes(&valPtr->addr.sin6_addr, pm, 16);
 	valPtr->addr.sin6_family = AF_INET6;
 	valPtr->addr.sin6_port = htons(CW_CONTROL_PORT);
 
-	CWUseSockNtop((&(valPtr->addr)), CWDebugLog("Interface Address: %s", str);
-	    );
+	CWUseSockNtop((&(valPtr->addr)), CWDebugLog("Interface Address: %s", str); );
 
-	valPtr->WTPCount = CWProtocolRetrieve16(msgPtr);
-//  CWDebugLog("WTP Count: %d", valPtr->WTPCount);
-
-	CWParseMessageElementEnd();
+	valPtr->WTPCount = CWProtocolRetrieve16(pm);
+	//  CWDebugLog("WTP Count: %d", valPtr->WTPCount);
 }
 
-CWBool CWParseCWTimers(CWProtocolMessage * msgPtr, int len, CWTimersValues * valPtr)
+CWBool CWParseCWControlIPv6Addresses(const void *ctx, CWProtocolMessage *pm, int len, CWACInfoValues *ACInfoPtr)
 {
-	CWParseMessageElementStart();
+	CWParseMessageElementStart(pm);
 
-	valPtr->discoveryTimer = CWProtocolRetrieve8(msgPtr);
+	if ((ACInfoPtr->IPv6AddressesCount % CW_BLOCK_ALLOC) == 0) {
+		ACInfoPtr->IPv6Addresses =
+			reralloc(ctx, ACInfoPtr->IPv6Addresses, CWProtocolIPv6NetworkInterface,
+				 ACInfoPtr->IPv6AddressesCount + CW_BLOCK_ALLOC);
+	}
+	if (!ACInfoPtr->IPv6Addresses)
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+
+	CWParseCWControlIPv6Address(pm, &(ACInfoPtr->IPv6Addresses[ACInfoPtr->IPv6AddressesCount]));
+	ACInfoPtr->IPv6AddressesCount++;
+
+	return CWParseMessageElementEnd(pm, len);
+}
+
+
+CWBool CWParseCWTimers(CWProtocolMessage *pm, int len, CWTimersValues * valPtr)
+{
+	CWParseMessageElementStart(pm);
+
+	valPtr->discoveryTimer = CWProtocolRetrieve8(pm);
 //  CWDebugLog("Discovery Timer: %d", valPtr->discoveryTimer);
-	valPtr->echoRequestTimer = CWProtocolRetrieve8(msgPtr);
+	valPtr->echoRequestTimer = CWProtocolRetrieve8(pm);
 //  CWDebugLog("Echo Timer: %d", valPtr->echoRequestTimer);
 
-	CWParseMessageElementEnd();
+	return CWParseMessageElementEnd(pm, len);
 }
 
-CWBool CWParseDecryptErrorReportPeriod(CWProtocolMessage * msgPtr, int len, WTPDecryptErrorReportValues * valPtr)
+CWBool CWParseDecryptErrorReportPeriod(CWProtocolMessage *pm, int len, WTPDecryptErrorReportValues * valPtr)
 {
-	CWParseMessageElementStart();
+	CWParseMessageElementStart(pm);
 
-	valPtr->radioID = CWProtocolRetrieve8(msgPtr);
-	valPtr->reportInterval = CWProtocolRetrieve16(msgPtr);
+	valPtr->radioID = CWProtocolRetrieve8(pm);
+	valPtr->reportInterval = CWProtocolRetrieve16(pm);
 //  CWDebugLog("Decrypt Error Report Period: %d - %d", valPtr->radioID, valPtr->reportInterval);
 
-	CWParseMessageElementEnd();
+	return CWParseMessageElementEnd(pm, len);
 }
 
-CWBool CWParseIdleTimeout(CWProtocolMessage * msgPtr, int len, CWProtocolConfigureResponseValues * valPtr)
+CWBool CWParseIdleTimeout(CWProtocolMessage *pm, int len, CWProtocolConfigureResponseValues * valPtr)
 {
-	CWParseMessageElementStart();
+	CWParseMessageElementStart(pm);
 
-	valPtr->idleTimeout = CWProtocolRetrieve32(msgPtr);
+	valPtr->idleTimeout = CWProtocolRetrieve32(pm);
 //  CWDebugLog("Idle Timeout: %d", valPtr->idleTimeout);
 
-	CWParseMessageElementEnd();
+	return CWParseMessageElementEnd(pm, len);
 }
 
-CWBool CWParseWTPFallback(CWProtocolMessage * msgPtr, int len, CWProtocolConfigureResponseValues * valPtr)
+CWBool CWParseWTPFallback(CWProtocolMessage *pm, int len, CWProtocolConfigureResponseValues * valPtr)
 {
-	CWParseMessageElementStart();
+	CWParseMessageElementStart(pm);
 
-	valPtr->fallback = CWProtocolRetrieve8(msgPtr);
+	valPtr->fallback = CWProtocolRetrieve8(pm);
 //  CWDebugLog("WTP Fallback: %d", valPtr->fallback);
 
-	CWParseMessageElementEnd();
+	return CWParseMessageElementEnd(pm, len);
 }
 
-CWBool CWParseVendorTPWTPTimestamp(CWProtocolMessage * msgPtr, int len, struct timeval * valPtr)
+CWBool CWParseVendorTPWTPTimestamp(CWProtocolMessage *pm, int len, struct timeval * valPtr)
 {
 	struct ntp_time_t ntp_time;
 
 	CWDebugLog("WTP Timestamp: %d", len);
-	CWParseMessageElementStart();
+	CWParseMessageElementStart(pm);
 
-	ntp_time.second = CWProtocolRetrieve32(msgPtr);
-	ntp_time.fraction = CWProtocolRetrieve32(msgPtr);
+	ntp_time.second = CWProtocolRetrieve32(pm);
+	ntp_time.fraction = CWProtocolRetrieve32(pm);
 	convert_ntp_time_into_unix_time(&ntp_time, valPtr);
 
-	CWParseMessageElementEnd();
+	return CWParseMessageElementEnd(pm, len);
 }
 
 void CWWTPResetRebootStatistics(WTPRebootStatisticsInfo * rebootStatistics)

@@ -40,8 +40,7 @@ void CWResetPendingMsgBox(CWPendingRequestMessage * pendingRequestMsgs)
 
 	timer_rem(pendingRequestMsgs->timer, NULL);
 
-	CW_FREE_OBJECT(pendingRequestMsgs->msgElems);
-	pendingRequestMsgs->fragmentsNum = 0;
+	CWReleaseTransportMessage(&pendingRequestMsgs->msg);
 
 	return;
 }
@@ -59,15 +58,14 @@ int CWFindFreePendingMsgBox(CWPendingRequestMessage * pendingRequestMsgs, const 
 	return -1;
 }
 
-CWBool CWUpdatePendingMsgBox(CWPendingRequestMessage * pendingRequestMsgs,
+CWBool CWUpdatePendingMsgBox(CWPendingRequestMessage *pendingRequestMsgs,
 			     unsigned char msgType,
 			     int seqNum,
 			     int timer_sec,
 			     CWTimerArg timer_arg,
 			     void (*timer_hdl) (CWTimerArg),
-			     int retransmission, CWProtocolMessage * msgElems, int fragmentsNum)
+			     int retransmission, CWTransportMessage *tm)
 {
-
 	if (pendingRequestMsgs == NULL)
 		return CW_FALSE;
 	if (pendingRequestMsgs->msgType != UNUSED_MSG_TYPE)
@@ -76,14 +74,12 @@ CWBool CWUpdatePendingMsgBox(CWPendingRequestMessage * pendingRequestMsgs,
 	pendingRequestMsgs->msgType = msgType;
 	pendingRequestMsgs->seqNum = seqNum;
 	pendingRequestMsgs->retransmission = retransmission;
-	pendingRequestMsgs->msgElems = msgElems;
-	pendingRequestMsgs->fragmentsNum = fragmentsNum;
+	pendingRequestMsgs->msg = *tm;
 	pendingRequestMsgs->timer_sec = timer_sec;
 	pendingRequestMsgs->timer_hdl = timer_hdl;
 	pendingRequestMsgs->timer_arg = timer_arg;
-	if ((pendingRequestMsgs->timer = timer_add(timer_sec, 0, timer_hdl, timer_arg))) {
+	if ((pendingRequestMsgs->timer = timer_add(timer_sec, 0, timer_hdl, timer_arg)))
 		return CW_FALSE;
-	}
 
 	return CW_TRUE;
 }
@@ -91,9 +87,9 @@ CWBool CWUpdatePendingMsgBox(CWPendingRequestMessage * pendingRequestMsgs,
 int CWFindPendingRequestMsgsBox(CWPendingRequestMessage * pendingRequestMsgs,
 				const int length, const int msgType, const int seqNum)
 {
-
 	if (pendingRequestMsgs == NULL)
 		return -1;
+
 	/* CWDebugLog("### TYPE = %d   SEQNUM = %d", msgType, seqNum); */
 	int k;
 	for (k = 0; k < length; k++) {
@@ -105,34 +101,26 @@ int CWFindPendingRequestMsgsBox(CWPendingRequestMessage * pendingRequestMsgs,
 		}
 	}
 	return -1;
-
 }
 
-int CWSendPendingRequestMessage(CWPendingRequestMessage * pendingRequestMsgs, CWProtocolMessage * messages,
-				int fragmentsNum)
+int CWSendPendingRequestMessage(CWPendingRequestMessage * pendingRequestMsgs, CWTransportMessage *tm)
 {
-	int pendingReqIndex = -1;
+	int pendingReqIndex;
 
-	if (messages == NULL || fragmentsNum < 0) {
-		return -1;
-	}
+	assert(tm);
 
 	pendingReqIndex = CWFindFreePendingMsgBox(pendingRequestMsgs, MAX_PENDING_REQUEST_MSGS);
-
-	if (pendingReqIndex < 0) {
+	if (pendingReqIndex < 0)
 		return -1;
-	}
 
 	int i;
-	for (i = 0; i < fragmentsNum; i++) {
+	for (i = 0; i < tm->count; i++) {
 #ifdef CW_NO_DTLS
-		if (!CWNetworkSendUnsafeConnected(gWTPSocket, messages[i].msg, messages[i].offset)) {
+		if (!CWNetworkSendUnsafeConnected(gWTPSocket, tm->parts[i].data, tm->parts[i].pos))
 #else
-		if (!CWSecuritySend(gWTPSession, messages[i].msg, messages[i].offset)) {
+		if (!CWSecuritySend(gWTPSession, tm->parts[i].data, tm->parts[i].pos))
 #endif
 			return -1;
-		}
 	}
-
 	return pendingReqIndex;
 }

@@ -50,6 +50,9 @@ CWBool CWCreateThread(CWThread * newThread, CW_THREAD_FUNCTION threadFunc, void 
 				    "Can't create thread (maybe there are too many other threads)");
 	}
 
+	/* terminated threads are not joined, detach them to release their resources on terminate */
+	pthread_detach(*newThread);
+
 	return CW_TRUE;
 }
 

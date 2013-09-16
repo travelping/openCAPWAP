@@ -39,7 +39,7 @@
 #include "CWVendorPayloads.h"
 #include "WUM.h"
 
-CWBool CWParseUCIPayload(CWProtocolMessage * msgPtr, CWVendorUciValues ** payloadPtr)
+CWBool CWParseUCIPayload(CWProtocolMessage *pm, CWVendorUciValues ** payloadPtr)
 {
 	int argsLen;
 	CWVendorUciValues *uciPayload = NULL;
@@ -47,11 +47,11 @@ CWBool CWParseUCIPayload(CWProtocolMessage * msgPtr, CWVendorUciValues ** payloa
 	if (!(uciPayload = ralloc(NULL, CWVendorUciValues)))
 		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
-	uciPayload->command = (unsigned char)CWProtocolRetrieve8(msgPtr);
+	uciPayload->command = (unsigned char)CWProtocolRetrieve8(pm);
 	uciPayload->response = NULL;
-	argsLen = (unsigned int)CWProtocolRetrieve32(msgPtr);
+	argsLen = (unsigned int)CWProtocolRetrieve32(pm);
 	if (argsLen != 0) {
-		uciPayload->commandArgs = CWProtocolRetrieveStr(NULL, msgPtr, argsLen);
+		uciPayload->commandArgs = CWProtocolRetrieveStr(NULL, pm, argsLen);
 	} else
 		uciPayload->commandArgs = NULL;
 
@@ -61,27 +61,27 @@ CWBool CWParseUCIPayload(CWProtocolMessage * msgPtr, CWVendorUciValues ** payloa
 	return CW_TRUE;
 }
 
-CWBool CWParseWUMPayload(CWProtocolMessage * msgPtr, CWVendorWumValues ** payloadPtr)
+CWBool CWParseWUMPayload(CWProtocolMessage *pm, CWVendorWumValues ** payloadPtr)
 {
 	CWVendorWumValues *wumPayload = NULL;
 
 	if (!(wumPayload = ralloc(NULL, CWVendorWumValues)))
 		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
-	wumPayload->type = (unsigned char)CWProtocolRetrieve8(msgPtr);
+	wumPayload->type = (unsigned char)CWProtocolRetrieve8(pm);
 
 	/*
 	 * According to the type of the message, retrive additional fields
 	 */
 	if (wumPayload->type == WTP_UPDATE_REQUEST) {
-		wumPayload->_major_v_ = (unsigned char)CWProtocolRetrieve8(msgPtr);
-		wumPayload->_minor_v_ = (unsigned char)CWProtocolRetrieve8(msgPtr);
-		wumPayload->_revision_v_ = (unsigned char)CWProtocolRetrieve8(msgPtr);
-		wumPayload->_pack_size_ = (unsigned int)CWProtocolRetrieve32(msgPtr);
+		wumPayload->_major_v_ = (unsigned char)CWProtocolRetrieve8(pm);
+		wumPayload->_minor_v_ = (unsigned char)CWProtocolRetrieve8(pm);
+		wumPayload->_revision_v_ = (unsigned char)CWProtocolRetrieve8(pm);
+		wumPayload->_pack_size_ = (unsigned int)CWProtocolRetrieve32(pm);
 	} else if (wumPayload->type == WTP_CUP_FRAGMENT) {
-		wumPayload->_seq_num_ = (unsigned int)CWProtocolRetrieve32(msgPtr);
-		wumPayload->_cup_fragment_size_ = (unsigned int)CWProtocolRetrieve32(msgPtr);
-		wumPayload->_cup_ = CWProtocolRetrieveRawBytes(NULL, msgPtr, wumPayload->_cup_fragment_size_);
+		wumPayload->_seq_num_ = (unsigned int)CWProtocolRetrieve32(pm);
+		wumPayload->_cup_fragment_size_ = (unsigned int)CWProtocolRetrieve32(pm);
+		wumPayload->_cup_ = CWProtocolRetrieveRawBytes(NULL, pm, wumPayload->_cup_fragment_size_);
 	}
 
 	*payloadPtr = wumPayload;
@@ -90,40 +90,45 @@ CWBool CWParseWUMPayload(CWProtocolMessage * msgPtr, CWVendorWumValues ** payloa
 	return CW_TRUE;
 }
 
-CWBool CWParseVendorPayload(CWProtocolMessage * msgPtr, int len, CWProtocolVendorSpecificValues * valPtr)
+CWBool CWParseVendorPayload(const void *ctx, CWProtocolMessage *pm, int len, void **valPtr)
 {
-
+	CWProtocolVendorSpecificValues *v;
 	CWVendorUciValues *uciPtr;
 	CWVendorWumValues *wumPtr;
 
-	CWParseMessageElementStart();
+	assert(valPtr);
+	if (!(*valPtr = ralloc(ctx, CWProtocolVendorSpecificValues)))
+		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	v = (CWProtocolVendorSpecificValues *)*valPtr;
+
+	CWParseMessageElementStart(pm);
 
 	/*...we choose which payload was used (in this case only
 	   uci configuration payloads are used) */
-	valPtr->vendorPayloadType = (unsigned short)CWProtocolRetrieve16(msgPtr);
+	v->vendorPayloadType = (unsigned short)CWProtocolRetrieve16(pm);
 
-	switch (valPtr->vendorPayloadType) {
+	switch (v->vendorPayloadType) {
 	case CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_UCI:
-		if (!(CWParseUCIPayload(msgPtr, &uciPtr))) {
+		if (!CWParseUCIPayload(pm, &uciPtr)) {
 			CW_FREE_OBJECT(uciPtr->commandArgs);
 			CW_FREE_OBJECT(uciPtr->response);
 			CW_FREE_OBJECT(uciPtr);
 			return CW_FALSE;	// will be handled by the caller
 		}
-		valPtr->payload = (void *)uciPtr;
+		v->payload = (void *)uciPtr;
 		break;
 	case CW_MSG_ELEMENT_VENDOR_SPEC_PAYLOAD_WUM:
-		if (!(CWParseWUMPayload(msgPtr, &wumPtr))) {
+		if (!CWParseWUMPayload(pm, &wumPtr)) {
 			CW_FREE_OBJECT(wumPtr);
 			return CW_FALSE;	// will be handled by the caller
 		}
-		valPtr->payload = (void *)wumPtr;
+		v->payload = (void *)wumPtr;
 		break;
 	default:
 		return CW_FALSE;	// will be handled by the caller
 	}
 
-	CWParseMessageElementEnd();
+	return CWParseMessageElementEnd(pm, len);
 }
 
 /************************************************************************

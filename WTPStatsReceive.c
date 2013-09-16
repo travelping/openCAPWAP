@@ -24,29 +24,16 @@
 
 #include "WTPStatsReceive.h"
 
-static int create_data_Frame(const void *ctx, CWProtocolMessage ** frame, char *buffer, int len)
-{
-	if (!(*frame = ralloc(NULL, CWProtocolMessage)))
-		return 0;
-
-	CWProtocolMessage *auxPtr = *frame;
-	CW_CREATE_PROTOCOL_MESSAGE(ctx, *auxPtr, len, return 0;
-	    );
-	memcpy(auxPtr->msg, buffer, len);
-	auxPtr->offset = len;
-	return 1;
-}
-
 CW_THREAD_RETURN_TYPE CWWTPReceiveStats(void *arg)
 {
 
-	int sock, rlen, len, k, fragmentsNum = 0, fromlen;
+	int sock, rlen, len, k, fromlen;
 	struct sockaddr_un servaddr;
 	struct sockaddr_un from;
-	static char buffer[PACKET_SIZE + 1];
-	CWProtocolMessage *completeMsgPtr = NULL;
-	CWProtocolMessage *data = NULL;
-	CWBindingTransportHeaderValues *bindingValuesPtr = NULL;
+	unsigned char buffer[PACKET_SIZE + 1];
+	CWTransportMessage tm;
+	CWProtocolMessage pm;
+	CWBindingTransportHeaderValues binding;
 
 	CWThreadSetSignals(SIG_BLOCK, 1, SIGALRM);
 
@@ -80,26 +67,20 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveStats(void *arg)
 			CWDebugLog("THR STATS: Error receiving from unix socket");
 			CWExitThread();
 		} else {
-			completeMsgPtr = NULL;
+			CWInitTransportMessage(&pm, buffer, rlen, 1);
 
-			if (!create_data_Frame(NULL, &data, buffer, rlen)) {
-				CWDebugLog("Error extracting a data stats frame");
-				CWExitThread();
-			};
-			if (!(bindingValuesPtr = ralloc(NULL, CWBindingTransportHeaderValues)))
-				EXIT_THREAD
+			CW_ZERO_MEMORY(&binding, sizeof(binding));
+			binding.length = sizeof(binding.ieee80211);
+			binding.ieee80211.dataRate = htons(-1);
 
-			bindingValuesPtr->dataRate = -1;	//to distinguish between wireless frame e data message (Daniele) see CWBindig.c line 224
-
-			if (CWAssembleDataMessage(&completeMsgPtr, &fragmentsNum, gWTPPathMTU, data, bindingValuesPtr,
-						  CW_PACKET_PLAIN, 0)) {
-				for (k = 0; k < fragmentsNum; k++) {
+			if (CWAssembleDataMessage(&tm, gWTPPathMTU, 1, BINDING_IEEE_802_11, CW_TRUE, CW_FALSE, NULL, &binding, &pm)) {
+				for (k = 0; k < tm.count; k++) {
 #ifdef CW_NO_DTLS
 					if (!CWNetworkSendUnsafeConnected
-					    (gWTPSocket, completeMsgPtr[k].msg, completeMsgPtr[k].offset)) {
+					    (gWTPSocket, tm.parts[k].data, tm.parts[k].pos)) {
 #else
 					if (!CWSecuritySend
-					    (gWTPSession, completeMsgPtr[k].msg, completeMsgPtr[k].offset)) {
+					    (gWTPSession, tm.parts[k].data, tm.parts[k].pos)) {
 #endif
 						CWDebugLog("Failure sending Request");
 						break;
@@ -107,11 +88,8 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveStats(void *arg)
 				}
 			}
 
-			CW_FREE_OBJECT(completeMsgPtr);
-			CW_FREE_OBJECT(data);
-			CW_FREE_OBJECT(bindingValuesPtr);
+			CWReleaseTransportMessage(&tm);
 		}
-
 	}
 
 	close(sock);

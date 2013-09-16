@@ -123,52 +123,50 @@ typedef struct {
 
 /*__________________________________________________________*/
 /*  *******************___PROTOTYPES___*******************  */
-CWBool CWParseChangeStateEventRequestMessage(unsigned char *msg, int len, int *seqNumPtr,
-					     CWProtocolChangeStateEventRequestValues * valuesPtr);
-CWBool CWAssembleChangeStateEventResponse(CWProtocolMessage ** messagesPtr, int *fragmentsNumPtr, int PMTU, int seqNum);
+CWBool CWAssembleChangeStateEventResponse(CWTransportMessage *tm, int PMTU, int seqNum);
 
-CWBool CWAssembleMsgElemACDescriptor(const void *ctx, CWProtocolMessage * msgPtr);	// 1
-CWBool CWAssembleMsgElemACIPv4List(const void *ctx, CWProtocolMessage * msgPtr);	// 2
-CWBool CWAssembleMsgElemACIPv6List(const void *ctx, CWProtocolMessage * msgPtr);	// 3
-CWBool CWAssembleMsgElemACName(const void *ctx, CWProtocolMessage * msgPtr);	// 4
-CWBool CWAssembleMsgElemAddStation(const void *ctx, int radioID, CWProtocolMessage * msgPtr, unsigned char *StationMacAddr);	// 8
-CWBool CWAssembleMsgElemDeleteStation(const void *ctx, int radioID, CWProtocolMessage * msgPtr, unsigned char *StationMacAddr);	// 8
-CWBool CWAssembleMsgElemCWControlIPv4Addresses(const void *ctx, CWProtocolMessage * msgPtr);	//10
-CWBool CWAssembleMsgElemCWControlIPv6Addresses(const void *ctx, CWProtocolMessage * msgPtr);	//11
-CWBool CWAssembleMsgElemCWTimer(const void *ctx, CWProtocolMessage * msgPtr);	//12
-CWBool CWAssembleMsgElemDecryptErrorReportPeriod(const void *ctx, CWProtocolMessage * msgPtr);	//16
-CWBool CWAssembleMsgElemIdleTimeout(const void *ctx, CWProtocolMessage * msgPtr);	//23
-CWBool CWAssembleMsgElemWTPFallback(const void *ctx, CWProtocolMessage * msgPtr);	//37
-CWBool CWAssembleWLANConfigurationRequest(CWProtocolMessage ** messagesPtr, int *fragmentsNumPtr, int PMTU, int seqNum,
+CWBool CWAssembleMsgElemACDescriptor(const void *ctx, CWProtocolMessage *pm);	// 1
+CWBool CWAssembleMsgElemACIPv4List(const void *ctx, CWProtocolMessage *pm);	// 2
+CWBool CWAssembleMsgElemACIPv6List(const void *ctx, CWProtocolMessage *pm);	// 3
+CWBool CWAssembleMsgElemACName(const void *ctx, CWProtocolMessage *pm);	// 4
+CWBool CWAssembleMsgElemAddStation(const void *ctx, int radioID, CWProtocolMessage *pm, unsigned char *StationMacAddr);	// 8
+CWBool CWAssembleMsgElemDeleteStation(const void *ctx, int radioID, CWProtocolMessage *pm, unsigned char *StationMacAddr);	// 8
+CWBool CWAssembleMsgElemCWControlIPv4Addresses(const void *ctx, CWProtocolMessage *pm);	//10
+CWBool CWAssembleMsgElemCWControlIPv6Addresses(const void *ctx, CWProtocolMessage *pm);	//11
+CWBool CWAssembleMsgElemCWTimer(const void *ctx, CWProtocolMessage *pm);	//12
+CWBool CWAssembleMsgElemDecryptErrorReportPeriod(const void *ctx, CWProtocolMessage *pm);	//16
+CWBool CWAssembleMsgElemIdleTimeout(const void *ctx, CWProtocolMessage *pm);	//23
+CWBool CWAssembleMsgElemWTPFallback(const void *ctx, CWProtocolMessage *pm);	//37
+CWBool CWAssembleWLANConfigurationRequest(CWTransportMessage *tm, int PMTU, int seqNum,
 					  unsigned char *recv_packet, int Operation, int len_packet);
-CWBool CWAssembleMsgElemACWTPRadioInformation(const void *ctx, CWProtocolMessage * msgPtr);
-CWBool CWAssembleMsgElemAddWLAN(const void *ctx, int radioID, CWProtocolMessage * msgPtr, unsigned char *recv_packet, int len_packet);
-CWBool CWAssembleMsgElemDeleteWLAN(const void *ctx, int radioID, CWProtocolMessage * msgPtr, unsigned char *recv_packet, int len_packet);
+CWBool CWAssembleMsgElemACWTPRadioInformation(const void *ctx, CWProtocolMessage *pm);
+CWBool CWAssembleMsgElemAddWLAN(const void *ctx, int radioID, CWProtocolMessage *pm, unsigned char *recv_packet, int len_packet);
+CWBool CWAssembleMsgElemDeleteWLAN(const void *ctx, int radioID, CWProtocolMessage *pm, unsigned char *recv_packet, int len_packet);
 
 //---------------------------------------------------------/
 
 //CWBool CWParseACName(CWProtocolMessage *msgPtr, int len, char **valPtr);
-CWBool CWParseACNameWithIndex(CWProtocolMessage * msgPtr, int len, CWACNameWithIndexValues * valPtr);	// 5
-CWBool CWParseMsgElemDataTransferData(CWProtocolMessage * msgPtr, int len, CWProtocolWTPDataTransferRequestValues * valPtr);	//13
-CWBool CWParseDiscoveryType(CWProtocolMessage * msgPtr, int len, CWDiscoveryRequestValues * valPtr);	//20
-CWBool CWParseMsgElemDuplicateIPv4Address(CWProtocolMessage * msgPtr, int len, WTPDuplicateIPv4 * valPtr);	//21
-CWBool CWParseLocationData(CWProtocolMessage * msgPtr, int len, char **valPtr);	//27
-CWBool CWParseWTPRadioAdminState(CWProtocolMessage * msgPtr, int len, CWRadioAdminInfoValues * valPtr);	//29
-CWBool CWParseWTPStatisticsTimer(CWProtocolMessage * msgPtr, int len, int *valPtr);	//33
-CWBool CWParseWTPBoardData(CWProtocolMessage * msgPtr, int len, CWWTPVendorInfos * valPtr);	//35
-CWBool CWParseWTPDescriptor(CWProtocolMessage * msgPtr, int len, CWWTPDescriptor * valPtr);	//37
-CWBool CWParseWTPFrameTunnelMode(CWProtocolMessage * msgPtr, int len, CWframeTunnelMode * valPtr);	//38
-CWBool CWParseWTPIPv4Address(CWProtocolMessage * msgPtr, int len, CWProtocolJoinRequestValues * valPtr);	//39
-CWBool CWParseWTPMACType(CWProtocolMessage * msgPtr, int len, CWMACType * valPtr);	//40
-CWBool CWParseWTPName(CWProtocolMessage * msgPtr, int len, char **valPtr);	//41
-CWBool CWParseWTPOperationalStatistics(CWProtocolMessage * msgPtr, int len, WTPOperationalStatisticsValues * valPtr);	//42
-CWBool CWParseWTPRadioStatistics(CWProtocolMessage * msgPtr, int len, WTPRadioStatisticsValues * valPtr);	//43
-CWBool CWParseWTPRebootStatistics(CWProtocolMessage * msgPtr, int len, WTPRebootStatisticsInfo * valPtr);	//44
-CWBool CWParseMsgElemDecryptErrorReport(CWProtocolMessage * msgPtr, int len, CWDecryptErrorReportValues * valPtr);
-CWBool CWParseMsgElemDuplicateIPv6Address(CWProtocolMessage * msgPtr, int len, WTPDuplicateIPv6 * valPtr);
-CWBool CWParseWTPRadioInformation(CWProtocolMessage * msgPtr, int len, unsigned char *valPtr);	//1048
-CWBool CWParseWTPSupportedRates(CWProtocolMessage * msgPtr, int len, unsigned char *valPtr);	//1040
-CWBool CWParseWTPMultiDomainCapability(CWProtocolMessage * msgPtr, int len, unsigned char *valPtr);	//1032
+CWBool CWParseACNameWithIndex(CWProtocolMessage *pm, int len, CWACNameWithIndexValues * valPtr);	// 5
+CWBool CWParseMsgElemDataTransferData(CWProtocolMessage *pm, int len, CWProtocolWTPDataTransferRequestValues * valPtr);	//13
+CWBool CWParseDiscoveryType(CWProtocolMessage *pm, int len, CWDiscoveryRequestValues * valPtr);	//20
+CWBool CWParseMsgElemDuplicateIPv4Address(CWProtocolMessage *pm, int len, WTPDuplicateIPv4 * valPtr);	//21
+CWBool CWParseLocationData(CWProtocolMessage *pm, int len, char **valPtr);	//27
+CWBool CWParseWTPRadioAdminState(CWProtocolMessage *pm, int len, CWRadioAdminInfoValues * valPtr);	//29
+CWBool CWParseWTPStatisticsTimer(CWProtocolMessage *pm, int len, int *valPtr);	//33
+CWBool CWParseWTPBoardData(CWProtocolMessage *pm, int len, CWWTPVendorInfos * valPtr);	//35
+CWBool CWParseWTPDescriptor(CWProtocolMessage *pm, int len, CWWTPDescriptor * valPtr);	//37
+CWBool CWParseWTPFrameTunnelMode(CWProtocolMessage *pm, int len, CWframeTunnelMode * valPtr);	//38
+CWBool CWParseWTPIPv4Address(CWProtocolMessage *pm, int len, CWProtocolJoinRequestValues * valPtr);	//39
+CWBool CWParseWTPMACType(CWProtocolMessage *pm, int len, CWMACType * valPtr);	//40
+CWBool CWParseWTPName(CWProtocolMessage *pm, int len, char **valPtr);	//41
+CWBool CWParseWTPOperationalStatistics(CWProtocolMessage *pm, int len, WTPOperationalStatisticsValues * valPtr);	//42
+CWBool CWParseWTPRadioStatistics(CWProtocolMessage *pm, int len, WTPRadioStatisticsValues * valPtr);	//43
+CWBool CWParseWTPRebootStatistics(CWProtocolMessage *pm, int len, WTPRebootStatisticsInfo * valPtr);	//44
+CWBool CWParseMsgElemDecryptErrorReport(CWProtocolMessage *pm, int len, CWDecryptErrorReportValues * valPtr);
+CWBool CWParseMsgElemDuplicateIPv6Address(CWProtocolMessage *pm, int len, WTPDuplicateIPv6 * valPtr);
+CWBool CWParseWTPRadioInformation(CWProtocolMessage *pm, int len, unsigned char *valPtr);	//1048
+CWBool CWParseWTPSupportedRates(CWProtocolMessage *pm, int len, unsigned char *valPtr);	//1040
+CWBool CWParseWTPMultiDomainCapability(CWProtocolMessage *pm, int len, unsigned char *valPtr);	//1032
 //CWBool CWParseWTPRadioInfo(CWProtocolMessage *msgPtr, int len, CWRadiosInformation *valPtr, int radioIndex);
 
 //---------------------------------------------------------/
@@ -195,7 +193,7 @@ CWBool CWGetWTPRadiosOperationalState(int radioID, CWRadiosOperationalInfo * val
 CWBool CWACSupportIPv6();
 void CWDestroyDiscoveryRequestValues(CWDiscoveryRequestValues * valPtr);
 
-CWBool CWProtocolAssembleConfigurationUpdateRequest(CWProtocolMessage ** msgElems,
-						    int *msgElemCountPtr, int MsgElementType);
+CWBool CWProtocolAssembleConfigurationUpdateRequest(CWProtocolMessage *msgElems,
+						    int MsgElementType);
 
 #endif

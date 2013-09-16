@@ -37,8 +37,10 @@ void CWLog(const char *format, ...)
 #ifdef CW_DEBUGGING
 void CWDebugLog(const char *format, ...)
 	__attribute__ ((__format__ (__printf__, 1, 2)));
+void CWDebugErrorLog();
 #else
 #define CWDebugLog(format, ...) do { } while(0)
+#define CWDebugErrorLog() do { } while(0)
 #endif
 
 #endif

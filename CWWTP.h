@@ -115,20 +115,17 @@ extern char *gWtpBootVersion;
 CWBool CWWTPLoadConfiguration();
 CWBool CWWTPInitConfiguration();
 void CWWTPResetRadioStatistics(WTPRadioStatisticsInfo * radioStatistics);
-CWBool CWReceiveMessage(CWProtocolMessage * msgPtr);
+CWBool CWReceiveMessage(CWProtocolMessage *pm);
 CWBool CWWTPSendAcknowledgedPacket(int seqNum,
 				   CWList msgElemlist,
-				   CWBool(assembleFunc) (CWProtocolMessage **, int *, int, int, CWList),
-				   CWBool(parseFunc) (unsigned char *, int, int, void *),
+				   CWBool(assembleFunc) (CWTransportMessage *, int, int, CWList),
+				   CWBool(parseFunc) (CWProtocolMessage *, int, void *),
 				   CWBool(saveFunc) (void *), void *valuesPtr);
 void CWWTPDestroy();
 
 /* in WTPRunState.c */
-CWBool CWAssembleWTPDataTansferRequest(CWProtocolMessage ** messagesPtr,
-				       int *fragmentsNumPtr, int PMTU, int seqNum, CWList msgElemList);
-
-CWBool CWAssembleWTPEventRequest(CWProtocolMessage ** messagesPtr,
-				 int *fragmentsNumPtr, int PMTU, int seqNum, CWList msgElemList);
+CWBool CWAssembleWTPDataTansferRequest(CWTransportMessage *tm, int PMTU, int seqNum, CWList msgElemList);
+CWBool CWAssembleWTPEventRequest(CWTransportMessage *tm, int PMTU, int seqNum, CWList msgElemList);
 
 CW_THREAD_RETURN_TYPE CWWTPReceiveDtlsPacket(void *arg);
 CW_THREAD_RETURN_TYPE CWWTPReceiveDataPacket(void *arg);
@@ -144,20 +141,17 @@ CWBool CWGetWTPRadiosAdminState(CWRadiosAdminInfo * valPtr);
 CWBool CWGetDecryptErrorReport(int radioID, CWDecryptErrorReportInfo * valPtr);
 
 /* in WTPRetransmission.c */
-int CWSendPendingRequestMessage(CWPendingRequestMessage * pendingRequestMsgs,
-				CWProtocolMessage * messages, int fragmentsNum);
-
-int CWFindPendingRequestMsgsBox(CWPendingRequestMessage * pendingRequestMsgs,
+int CWSendPendingRequestMessage(CWPendingRequestMessage *pendingRequestMsgs, CWTransportMessage *tm);
+int CWFindPendingRequestMsgsBox(CWPendingRequestMessage *pendingRequestMsgs,
 				const int length, const int msgType, const int seqNum);
-
-void CWResetPendingMsgBox(CWPendingRequestMessage * pendingRequestMsgs);
-CWBool CWUpdatePendingMsgBox(CWPendingRequestMessage * pendingRequestMsgs,
+void CWResetPendingMsgBox(CWPendingRequestMessage *pendingRequestMsgs);
+CWBool CWUpdatePendingMsgBox(CWPendingRequestMessage *pendingRequestMsgs,
 			     unsigned char msgType,
 			     int seqNum,
 			     int timer_sec,
 			     CWTimerArg timer_arg,
 			     void (*timer_hdl) (CWTimerArg),
-			     int retransmission, CWProtocolMessage * msgElems, int fragmentsNum);
+			     int retransmission, CWTransportMessage *tm);
 
 #ifdef SOFTMAC
 //in WTPmacDriverInteraction.c
@@ -196,7 +190,7 @@ void CWResetDiscoveredACAddresses();
 CWBool CWAddDiscoveredACAddress(unsigned char priority,
 				int family,
 				struct sockaddr *addr, socklen_t addrlen);
-CWBool CWParseACAddressListWithPrio(CWProtocolMessage * msgPtr, int len);
+CWBool CWParseACAddressListWithPrio(CWProtocolMessage *pm, int len);
 
 CWStateTransition CWWTPEnterSulking();
 CWStateTransition CWWTPEnterJoin();

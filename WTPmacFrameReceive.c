@@ -62,29 +62,19 @@ int extractFrameInfo(char *buffer, char *RSSI, char *SNR, int *dataRate)
 	return 1;
 }
 
-int extractFrame(const void *ctx, CWProtocolMessage ** frame, unsigned char *buffer, int len)
+int extractFrame(const void *ctx, CWProtocolMessage *frame, unsigned char *buffer, int len)
 {
-	if (!(*frame = ralloc(NULL, CWProtocolMessage)))
-		return 0;
-
-	CWProtocolMessage *auxPtr = *frame;
-	CW_CREATE_PROTOCOL_MESSAGE(ctx, *auxPtr, len - PRISMH_LEN, return 0;
-	    );
-	memcpy(auxPtr->msg, buffer + PRISMH_LEN, len - PRISMH_LEN);
-	auxPtr->offset = len - PRISMH_LEN;
+	CW_CREATE_PROTOCOL_MESSAGE(ctx, frame, len - PRISMH_LEN, return 0; );
+	memcpy(frame->data, buffer + PRISMH_LEN, len - PRISMH_LEN);
+	frame->pos = len - PRISMH_LEN;
 	return 1;
 }
 
-int extract802_11_Frame(const void *ctx, CWProtocolMessage ** frame, unsigned char *buffer, int len)
+int extract802_11_Frame(const void *ctx, CWProtocolMessage *frame, unsigned char *buffer, int len)
 {
-	if (!(*frame = ralloc(NULL, CWProtocolMessage)))
-		return 0;
-
-	CWProtocolMessage *auxPtr = *frame;
-	CW_CREATE_PROTOCOL_MESSAGE(ctx, *auxPtr, len, return 0;
-	    );
-	memcpy(auxPtr->msg, buffer, len);
-	auxPtr->offset = len;
+	CW_CREATE_PROTOCOL_MESSAGE(ctx, frame, len, return 0; );
+	memcpy(frame->data, buffer, len);
+	frame->pos = len;
 	return 1;
 }
 
@@ -234,7 +224,7 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveFrame(void *arg)
 				EXIT_FRAME_THREAD(gRawSock);
 			}
 
-			listElement->frame->data_msgType = CW_IEEE_802_11_FRAME_TYPE;
+			listElement->frame.data_msgType = CW_IEEE_802_11_FRAME_TYPE;
 
 			CWDebugLog("Recv 802.11 data(len:%d) from %s", encaps_len, gRadioInterfaceName_0);
 		} else {
@@ -243,7 +233,7 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveFrame(void *arg)
 				EXIT_FRAME_THREAD(gRawSock);
 			}
 
-			listElement->frame->data_msgType = CW_IEEE_802_3_FRAME_TYPE;
+			listElement->frame.data_msgType = CW_IEEE_802_3_FRAME_TYPE;
 
 			CWDebugLog("Recv 802.3 data(len:%d) from %s", n, gRadioInterfaceName_0);
 		}

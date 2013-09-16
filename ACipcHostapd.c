@@ -239,7 +239,7 @@ CW_THREAD_RETURN_TYPE CWACipc_with_ac_hostapd(void *arg)
 	int connect_ret;
 	char cmd[10];
 
-	CWProtocolMessage *frame = NULL;
+	CWProtocolMessage frame;
 	CWNetworkLev4Address address;
 	CWThreadSetSignals(SIG_BLOCK, 1, SIGALRM);
 
@@ -309,7 +309,7 @@ CW_THREAD_RETURN_TYPE CWACipc_with_ac_hostapd(void *arg)
 #endif
 
 	int i = 0;
-	CWProtocolMessage *completeMsgPtr = NULL;
+	CWTransportMessage tm;
 	int fragmentsNum = 0;
 	CWMultiHomedSocket *sockPtr = &gACSocket;
 	int dataSocket = 0;
@@ -468,22 +468,16 @@ CW_THREAD_RETURN_TYPE CWACipc_with_ac_hostapd(void *arg)
 
 					len = len - sig_byte;
 
-					if (!(frame = ralloc(NULL, CWProtocolMessage)))
-						return 0;
+					CW_CREATE_PROTOCOL_MESSAGE(NULL, &frame, len, return 0; );
 
-					CW_CREATE_PROTOCOL_MESSAGE(frame, *frame, len, return 0;
-					    );
+					memcpy(frame.data, buffer + sig_byte, len);
 
-					memcpy(frame->msg, buffer + sig_byte, len);
+					frame.pos = len;
+					frame.data_msgType = CW_IEEE_802_11_FRAME_TYPE;
 
-					frame->offset = len;
-					frame->data_msgType = CW_IEEE_802_11_FRAME_TYPE;
-
-					if (!CWAssembleDataMessage
-					    (&completeMsgPtr, &fragmentsNum, gWTPs[tmp_WTPIndex].pathMTU, frame, NULL,
-					     CW_PACKET_PLAIN, 0)) {
-						CW_FREE_OBJECT(completeMsgPtr);
-						CW_FREE_OBJECT(frame);
+					if (!CWAssembleDataMessage(&tm, gWTPs[tmp_WTPIndex].pathMTU, 1, BINDING_IEEE_802_11, CW_FALSE, CW_TRUE, NULL, NULL, &frame)) {
+						CWReleaseTransportMessage(&tm);
+						CWReleaseMessage(&frame);
 						continue;
 					}
 
@@ -503,24 +497,21 @@ CW_THREAD_RETURN_TYPE CWACipc_with_ac_hostapd(void *arg)
 					/* Set port and address of data tunnel */
 					sock_set_port_cw((struct sockaddr *)&(address), htons(CW_DATA_PORT));
 					for (k = 0; k < fragmentsNum; k++) {
-						if (!CWNetworkSendUnsafeUnconnected
-						    (dataSocket, &(address), completeMsgPtr[k].msg,
-						     completeMsgPtr[k].offset)) {
+						if (!CWNetworkSendUnsafeUnconnected(dataSocket, &(address), tm.parts[k].data, tm.parts[k].pos)) {
 							CWDebugLog("Failure sending Request");
 							break;
 						}
 					}
 
-					CW_FREE_OBJECT(completeMsgPtr);
-					CW_FREE_OBJECT(frame);
+					CWReleaseTransportMessage(&tm);
+					CWReleaseMessage(&frame);
 				}
 
 			} else if (buffer[0] == SET_ADDR) {
 
 				int seqNum = CWGetSeqNum();
 
-				if (CWAssembleStationConfigurationRequest(&(gWTPs[tmp_WTPIndex].messages),
-									  &(gWTPs[tmp_WTPIndex].messagesCount),
+				if (CWAssembleStationConfigurationRequest(&gWTPs[tmp_WTPIndex].messages,
 									  gWTPs[tmp_WTPIndex].pathMTU,
 									  seqNum, buffer + sig_byte,
 									  CW_MSG_ELEMENT_ADD_STATION_CW_TYPE)) {
@@ -536,8 +527,7 @@ CW_THREAD_RETURN_TYPE CWACipc_with_ac_hostapd(void *arg)
 			} else if (buffer[0] == DEL_ADDR) {
 				int seqNum = CWGetSeqNum();
 
-				if (CWAssembleStationConfigurationRequest(&(gWTPs[tmp_WTPIndex].messages),
-									  &(gWTPs[tmp_WTPIndex].messagesCount),
+				if (CWAssembleStationConfigurationRequest(&gWTPs[tmp_WTPIndex].messages,
 									  gWTPs[tmp_WTPIndex].pathMTU,
 									  seqNum, buffer + sig_byte,
 									  CW_MSG_ELEMENT_DELETE_STATION_CW_TYPE)) {
@@ -582,8 +572,7 @@ CW_THREAD_RETURN_TYPE CWACipc_with_ac_hostapd(void *arg)
 					EXIT_FRAME_THREAD(sock);
 				}
 
-				if (CWAssembleWLANConfigurationRequest(&(gWTPs[tmp_WTPIndex].messages),
-								       &(gWTPs[tmp_WTPIndex].messagesCount),
+				if (CWAssembleWLANConfigurationRequest(&gWTPs[tmp_WTPIndex].messages,
 								       gWTPs[tmp_WTPIndex].pathMTU,
 								       seqNum, buffer + sig_byte,
 								       CW_MSG_ELEMENT_IEEE80211_ADD_WLAN_CW_TYPE,
@@ -599,8 +588,7 @@ CW_THREAD_RETURN_TYPE CWACipc_with_ac_hostapd(void *arg)
 
 			} else if (buffer[0] == DEL_WLAN) {
 				int seqNum = CWGetSeqNum();
-				if (CWAssembleWLANConfigurationRequest(&(gWTPs[tmp_WTPIndex].messages),
-								       &(gWTPs[tmp_WTPIndex].messagesCount),
+				if (CWAssembleWLANConfigurationRequest(&gWTPs[tmp_WTPIndex].messages,
 								       gWTPs[tmp_WTPIndex].pathMTU,
 								       seqNum, buffer + sig_byte,
 								       CW_MSG_ELEMENT_IEEE80211_DELETE_WLAN_CW_TYPE,

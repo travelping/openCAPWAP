@@ -29,6 +29,10 @@
 #ifndef __CAPWAP_CWCommon_HEADER__
 #define __CAPWAP_CWCommon_HEADER__
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -53,6 +57,13 @@
 #include <sys/resource.h>
 #include "wireless_copy.h"
 #include "ralloc.h"
+
+#ifdef HAVE_VALGRIND_MEMCHECK_H
+#include <valgrind/memcheck.h>
+#endif
+#ifdef HAVE_VALGRIND_VALGRIND_H
+#include <valgrind/valgrind.h>
+#endif
 
 // make sure the types really have the right sizes
 #define CW_COMPILE_TIME_ASSERT(name, x)               typedef int CWDummy_ ## name[(x) * 2 - 1]

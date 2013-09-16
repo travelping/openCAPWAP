@@ -30,14 +30,13 @@
 #define __CAPWAP_ACBinding_HEADER__
 
 CWBool CWACInitBinding(int i);
-CWBool CWBindingAssembleConfigureResponse(CWProtocolMessage ** msgElems, int *msgElemCountPtr);
+CWBool CWBindingAssembleConfigureResponse(CWProtocolMessage *msg);
 /****************************************************
  * 2009 Update:                                     *
  * The field BindingMsgElement has been added for   *
  * the multiple type of Message Element.            *
  ****************************************************/
-CWBool CWBindingAssembleConfigurationUpdateRequest(CWProtocolMessage ** msgElems,
-						   int *msgElemCountPtr, int BindingMsgElement);
+CWBool CWBindingAssembleConfigurationUpdateRequest(CWProtocolMessage *msg, int BindingMsgElement);
 CWBool CWBindingSaveConfigurationUpdateResponse(CWProtocolResultCode resultCode, int WTPIndex);
 
 #endif

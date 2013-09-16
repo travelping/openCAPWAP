@@ -82,28 +82,31 @@ void CWWTPDestroyEncCapabilities(CWWTPEncryptCaps * encc)
 	CW_FREE_OBJECT(encc->encryptCaps);
 }
 
-CWBool CWWTPGetBoardData(CWWTPVendorInfos * valPtr)
+static
+CWBool CWAssembleMsgElemWTPBoardDataElem(const void *ctx, CWProtocolMessage *pm,
+					 uint16_t type, uint16_t length, unsigned char *data)
 {
-	if (valPtr == NULL)
-		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
+	assert(pm != NULL);
 
-	valPtr->vendorInfosCount = 2;	// we fill 2 information (just the required ones)
-	if (!(valPtr->vendorInfos = ralloc_array(NULL, CWWTPVendorInfoValues, valPtr->vendorInfosCount)))
+	if (!CWMessageEnsureSpace(ctx, pm, length + 4))
 		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 
-	// my vendor identifier (IANA assigned "SMI Network Management Private Enterprise Code")
-	valPtr->vendorInfos[0].vendorIdentifier = CW_IANA_ENTERPRISE_NUMBER_VENDOR_TRAVELPING;
-	valPtr->vendorInfos[0].type = CW_WTP_MODEL_NUMBER;
-	valPtr->vendorInfos[0].length = strlen(gWtpModelNumber);
-	if (!(valPtr->vendorInfos[0].valuePtr = ralloc_strdup(NULL, gWtpModelNumber)))
-		 return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	CWProtocolStore16(pm, type);
+	CWProtocolStore16(pm, length);
+	CWProtocolStoreRawBytes(pm, data, length);
 
-	// my vendor identifier (IANA assigned "SMI Network Management Private Enterprise Code")
-	valPtr->vendorInfos[1].vendorIdentifier = CW_IANA_ENTERPRISE_NUMBER_VENDOR_TRAVELPING;
-	valPtr->vendorInfos[1].type = CW_WTP_SERIAL_NUMBER;
-	valPtr->vendorInfos[1].length = strlen(gWtpSerialNumber);
-	if (!(valPtr->vendorInfos[1].valuePtr = ralloc_strdup(NULL, gWtpSerialNumber)))
-		 return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
+	return CW_TRUE;
+}
+
+CWBool CWAssembleMsgElemWTPBoardData_User(const void *ctx, CWProtocolMessage *pm)
+{
+	assert(pm != NULL);
+
+	if (!CWAssembleMsgElemWTPBoardDataElem(ctx, pm, CW_WTP_MODEL_NUMBER,
+					       strlen(gWtpModelNumber),  (unsigned char *)gWtpModelNumber) ||
+	    !CWAssembleMsgElemWTPBoardDataElem(ctx, pm, CW_WTP_SERIAL_NUMBER,
+					       strlen(gWtpSerialNumber), (unsigned char *)gWtpSerialNumber))
+		return CW_FALSE;
 
 	return CW_TRUE;
 }

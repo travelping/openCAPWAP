@@ -154,7 +154,7 @@ void CWACManageIncomingPacket(CWSocket sock,
 
 		if (CWErr(CWParseDiscoveryRequestMessage(buf, readBytes, &seqNum, &values))) {
 
-			CWProtocolMessage *msgPtr;
+			CWTransportMessage tm;
 
 			CWLog("\n");
 			CWLog("######### Discovery State #########");
@@ -173,7 +173,7 @@ void CWACManageIncomingPacket(CWSocket sock,
 			 * note: we can consider reassembling only changed part
 			 * AND/OR do this in a new thread.
 			 */
-			if (!CWErr(CWAssembleDiscoveryResponse(&msgPtr, seqNum))) {
+			if (!CWErr(CWAssembleDiscoveryResponse(&tm, seqNum))) {
 				/*
 				 * note: maybe an out-of-memory memory error
 				 * can be resolved without exit()-ing by
@@ -184,14 +184,12 @@ void CWACManageIncomingPacket(CWSocket sock,
 				exit(1);
 			}
 
-			if (!CWErr(CWNetworkSendUnsafeUnconnected(sock, addrPtr, (*msgPtr).msg, (*msgPtr).offset))) {
+			if (!CWErr(CWNetworkSendUnsafeUnconnected(sock, addrPtr, tm.parts[0].data, tm.parts[0].pos))) {
 
 				CWLog("Critical Error Sending Discovery Response");
 				exit(1);
 			}
-
-			CW_FREE_PROTOCOL_MESSAGE(*msgPtr);
-			CW_FREE_OBJECT(msgPtr);
+			CWReleaseTransportMessage(&tm);
 		} else {
 			/* this isn't a Discovery Request */
 			int i;
@@ -344,7 +342,7 @@ CW_THREAD_RETURN_TYPE CWManageWTP(void *arg)
 	gWTPs[i].interfaceIndex = interfaceIndex;
 	gWTPs[i].socket = sock;
 
-	gWTPs[i].fragmentsList = NULL;
+	CW_ZERO_MEMORY(&gWTPs[i].fragmentsList, sizeof(CWFragmentBufferList));
 	/* we're in the join state for this session */
 	gWTPs[i].currentState = CW_ENTER_JOIN;
 	gWTPs[i].subState = CW_DTLS_HANDSHAKE_IN_PROGRESS;
@@ -363,8 +361,9 @@ CW_THREAD_RETURN_TYPE CWManageWTP(void *arg)
 	gWTPs[i].qosValues = NULL;
 	/**** ACInterface ****/
 
-	gWTPs[i].messages = NULL;
-	gWTPs[i].messagesCount = 0;
+	gWTPs[i].messages.parts = NULL;
+	gWTPs[i].messages.count = 0;
+
 	gWTPs[i].isRetransmitting = CW_FALSE;
 	gWTPs[i].retransmissionCount = 0;
 
@@ -400,8 +399,7 @@ CW_THREAD_RETURN_TYPE CWManageWTP(void *arg)
 		CWProtocolMessage msg;
 		CWBool dataFlag = CW_FALSE;
 
-		msg.msg = NULL;
-		msg.offset = 0;
+		CW_ZERO_MEMORY(&msg, sizeof(CWProtocolMessage));
 
 		/* Wait WTP action */
 
@@ -441,7 +439,7 @@ CW_THREAD_RETURN_TYPE CWManageWTP(void *arg)
 			if (bCrypt) {
 #ifndef CW_NO_DTLS
 				if (!CWErr(CWSecurityReceive(gWTPs[i].session,
-							     gWTPs[i].buf, CW_BUFFER_SIZE - 1, &readBytes))) {
+							     gWTPs[i].buf, CW_BUFFER_SIZE, &readBytes))) {
 					/* error */
 
 					CWDebugLog("Error during security receive");
@@ -466,10 +464,11 @@ CW_THREAD_RETURN_TYPE CWManageWTP(void *arg)
 				CW_FREE_OBJECT(pBuffer);
 			}
 
-			if (!CWProtocolParseFragment(gWTPs[i].buf,
-						     readBytes,
-						     &(gWTPs[i].fragmentsList), &msg, &dataFlag, gWTPs[i].RadioMAC)) {
+			CWProtocolMessage tmsg;
 
+			CWInitTransportMessage(&tmsg, gWTPs[i].buf, readBytes, 1);
+			// TODO: readd RadioMAC handling
+			if (!CWProtocolParseFragment(&tmsg, &gWTPs[i].fragmentsList, &msg)) {
 				if (CWErrorGetLastErrorCode() == CW_ERROR_NEED_RESOURCE) {
 
 					CWDebugLog("Need At Least One More Fragment");
@@ -569,10 +568,7 @@ CW_THREAD_RETURN_TYPE CWManageWTP(void *arg)
 						int seqNum = CWGetSeqNum();
 
 						/* CWDebugLog("~~~~~~seq num in Check: %d~~~~~~", seqNum); */
-						if (CWAssembleConfigurationUpdateRequest(&(gWTPs[i].messages),
-											 &(gWTPs[i].messagesCount),
-											 gWTPs[i].pathMTU,
-											 seqNum,
+						if (CWAssembleConfigurationUpdateRequest(&gWTPs[i].messages, gWTPs[i].pathMTU, seqNum,
 											 CONFIG_UPDATE_REQ_QOS_ELEMENT_TYPE))
 						{
 
@@ -588,10 +584,7 @@ CW_THREAD_RETURN_TYPE CWManageWTP(void *arg)
 						int seqNum = CWGetSeqNum();
 
 						/* Clear Configuration Request */
-						if (CWAssembleClearConfigurationRequest(&(gWTPs[i].messages),
-											&(gWTPs[i].messagesCount),
-											gWTPs[i].pathMTU, seqNum)) {
-
+						if (CWAssembleClearConfigurationRequest(&gWTPs[i].messages, gWTPs[i].pathMTU, seqNum)) {
 							if (CWACSendAcknowledgedPacket
 							    (i, CW_MSG_TYPE_VALUE_CLEAR_CONFIGURATION_RESPONSE, seqNum))
 								bResult = CW_TRUE;
@@ -608,10 +601,7 @@ CW_THREAD_RETURN_TYPE CWManageWTP(void *arg)
 				case OFDM_CONTROL_CMD:{
 						int seqNum = CWGetSeqNum();
 
-						if (CWAssembleConfigurationUpdateRequest(&(gWTPs[i].messages),
-											 &(gWTPs[i].messagesCount),
-											 gWTPs[i].pathMTU,
-											 seqNum,
+						if (CWAssembleConfigurationUpdateRequest(&gWTPs[i].messages, gWTPs[i].pathMTU, seqNum,
 											 CONFIG_UPDATE_REQ_OFDM_ELEMENT_TYPE))
 						{
 
@@ -628,10 +618,7 @@ CW_THREAD_RETURN_TYPE CWManageWTP(void *arg)
 				case UCI_CONTROL_CMD:{
 						int seqNum = CWGetSeqNum();
 
-						if (CWAssembleConfigurationUpdateRequest(&(gWTPs[i].messages),
-											 &(gWTPs[i].messagesCount),
-											 gWTPs[i].pathMTU,
-											 seqNum,
+						if (CWAssembleConfigurationUpdateRequest(&gWTPs[i].messages, gWTPs[i].pathMTU, seqNum,
 											 CONFIG_UPDATE_REQ_VENDOR_UCI_ELEMENT_TYPE))
 						{
 
@@ -646,10 +633,7 @@ CW_THREAD_RETURN_TYPE CWManageWTP(void *arg)
 				case WTP_UPDATE_CMD:{
 						int seqNum = CWGetSeqNum();
 
-						if (CWAssembleConfigurationUpdateRequest(&(gWTPs[i].messages),
-											 &(gWTPs[i].messagesCount),
-											 gWTPs[i].pathMTU,
-											 seqNum,
+						if (CWAssembleConfigurationUpdateRequest(&gWTPs[i].messages, gWTPs[i].pathMTU, seqNum,
 											 CONFIG_UPDATE_REQ_VENDOR_WUM_ELEMENT_TYPE))
 						{
 
@@ -726,11 +710,10 @@ void _CWCloseThread(int i)
 
 	gWTPs[i].session = NULL;
 	gWTPs[i].subState = CW_DTLS_HANDSHAKE_IN_PROGRESS;
-	CWDeleteList(&(gWTPs[i].fragmentsList), CWProtocolDestroyFragment);
 
 	/* CW_FREE_OBJECT(gWTPs[i].configureReqValuesPtr); */
 
-	CWCleanSafeList(gWTPs[i].packetReceiveList, free);
+	CWCleanSafeList(gWTPs[i].packetReceiveList, ralloc_free);
 	CWDestroySafeList(gWTPs[i].packetReceiveList);
 
 	CWThreadMutexLock(&gWTPsMutex);
@@ -793,7 +776,7 @@ void CWSoftTimerExpiredHandler(int arg)
 		return;
 	}
 
-	if ((!gWTPs[*iPtr].isRetransmitting) || (gWTPs[*iPtr].messages == NULL)) {
+	if (!gWTPs[*iPtr].isRetransmitting || gWTPs[*iPtr].messages.parts == NULL) {
 
 		CWDebugLog("Soft timer expired but we are not retransmitting");
 		CWThreadSetSignals(SIG_UNBLOCK, 2, CW_SOFT_TIMER_EXPIRED_SIGNAL, CW_CRITICAL_TIMER_EXPIRED_SIGNAL);

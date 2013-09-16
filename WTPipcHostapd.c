@@ -254,7 +254,6 @@ CW_THREAD_RETURN_TYPE CWWTPThread_read_data_from_hostapd(void *arg)
 	int connect_ret;
 	unsigned char cmd[10];
 
-	CWProtocolMessage *frame = NULL;
 	CWBindingDataListElement *listElement = NULL;
 
 	CWThreadSetSignals(SIG_BLOCK, 1, SIGALRM);
@@ -369,15 +368,14 @@ CW_THREAD_RETURN_TYPE CWWTPThread_read_data_from_hostapd(void *arg)
 			if (!(listElement = ralloc(NULL, CWBindingDataListElement)))
 				EXIT_FRAME_THREAD(sock);
 
-			if (!extract802_11_Frame(listElement, &frame, buffer + sig_byte, len - sig_byte)) {
+			if (!extract802_11_Frame(listElement, &listElement->frame, buffer + sig_byte, len - sig_byte)) {
 				CWLog("THR FRAME: Error extracting a frame");
 				EXIT_FRAME_THREAD(sock);
 			}
 
-			listElement->frame = frame;
 			listElement->bindingValues = NULL;
 
-			listElement->frame->data_msgType = CW_IEEE_802_11_FRAME_TYPE;
+			listElement->frame.data_msgType = CW_IEEE_802_11_FRAME_TYPE;
 
 			CWLockSafeList(gFrameList);
 			CWAddElementToSafeListTail(gFrameList, listElement, sizeof(CWBindingDataListElement));

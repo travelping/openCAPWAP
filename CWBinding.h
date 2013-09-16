@@ -120,26 +120,31 @@ typedef struct {
 
 /*---------------------------*/
 
-typedef struct {
-	char RSSI;
-	char SNR;
-	int dataRate;
+typedef struct __attribute__ ((packed)) {
+	uint8_t length;
+	union {
+		struct {
+			uint8_t RSSI;
+			uint8_t SNR;
+			uint16_t dataRate;
+		} ieee80211;
+	};
 } CWBindingTransportHeaderValues;
 
 typedef struct {
-	CWProtocolMessage *frame;
+	CWProtocolMessage frame;
 	CWBindingTransportHeaderValues *bindingValues;
 } CWBindingDataListElement;
 
 extern const int gMaxCAPWAPHeaderSizeBinding;
 
-CWBool CWAssembleDataMessage(CWProtocolMessage ** completeMsgPtr, int *fragmentsNumPtr, int PMTU,
-			     CWProtocolMessage * frame, CWBindingTransportHeaderValues * bindingValuesPtr,
-			     int is_crypted, int keepAlive);
-CWBool CWAssembleTransportHeaderBinding(CWProtocolMessage * transportHdrPtr,
-					CWBindingTransportHeaderValues * valuesPtr);
-CWBool CWBindingCheckType(int elemType);
-CWBool CWParseTransportHeaderBinding(CWProtocolMessage * msgPtr, CWBindingTransportHeaderValues * valuesPtr);
-CWBool CWParseTransportHeaderMACAddress(CWProtocolMessage * msgPtr, unsigned char *mac_ptr);
+CWBool CWAssembleDataMessage(CWTransportMessage *tm, int PMTU,
+			     unsigned int rid, CWBindingProtocol wbid,
+			     CWBool keepAlive, CWBool isNative, CWMAC *radio_mac,
+			     CWBindingTransportHeaderValues *binding,
+			     CWProtocolMessage *msg);
+
+CWBindingTransportHeaderValues *CWParseTransportHeaderBinding(CWProtocolMessage *pm);
+CWBool CWParseTransportHeaderMACAddress(CWProtocolMessage *pm, unsigned char *mac_ptr);
 
 #endif
