@@ -263,6 +263,7 @@ int timer_init()
 	int rv;
 	struct timespec ts;
 	struct timeval tv;
+	pthread_attr_t attr;
 
 	rv = pthread_mutex_init(&timerq.mutex, NULL);
 	if (rv != 0)
@@ -280,14 +281,19 @@ int timer_init()
 
 	pthread_mutex_lock(&timerq.mutex);
 
-	rv = pthread_create(&timerq.ticker, NULL, cronometer, NULL);
-	if (rv != 0) {
+	pthread_attr_init(&attr);
+	/* 128k stack for timer thread */
+	pthread_attr_setstacksize(&attr, 128 * 1024);
 
+	rv = pthread_create(&timerq.ticker, &attr, cronometer, NULL);
+	if (rv != 0) {
+		pthread_attr_destroy(&attr);
 		pthread_mutex_unlock(&timerq.mutex);
 		pthread_mutex_destroy(&timerq.mutex);
 		pthread_cond_destroy(&timerq.cond);
 		return 0;
 	}
+	pthread_attr_destroy(&attr);
 
 	gettimeofday(&tv, NULL);
 	ts.tv_sec = tv.tv_sec + INIT_WAIT_TIME;
@@ -306,12 +312,6 @@ int timer_init()
 		return 0;
 	}
 
-	/*
-	 * BUG.TRL02
-	 * Here we have to detach the thread in oder to avoid memory leakage.
-	 *
-	 * 16/10/2009 - Donato Capitella
-	 */
 	pthread_detach(timerq.ticker);
 
 	pthread_mutex_unlock(&timerq.mutex);

@@ -40,15 +40,24 @@ CW_THREAD_RETURN_TYPE CWThreadManageTimers(void *arg);
 // Creates a thread that will execute a given function with a given parameter
 CWBool CWCreateThread(CWThread * newThread, CW_THREAD_FUNCTION threadFunc, void *arg)
 {
+	pthread_attr_t attr;
+
 	if (newThread == NULL)
 		return CWErrorRaise(CW_ERROR_WRONG_ARG, NULL);
 
 	CWDebugLog("Create Thread\n");
 
-	if (pthread_create(newThread, NULL, threadFunc, arg) != 0) {
+	pthread_attr_init(&attr);
+	/* 256k stack pre thread */
+	pthread_attr_setstacksize(&attr, 256 * 1024);
+
+	if (pthread_create(newThread, &attr, threadFunc, arg) != 0) {
+		pthread_attr_destroy(&attr);
 		return CWErrorRaise(CW_ERROR_NEED_RESOURCE,
 				    "Can't create thread (maybe there are too many other threads)");
 	}
+
+	pthread_attr_destroy(&attr);
 
 	/* terminated threads are not joined, detach them to release their resources on terminate */
 	pthread_detach(*newThread);
