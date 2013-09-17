@@ -40,8 +40,17 @@ CWBool CWWTPCheckForBindingFrame()
 		if (dataFirstElem) {
 			int k;
 			CWTransportMessage tm;
+			CWMAC radio_mac;
 
-			if (!CWAssembleDataMessage(&tm, gWTPPathMTU, 1, BINDING_IEEE_802_11, CW_FALSE, CW_TRUE, NULL,
+			radio_mac.length = 6;
+			CWThreadMutexLock(&gRADIO_MAC_mutex);
+			memcpy(radio_mac.data, gRADIO_MAC, 6);
+			CWThreadMutexUnlock(&gRADIO_MAC_mutex);
+
+			/* TODO: the data_msgType handling should be moved to the bindingValues ! */
+			if (!CWAssembleDataMessage(&tm, gWTPPathMTU, 1, BINDING_IEEE_802_11, CW_FALSE,
+						   dataFirstElem->frame.data_msgType == CW_IEEE_802_3_FRAME_TYPE ? CW_FALSE : CW_TRUE,
+						   dataFirstElem->frame.data_msgType == CW_IEEE_802_3_FRAME_TYPE ? &radio_mac : NULL,
 						   dataFirstElem->bindingValues, &dataFirstElem->frame)) {
 				CWReleaseTransportMessage(&tm);
 				CWReleaseMessage(&dataFirstElem->frame);

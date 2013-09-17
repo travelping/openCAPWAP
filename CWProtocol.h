@@ -315,7 +315,8 @@ typedef struct {
 	int value;
 } CWMsgElemData;
 
-typedef unsigned char CWMACAddress[6];
+#define MAC_MAX_LENGTH 6
+typedef unsigned char CWMACAddress[MAC_MAX_LENGTH];
 
 typedef enum {
 	CW_PROTOCOL_SUCCESS = 0,	// Success
@@ -377,7 +378,7 @@ typedef struct __attribute__ ((packed)) {
 
 typedef struct __attribute__ ((packed)) {
 	uint8_t length;
-	unsigned char data[];
+	unsigned char data[MAC_MAX_LENGTH];
 } CWMAC;
 
 typedef enum {
