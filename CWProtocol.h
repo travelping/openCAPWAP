@@ -933,7 +933,7 @@ void CWParseMessageElementStart(CWProtocolMessage *pm)
 	})
 
 #define CWParseMessageElementWhile(pm, len)	\
-	while (((pm)->pos - (pm)->start[(pm)->level - 1]) < (len))
+	while ((pm)->pos < (pm)->space && ((pm)->pos - (pm)->start[(pm)->level - 1]) < (len))
 
 static inline
 void CWParseSkipElement(CWProtocolMessage *pm, size_t len)
