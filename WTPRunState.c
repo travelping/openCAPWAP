@@ -60,6 +60,7 @@ static CWBool CWAssembleStationConfigurationResponse(CWTransportMessage *tm, int
 static CWBool CWAssembleWLANConfigurationResponse(CWTransportMessage *tm, int PMTU, int seqNum, CWProtocolResultCode resultCode);
 static CWBool CWParseStationConfigurationRequest(CWProtocolMessage *pm, int len);
 static CWBool CWParseWLANConfigurationRequest(CWProtocolMessage *pm, int len);
+static CWBool CWParseKeepAlivePacket(CWProtocolMessage *pm, int len);
 
 static void CWWTPHeartBeatTimerExpiredHandler(void *arg);
 static void CWWTPKeepAliveDataTimerExpiredHandler(void *arg);
@@ -195,17 +196,10 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveDataPacket(void *arg)
 		CWParseTransportHeader(&pm, &transportHeader, radioMAC);
 
 		if (CWTransportHeaderIsKeepAlive(&pm)) {
-			unsigned char *valPtr = NULL;
-			unsigned short int elemType = 0;
-			unsigned short int elemLen = 0;
+			unsigned short int len = CWProtocolRetrieve16(&pm);
 
-			CWDebugLog("Got KeepAlive len: %zd from AC", pm.space);
-			CWParseFormatMsgElem(&pm, &elemType, &elemLen);
-			/* WARNING: this is not correct, a Data Channel Keep-Alive can contain
-			 *          more Message Elements, see RFC-5415, Sect. 4.4.1
-			 */
-			valPtr = CWParseSessionID(&pm, elemLen);
-			CW_FREE_OBJECT(valPtr);
+			CWDebugLog("Got KeepAlive packet len %zd, payload %d from AC", pm.space, len);
+			CWParseKeepAlivePacket(&pm, len);
 		}
 		else switch (CWTransportBinding(&pm)) {
 			case BINDING_IEEE_802_3:
@@ -1310,6 +1304,45 @@ CWBool CWParseEchoResponse(CWProtocolMessage *pm, int len)
 	return CW_TRUE;
 }
 
+CWBool CWParseKeepAlivePacket(CWProtocolMessage *pm, int len)
+{
+	unsigned short int elemType = 0;
+	unsigned short int elemLen = 0;
+
+	assert(pm != NULL);
+
+	CWLog("Parsing Keep-Alive Packet...");
+
+	CWParseMessageElementStart(pm);
+
+	/* parse message elements */
+	CWParseMessageElementWhile(pm, len) {
+
+		CWParseFormatMsgElem(pm, &elemType, &elemLen);
+
+		CWDebugLog("Parsing Message Element: %u, elemLen: %u", elemType, elemLen);
+		switch (elemType) {
+		case CW_MSG_ELEMENT_SESSION_ID_CW_TYPE:
+		{
+			unsigned char *valPtr = NULL;
+
+			valPtr = CWParseSessionID(pm, elemLen);
+			CW_FREE_OBJECT(valPtr);
+			break;
+		}
+
+		default:
+			CWLog("unknown Message Element, Element; %u", elemType);
+
+			/* ignore unknown IE */
+			CWParseSkipElement(pm, len);
+		}
+	}
+	CWParseMessageElementEnd(pm, len);
+
+	CWLog("Keep-Alive Packet Parsed");
+	return CW_TRUE;
+}
 /*______________________________________________________________*/
 /*  *******************___SAVE FUNCTIONS___*******************  */
 #if 0
