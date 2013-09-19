@@ -196,10 +196,14 @@ CW_THREAD_RETURN_TYPE CWWTPReceiveDataPacket(void *arg)
 		CWParseTransportHeader(&pm, &transportHeader, radioMAC);
 
 		if (CWTransportHeaderIsKeepAlive(&pm)) {
-			unsigned short int len = CWProtocolRetrieve16(&pm);
+			unsigned int plen = CWProtocolLength(&pm);
+			unsigned short len = CWProtocolRetrieve16(&pm);
 
 			CWDebugLog("Got KeepAlive packet len %zd, payload %d from AC", pm.space, len);
-			CWParseKeepAlivePacket(&pm, len);
+			if (len < 2 || len != plen)
+				CWLog("KeepAlive Element Malformed, invalid length %d, payload length %d", len, plen);
+			else
+				CWParseKeepAlivePacket(&pm, len - 2);
 		}
 		else switch (CWTransportBinding(&pm)) {
 			case BINDING_IEEE_802_3:

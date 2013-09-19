@@ -109,7 +109,7 @@ CWBool CWAssembleDataMessage(CWTransportMessage *tm, int PMTU,
 		CWFinalizeTransportMessageHeader(m + i);
 
 		if (keepAlive)
-			CWProtocolStore16(m + i, msg->pos);
+			CWProtocolStore16(m + i, msg->pos + 2);
 
 		/* message body */
 		CWProtocolStoreRawBytes(m + i, msg->data + offs, flen);

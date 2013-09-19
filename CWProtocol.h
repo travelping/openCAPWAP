@@ -1160,12 +1160,6 @@ void CWFinalizeTransportMessagePart(CWProtocolMessage *pm)
 {
 	pm->level--;
 	assert(pm->level == 0);
-/*
-	CWTransportHeader *h = ((CWTransportHeader *)(pm->data + pm->start[0]));
-
-	h->w[0] = htonl(h->w[0]);
-	h->w[1] = htonl(h->w[1]);
-*/
 }
 
 
