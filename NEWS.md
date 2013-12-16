@@ -5,9 +5,11 @@ A Open Source implementation of CAPWAP
 
 Home: [http://github.com/travelping/openCAPWAP](http://github.com/travelping/openCAPWAP)
 
-Changes with 1.2.1 - xx Sep 2013
+Changes with 1.2.1 - xx Dec 2013
 --------------------------------
 
+* allow the new parent in ralloc_steal to be NULL to detach a pointer
+  from it's parent
 * Data Channel KeepAlive messages are now RFC compliant, invalid formated
   messages will be logged, but accepted for backwards compatibility
 

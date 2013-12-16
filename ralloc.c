@@ -254,7 +254,7 @@ ralloc_steal(const void *new_ctx, void *ptr)
       return;
 
    info = get_header(ptr);
-   parent = get_header(new_ctx);
+   parent = new_ctx != NULL ? get_header(new_ctx) : NULL;
 
    unlink_block(info);
 
