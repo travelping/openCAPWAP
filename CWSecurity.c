@@ -30,7 +30,7 @@
 #include <openssl/pkcs12.h>
 #include <openssl/x509v3.h>
 
-#define CW_DTLS_CERT_VERIFY_DEPTH   1
+#define CW_DTLS_CERT_VERIFY_DEPTH   2
 
 #if (OPENSSL_VERSION_NUMBER < 0x000908000)
 #error "Must use CAPWAP Hacked OpenSSL 0.9.8a or later"
@@ -568,7 +568,6 @@ int CWSecurityVerifyCB(int ok, X509_STORE_CTX * ctx)
 	}
 
 	if (!preverify_ok) {
-
 		CWDebugLog("verify error:num=%d:%s:depth=%d:%s\n", err, X509_verify_cert_error_string(err), depth, buf);
 	} else {
 		CWDebugLog("depth=%d:%s\n", depth, buf);
