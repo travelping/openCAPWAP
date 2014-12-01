@@ -96,7 +96,7 @@ CWBool CWAssembleDataMessage(CWTransportMessage *tm, int PMTU,
 		flen = (frag_size * (i + 1) > msg->pos) ? msg->pos % frag_size : frag_size;
 		last = (tm->count > 1 && i == tm->count - 1) ? 1 : 0;
 
-		if (!CWInitTransportMessagePart(m, m + i, flen, rid, wbid, is_frag, last, frag_id, offs)) {
+		if (!CWInitTransportMessagePart(m, m + i, flen, rid, wbid, is_frag, last, frag_id, offs / 8)) {
 			CWReleaseTransportMessage(tm);
 			return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
 		}

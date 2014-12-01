@@ -188,62 +188,6 @@ CWBool CWAssembleMsgElemResultCode(const void *ctx, CWProtocolMessage *pm, CWPro
 CWBool CWAssembleMessage(CWTransportMessage *tm, int PMTU, CWProtocolMessage *msg)
 {
 	return CWAssembleDataMessage(tm, PMTU, 1, BINDING_IEEE_802_11, CW_FALSE, CW_FALSE, NULL, NULL, msg);
-#if 0
-	size_t frag_size;
-	unsigned int i;
-	unsigned int frag_id = 0, is_frag = 0;
-	CWProtocolMessage *m;
-
-	assert(tm != NULL);
-	assert(msg != NULL);
-	assert(msg->level == 0);
-
-	CWDebugLog("PMTU: %d", PMTU);
-
-	frag_size = msg->pos;
-	tm->count = 1;
-
-	/* handle fragmentation */
-	if (PMTU > gMaxDTLSHeaderSize + gMaxCAPWAPHeaderSize) {
-		frag_size = ((PMTU - gMaxDTLSHeaderSize - gMaxCAPWAPHeaderSize) / 8) * 8;
-		tm->count = (msg->pos + frag_size - 1) / frag_size;
-	}
-
-	CWDebugLog("Aligned PMTU: %zd", frag_size);
-	CWDebugLog("Fragments #: %d", tm->count);
-
-	tm->parts = m = rzalloc_array(NULL, CWProtocolMessage, tm->count);
-	if (!m)
-		return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-
-	if (tm->count > 1) {
-		frag_id = CWGetFragmentID();
-		is_frag = 1;
-	}
-
-	for (i = 0; i < tm->count; i++) {
-		int last;
-		size_t flen;
-		size_t offs;
-
-		offs = frag_size * i;
-		flen = (frag_size * (i + 1) > msg->pos) ? msg->pos % frag_size : frag_size;
-		last = (tm->count > 1 && i == tm->count - 1) ? 1 : 0;
-
-		if (!CWInitTransportMessagePart(m, m + i, flen, is_frag, last, frag_id, offs / 8)) {
-			CWReleaseTransportMessage(tm);
-			return CWErrorRaise(CW_ERROR_OUT_OF_MEMORY, NULL);
-		}
-		/*
-		 * optional fields.....
-		 */
-		CWProtocolStoreRawBytes(m + i, msg->data + offs, flen);
-		CWFinalizeTransportMessagePart(m + i);
-
-		CWDebugLog("Fragment #:%d, offset:%zd, bytes stored:%zd/%zd", i, offs, flen, msg->pos);
-	}
-	return CW_TRUE;
-#endif
 }
 
 #define THDR_ROOM  64
