@@ -368,10 +368,10 @@ CWBool CWProtocolParseFragment(CWProtocolMessage *msg, CWFragmentBufferList* fra
 
 		if (!done || b->length == 0 || b->count  != 1 ||
 		    b->parts[0].start != 0 || b->parts[0].end != b->length)
-			/* we need at least one mpre fragment */
+			/* we need at least one more fragment */
 			return CWErrorRaise(CW_ERROR_NEED_RESOURCE, NULL);
 
-		CWInitTransportMessage(pm, b->data, b->parts[0].end, 0);
+		CWInitTransportMessage(pm, b->data, b->length + THDR_ROOM, 0);
 		pm->pos = b->start;
 		ralloc_steal(NULL, b->data);
 
